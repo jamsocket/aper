@@ -5,7 +5,8 @@
 //! With Aper, you represent your program state as a state machine by
 //! implementing the [StateMachine] trait. Aper then provides the
 //! infrastructure to keep clones of this state synchronized across
-//! multiple clients.
+//! multiple clients, including clients running in WebAssembly via
+//! WebSockets.
 //!
 //! ## Organization
 //!
