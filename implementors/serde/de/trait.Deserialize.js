@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["aper"] = [{"text":"impl&lt;'de, Transition&gt; Deserialize&lt;'de&gt; for TransitionEvent&lt;Transition&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Transition: Deserialize&lt;'de&gt;,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl&lt;'de&gt; Deserialize&lt;'de&gt; for PlayerID","synthetic":false,"types":[]},{"text":"impl&lt;'de, State:&nbsp;StateMachine&gt; Deserialize&lt;'de&gt; for StateUpdateMessage&lt;State&gt;","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

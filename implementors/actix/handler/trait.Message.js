@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["aper_actix"] = [{"text":"impl&lt;State:&nbsp;StateMachine&gt; Message for WrappedStateUpdateMessage&lt;State&gt;","synthetic":false,"types":[]},{"text":"impl&lt;State:&nbsp;StateMachine&gt; Message for ChannelMessage&lt;State&gt;","synthetic":false,"types":[]},{"text":"impl Message for CreateChannelMessage","synthetic":false,"types":[]},{"text":"impl&lt;State:&nbsp;StateMachine&gt; Message for GetChannelMessage&lt;State&gt;","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

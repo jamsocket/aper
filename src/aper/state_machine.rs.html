@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aper/src/state_machine.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>state_machine.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../aper/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+</pre><div class="example-wrap"><pre class="rust ">
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">suspended_event</span>::<span class="ident">SuspendedEvent</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">transition_event</span>::<span class="ident">TransitionEvent</span>;
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
+
+<span class="doccomment">/// This trait provides the methods that Aper needs to be able to interact with</span>
+<span class="doccomment">/// an object as a state machine.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// None of the methods in this trait provide access to the internal data of the</span>
+<span class="doccomment">/// state machine. It&#39;s up to you to implement accessor methods (or use public</span>
+<span class="doccomment">/// fields) in order to expose the data necessary to render your views.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateMachine</span>:
+    <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Serialize</span> <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Debug</span>
+{
+    <span class="doccomment">/// The [StateMachine::Transition] type associates another type with this state machine</span>
+    <span class="doccomment">/// as its transitions.</span>
+    <span class="kw">type</span> <span class="ident">Transition</span>: <span class="ident">Sized</span>
+        <span class="op">+</span> <span class="ident">Unpin</span>
+        <span class="op">+</span> <span class="lifetime">&#39;static</span>
+        <span class="op">+</span> <span class="ident">Send</span>
+        <span class="op">+</span> <span class="ident">PartialEq</span>
+        <span class="op">+</span> <span class="ident">Clone</span>
+        <span class="op">+</span> <span class="ident">Serialize</span>
+        <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span>
+        <span class="op">+</span> <span class="ident">Debug</span>;
+
+    <span class="doccomment">/// Every state machine currently needs to be able to be constructed without arguments.</span>
+    <span class="doccomment">/// Eventually, this requirement will likely be relaxed and a factory pattern used instead</span>
+    <span class="doccomment">/// in places that currently call `new()`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Unlike the other methods of a state machine, this one does *not* need to be</span>
+    <span class="doccomment">/// deterministic. You can, for example, incorporate randomness or the current time in this.</span>
+    <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
+
+    <span class="doccomment">/// Update the state machine according to the given [TransitionEvent]. This method *must* be</span>
+    <span class="doccomment">/// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]</span>
+    <span class="doccomment">/// must result in the same state, even at a different time and on a different machine. This</span>
+    <span class="doccomment">/// is the requirement that allows Aper to keep the state in sync across multiple machines.</span>
+    <span class="kw">fn</span> <span class="ident">process_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">transition_event</span>: <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span>);
+
+    <span class="doccomment">/// A state machine may &quot;suspend&quot; an event which occurs at a specific time in the future.</span>
+    <span class="doccomment">/// This is useful for ensuring that the state is updated at a future time regardless of</span>
+    <span class="doccomment">/// a user-initiated state change before then. State machines that only change state as a</span>
+    <span class="doccomment">/// result of user-initiated events can ignore this method, as the default implementation</span>
+    <span class="doccomment">/// is to never suspend an event.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This method is called by the server once after every call to `process_event`. If it</span>
+    <span class="doccomment">/// returns `None`, no event is suspended, and any previously suspended event is cancelled.</span>
+    <span class="doccomment">/// If it returns `Some`, the provided event becomes the &quot;suspended&quot; event, replacing the</span>
+    <span class="doccomment">/// prior suspended event if there was one.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Only one event can be suspended at a time. If a state machine wants to be triggered for</span>
+    <span class="doccomment">/// multiple events in the future, it is up to that state machine to return the</span>
+    <span class="doccomment">/// (chronologically) next event each time this method is called.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Currently, only the state machine running on the server ever has this method called.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Since they are not associated with a particular player, suspended events trigger</span>
+    <span class="doccomment">/// `process_event` with a `None` as the player in the [TransitionEvent].</span>
+    <span class="kw">fn</span> <span class="ident">get_suspended_event</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="prelude-val">None</span>
+    }
+}
+</pre></div>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "aper";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

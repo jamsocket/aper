@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["aper"] = [{"text":"impl&lt;Transition&gt; Serialize for TransitionEvent&lt;Transition&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Transition: Serialize,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl Serialize for PlayerID","synthetic":false,"types":[]},{"text":"impl&lt;State:&nbsp;StateMachine&gt; Serialize for StateUpdateMessage&lt;State&gt;","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
