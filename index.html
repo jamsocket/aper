@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `aper` crate."><meta name="keywords" content="rust, rustlang, rust-lang, aper"><title>aper - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../aper/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Crate aper</p><div class="block version"><p>Version 0.1.0</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all aper's items</p></a><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li></ul></div><p class="location"></p><script>window.sidebarCurrent = {name: "aper", ty: "mod", relpath: "../"};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/aper/lib.rs.html#1-116" title="goto source code">[src]</a></span><span class="in-band">Crate <a class="mod" href="">aper</a></span></h1><div class="docblock"><h1 id="aper" class="section-header"><a href="#aper">Aper</a></h1>
+<p>Aper is a framework for real-time shared state.</p>
+<p>With Aper, you represent your program state as a state machine by
+implementing the <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> trait. Aper then provides the
+infrastructure to keep clones of this state synchronized across
+multiple clients, including clients running in WebAssembly via
+WebSockets.</p>
+<h2 id="organization" class="section-header"><a href="#organization">Organization</a></h2>
+<p>The Aper project is divided over a number of crates. This crate,
+<code>aper</code>, does not provide any functionality, it merely defines a spec
+that is used by the other crates.</p>
+<p>The other crates, <code>aper-yew</code> and <code>aper-actix</code>, provide client and server
+implementations (respectively).</p>
+<h2 id="what-is-a-state-machine" class="section-header"><a href="#what-is-a-state-machine">What is a state machine?</a></h2>
+<p>For the purposes of Aper, a state machine is simply a <code>struct</code> that
+implements <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> and has the following properties:</p>
+<ul>
+<li>It defines a <a href="../aper/trait.StateMachine.html#associatedtype.Transition" title="StateMachine::Transition">StateMachine::Transition</a> type, through which every
+possible change to the state can be described. It is usually useful,
+though not required, that this be an <code>enum</code> type.</li>
+<li>All state updates are deterministic: if you clone a <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> and a
+<a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a> (which represents a <a href="../aper/trait.StateMachine.html#associatedtype.Transition" title="StateMachine::Transition">StateMachine::Transition</a> wrapped in some
+metadata), the result of applying that transition <strong>must always</strong> result
+in the same underlying state.</li>
+</ul>
+<p>This is similar to the state representation in frameworks like
+<a href="https://redux.js.org">Redux</a> and <a href="https://yew.rs">Yew</a>.</p>
+<h2 id="how-it-works" class="section-header"><a href="#how-it-works">How it works</a></h2>
+<p>When a client connects to the server, it receives a complete serialized
+copy of the current state. After that, it sends <a href="../aper/trait.StateMachine.html#associatedtype.Transition" title="StateMachine::Transition">StateMachine::Transition</a>s to the server
+and receives only <a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s. By applying these <a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s to
+its local copy, each client keeps its local copy of the state synchronized
+with the server.</p>
+<p>It is important that the server guarantees that each client receives
+<a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s in the same order, since the way a transition is applied
+may depend on previous state. For example, if a transition pushes a value
+to the end of a list, two clients receiving the transitions in a different
+order would have internal states which represented different orders of the
+list.</p>
+<h2 id="why-not-crdt" class="section-header"><a href="#why-not-crdt">Why not CRDT?</a></h2>
+<p><a href="https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type">Conflict-free replicated data types</a>
+are a really neat way of representing data that's shared between peers.
+In order to avoid the need for a central “source of truth”, CRDTs require
+that update operations (i.e. state transitions) be <a href="https://en.wikipedia.org/wiki/Commutative_property">commutative</a>.
+This allows them to represent a bunch of common data structures, but doesn't
+allow you to represent complex update logic.</p>
+<p>By relying on a central authority, a state-machine approach allows you to
+implement data structures with arbitrary update logic, such as automic moves
+of a value between two data structures, or the rules of a board game.</p>
+<h2 id="vocabulary-conventions" class="section-header"><a href="#vocabulary-conventions">Vocabulary Conventions</a></h2>
+<ul>
+<li>A <strong>player</strong> is a connection to the service. The term <em>user</em> is probably a more conventional
+description, but <em>multiplayer</em> is often used in the context of non-game multi-user apps, and
+I've chosen to adopt it here because I think our users should be having fun.</li>
+<li>A <strong>transition</strong> represents a way to update the state. For example, “draw a circle at (4, 6)”
+is a transition.</li>
+<li>An <strong>event</strong> (or <em>transition event</em>) is a specific invocation of a transition by a user
+at a time. For example, “player A drew a circle at (4, 6) at 10:04 PM” is an event.
+State machines <em>may</em> use the &quot;who&quot; and &quot;when&quot; data to determine how a transition is applied.
+Events may also not have a player associated with them (as in suspended events), but always
+have a time.</li>
+<li>A <strong>channel</strong> is the combination of a state object and the players currently connected to
+it. You can think of this as analogous to a room or channel in a chat app, except
+that the state is an arbitrary state machine instead of a sequential list of messages.
+The state of each channel is independent from one another: state changes in one channel
+do not impact the state in another, much like messages in one chat room do not appear in
+another.</li>
+</ul>
+</div><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.PlayerID.html" title="aper::PlayerID struct">PlayerID</a></td><td class="docblock-short"><p>An opaque identifier for a single connected user.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.SuspendedEvent.html" title="aper::SuspendedEvent struct">SuspendedEvent</a></td><td class="docblock-short"><p>Represents a transition that a <a href="../aper/trait.StateMachine.html" title="crate::StateMachine">crate::StateMachine</a> would like to receive in the
+future from the server, as well as the time that it would like to receive it. Each state machine
+can have either zero or one transition suspended at any point in time, and may change or
+remove that suspended event every time its state is updated (and only then).</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.TransitionEvent.html" title="aper::TransitionEvent struct">TransitionEvent</a></td><td class="docblock-short"><p>A transition with associated metadata: which player triggered it and when.
+The player ID is optional, since <code>SuspendedEvent</code>s do not have a player associated
+with them.</p>
+</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+<table><tr class="module-item"><td><a class="enum" href="enum.StateUpdateMessage.html" title="aper::StateUpdateMessage enum">StateUpdateMessage</a></td><td class="docblock-short"><p>A message from the server to a client that tells it to update its state.</p>
+</td></tr></table><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
+<table><tr class="module-item"><td><a class="trait" href="trait.StateMachine.html" title="aper::StateMachine trait">StateMachine</a></td><td class="docblock-short"><p>This trait provides the methods that Aper needs to be able to interact with
+an object as a state machine.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "aper";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
