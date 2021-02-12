@@ -33,6 +33,9 @@ Before the first non-preview release, the following need to be sorted out:
 - [ ] Use a factory pattern to produce state machines rather than a no-argument
       `new` function, for flexibility.
 - [ ] Add turn-key “channel creation” UI.
+- [ ] Add a separate concept of “player state” in addition to game state. Player state
+      includes things like name or cursor position, but cannot be used for state updates,
+      and as a result can be sent out-of-order.
 
 The immediate roadmap has a strong emphasis on figuring out the right interface
 between Aper and application code. Once that's sorted out, longer-term tasks can
