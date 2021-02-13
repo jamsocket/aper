@@ -17,12 +17,42 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{StateMachine, StateUpdateMessage, PlayerID};
-use yew::{Callback, Html, Component, ComponentLink, ShouldRender, Properties, html};
-use yew::format::Json;
-use yew::services::websocket::{WebSocketTask, WebSocketStatus};
-use yew::services::WebSocketService;
+use aper::{PlayerID, StateMachine, StateUpdateMessage, TransitionEvent};
+use chrono::{DateTime, Utc};
 use std::fmt::Debug;
+use yew::format::Json;
+use yew::services::websocket::{WebSocketStatus, WebSocketTask};
+use yew::services::WebSocketService;
+use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
+
+#[derive(Debug)]
+pub struct StateManager<State: StateMachine> {
+    state: Box<State>,
+    last_server_time: DateTime<Utc>,
+    last_local_time: DateTime<Utc>,
+}
+
+impl<State: StateMachine> StateManager<State> {
+    pub fn get_estimated_server_time(&self) -> DateTime<Utc> {
+        let elapsed = Utc::now().signed_duration_since(self.last_local_time);
+        self.last_server_time + elapsed
+    }
+
+    pub fn new(state: State, server_time: DateTime<Utc>) -> StateManager<State> {
+        StateManager {
+            state: Box::new(state),
+            last_server_time: server_time,
+            last_local_time: Utc::now(),
+        }
+    }
+
+    pub fn process_event(&mut self, event: TransitionEvent<<State as StateMachine>::Transition>) {
+        self.last_local_time = Utc::now();
+        self.last_server_time = event.timestamp;
+
+        self.state.process_event(event);
+    }
+}
 
 /// Properties for [StateMachineComponent].
 #[derive(Properties, Clone)]
@@ -59,11 +89,7 @@ pub trait StateView: Sized + 'static + Debug + Clone {
     /// * `player`   - Upon connecting to the websocket server, each client is assigned a
     ///                [PlayerID]. It is passed to the view, so that the view can depend on the
     ///                player who is viewing it.
-    fn view(&self,
-            state: &Self::State,
-            callback: Callback<Option<<<Self as StateView>::State as StateMachine>::Transition>>,
-            player: PlayerID,
-    ) -> Html;
+    fn view(&self, state: &Self::State, view_context: &ViewContext<Self::State>) -> Html;
 }
 
 /// The connection status of the component, and stores the state once it is available.
@@ -79,7 +105,7 @@ pub enum Status<State: StateMachine> {
     WaitingForInitialState,
     /// The component has connected to the server and is assumed to contain an up-to-date
     /// copy of the state.
-    Connected(Box<State>, PlayerID),
+    Connected(StateManager<State>, PlayerID),
     /// There was some error during the `WaitingToConnect` or `WaitingForInitialState`
     /// phase. The component's `onerror()` callback should have triggered, so the owner
     /// of this component may use this callback to take over rendering from this component
@@ -133,10 +159,17 @@ impl<View: StateView> StateMachineComponent<View> {
                     WebSocketStatus::Closed => Msg::NoOp,
                     WebSocketStatus::Error => Msg::UpdateStatus(Box::new(Status::ErrorConnecting)),
                 }),
-        ).unwrap(); // TODO: handle failure here.
+        )
+        .unwrap(); // TODO: handle failure here.
 
         self.wss_task = Some(wss_task);
     }
+}
+
+pub struct ViewContext<State: StateMachine> {
+    pub callback: Callback<Option<<State as StateMachine>::Transition>>,
+    pub player_id: PlayerID,
+    pub time: DateTime<Utc>,
 }
 
 impl<View: StateView> Component for StateMachineComponent<View> {
@@ -168,7 +201,7 @@ impl<View: StateView> Component for StateMachineComponent<View> {
             }
             Msg::ServerMessage(c) => {
                 match *c {
-                    StateUpdateMessage::ReplaceState(game, own_player_id) => {
+                    StateUpdateMessage::ReplaceState(state, timestamp, own_player_id) => {
                         if let Status::WaitingForInitialState = self.status {
                         } else {
                             panic!(
@@ -176,11 +209,12 @@ impl<View: StateView> Component for StateMachineComponent<View> {
                                 &self.status
                             )
                         }
-                        self.status = Status::Connected(Box::new(game), own_player_id);
+                        self.status =
+                            Status::Connected(StateManager::new(state, timestamp), own_player_id);
                     }
                     StateUpdateMessage::TransitionState(msg) => match &mut self.status {
-                        Status::Connected(state, _) => {
-                            state.process_event(msg);
+                        Status::Connected(state_manager, _) => {
+                            state_manager.process_event(msg);
                         }
                         _ => panic!(
                             "Received GameStateTransition while in state {:?}",
@@ -192,9 +226,7 @@ impl<View: StateView> Component for StateMachineComponent<View> {
             }
             Msg::UpdateStatus(st) => {
                 if let Status::ErrorConnecting = *st {
-                    self.props
-                        .onerror
-                        .emit(())
+                    self.props.onerror.emit(())
                 }
                 self.status = *st;
                 true
@@ -215,13 +247,17 @@ impl<View: StateView> Component for StateMachineComponent<View> {
 
     fn view(&self) -> Html {
         match &self.status {
-            Status::WaitingToConnect => html!{{"Waiting to connect."}},
-            Status::WaitingForInitialState => html!{{"Waiting for initial state."}},
-            Status::Connected(state, player_id) =>
-                self.props.view.view(state,
-                           self.link.callback(Msg::GameStateTransition),
-                           *player_id),
-            Status::ErrorConnecting => html!{{"Error connecting."}},
+            Status::WaitingToConnect => html! {{"Waiting to connect."}},
+            Status::WaitingForInitialState => html! {{"Waiting for initial state."}},
+            Status::Connected(state_manager, player_id) => {
+                let view_context = ViewContext {
+                    callback: self.link.callback(Msg::GameStateTransition),
+                    player_id: *player_id,
+                    time: state_manager.get_estimated_server_time(),
+                };
+                self.props.view.view(&state_manager.state, &view_context)
+            }
+            Status::ErrorConnecting => html! {{"Error connecting."}},
         }
     }
 }

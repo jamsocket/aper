@@ -1,6 +1,7 @@
 //! # Aper
 //!
-//! Aper is a framework for real-time shared state.
+//! Aper is a framework for real-time sharing of arbitrary application state
+//! over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
 //!
 //! With Aper, you represent your program state as a state machine by
 //! implementing the [StateMachine] trait. Aper then provides the
@@ -79,6 +80,7 @@
 //!   do not impact the state in another, much like messages in one chat room do not appear in
 //!   another.
 
+use chrono::{DateTime, Utc};
 use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
@@ -107,7 +109,7 @@ pub enum StateUpdateMessage<State: StateMachine> {
     /// Instructs the client to completely discard its existing state and replace it
     /// with the provided one. This is currently only used to set the initial state
     /// when a client first connects.
-    ReplaceState(#[serde(bound = "")] State, PlayerID),
+    ReplaceState(#[serde(bound = "")] State, DateTime<Utc>, PlayerID),
 
     /// Instructs the client to apply the given [TransitionEvent] to its copy of
     /// the state to synchronize it with the server. Currently, all state updates

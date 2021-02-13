@@ -48,7 +48,11 @@ impl<State: StateMachine> Actor for PlayerActor<State> {
 impl<State: StateMachine> Handler<WrappedStateUpdateMessage<State>> for PlayerActor<State> {
     type Result = ();
 
-    fn handle(&mut self, msg: WrappedStateUpdateMessage<State>, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: WrappedStateUpdateMessage<State>,
+        ctx: &mut Self::Context,
+    ) -> Self::Result {
         ctx.text(serde_json::to_string(&msg.0).unwrap());
     }
 }

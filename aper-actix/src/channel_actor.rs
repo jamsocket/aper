@@ -1,9 +1,8 @@
+use chrono::Utc;
 use std::collections::{HashMap, HashSet};
 
 use actix::{Actor, Addr, Context, Handler};
-use aper::{
-    PlayerID, StateMachine, StateUpdateMessage, TransitionEvent,
-};
+use aper::{PlayerID, StateMachine, StateUpdateMessage, TransitionEvent};
 
 use crate::messages::{ChannelMessage, WrappedStateUpdateMessage};
 use crate::player_actor::PlayerActor;
@@ -52,9 +51,9 @@ impl<State: StateMachine + Clone> ChannelActor<State> {
         self.suspended_event.replace(get_suspended_event, ctx);
 
         for listener in &self.listeners {
-            listener.do_send(WrappedStateUpdateMessage(StateUpdateMessage::TransitionState(
-                event.clone(),
-            )));
+            listener.do_send(WrappedStateUpdateMessage(
+                StateUpdateMessage::TransitionState(event.clone()),
+            ));
         }
     }
 }
@@ -79,6 +78,7 @@ impl<State: StateMachine + Clone> Handler<ChannelMessage<State>> for ChannelActo
 
                 addr.do_send(WrappedStateUpdateMessage(StateUpdateMessage::ReplaceState(
                     self.state.clone(),
+                    Utc::now(),
                     id,
                 )));
 

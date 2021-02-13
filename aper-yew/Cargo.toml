@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 aper = {path="../aper"}
+chrono = { version = "0.4.19", features = ["serde", "wasmbind"] }
 yew = "0.17.4"

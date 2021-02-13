@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use crate::channel_actor::ChannelActor;
 use actix::{Actor, Addr, Context, Handler, Message};
+use aper::StateMachine;
 use rand::distributions::Uniform;
 use rand::{thread_rng, Rng};
-use aper::StateMachine;
 use std::marker::PhantomData;
 
 /// Tells the server to create a new channel and return its unique name.

@@ -1,4 +1,4 @@
-use std::time::SystemTime;
+use chrono::{DateTime, Utc};
 
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,7 @@ use crate::PlayerID;
 pub struct TransitionEvent<Transition> {
     pub player_id: Option<PlayerID>,
     pub transition: Transition,
-    pub timestamp: SystemTime,
+    pub timestamp: DateTime<Utc>,
 }
 
 impl<Transition> TransitionEvent<Transition> {
@@ -19,7 +19,7 @@ impl<Transition> TransitionEvent<Transition> {
         TransitionEvent {
             player_id: Some(player_id),
             transition,
-            timestamp: std::time::SystemTime::now(),
+            timestamp: Utc::now(),
         }
     }
 
@@ -27,7 +27,7 @@ impl<Transition> TransitionEvent<Transition> {
         TransitionEvent {
             player_id: None,
             transition,
-            timestamp: std::time::SystemTime::now(),
+            timestamp: Utc::now(),
         }
     }
 }

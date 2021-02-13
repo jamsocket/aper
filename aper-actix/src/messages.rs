@@ -1,5 +1,5 @@
 use actix::{Addr, Message};
-use aper::{StateUpdateMessage, StateMachine};
+use aper::{StateMachine, StateUpdateMessage};
 
 use crate::player_actor::PlayerActor;
 

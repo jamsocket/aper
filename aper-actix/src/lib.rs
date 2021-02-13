@@ -7,4 +7,4 @@ mod suspended_event;
 pub use channel_actor::ChannelActor;
 pub use messages::{ChannelMessage, WrappedStateUpdateMessage};
 pub use player_actor::PlayerActor;
-pub use server_actor::{GetChannelMessage, ServerActor, CreateChannelMessage};
+pub use server_actor::{CreateChannelMessage, GetChannelMessage, ServerActor};

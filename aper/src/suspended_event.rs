@@ -1,4 +1,4 @@
-use std::time::SystemTime;
+use chrono::{DateTime, Utc};
 
 /// Represents a transition that a [crate::StateMachine] would like to receive in the
 /// future from the server, as well as the time that it would like to receive it. Each state machine
@@ -14,7 +14,7 @@ pub struct SuspendedEvent<Transition> {
     /// there may be a small delay between the time an event is requested at and the time it is
     /// actually fired. The latter is used as the timestamp when creating the
     /// [crate::TransitionEvent].
-    pub time: SystemTime,
+    pub time: DateTime<Utc>,
 
     /// The transition that should be triggered. This is turned into a [crate::TransitionEvent]
     /// instance using `None` as the player, since these events are not considered to be initiated
@@ -23,7 +23,7 @@ pub struct SuspendedEvent<Transition> {
 }
 
 impl<Transition> SuspendedEvent<Transition> {
-    pub fn new(time: SystemTime, transition: Transition) -> SuspendedEvent<Transition> {
+    pub fn new(time: DateTime<Utc>, transition: Transition) -> SuspendedEvent<Transition> {
         SuspendedEvent { time, transition }
     }
 }
