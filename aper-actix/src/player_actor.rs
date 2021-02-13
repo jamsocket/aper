@@ -53,7 +53,11 @@ impl<State: StateMachine> Handler<WrappedStateUpdateMessage<State>> for PlayerAc
         msg: WrappedStateUpdateMessage<State>,
         ctx: &mut Self::Context,
     ) -> Self::Result {
-        ctx.text(serde_json::to_string(&msg.0).unwrap());
+        if cfg!(debug_assertions) {
+            ctx.text(serde_json::to_string(&msg.0).unwrap());
+        } else {
+            ctx.binary(bincode::serialize(&msg.0).unwrap());
+        }
     }
 }
 
@@ -64,6 +68,12 @@ impl<State: StateMachine> StreamHandler<Result<ws::Message, ws::ProtocolError>>
         match msg {
             Ok(ws::Message::Text(text)) => {
                 let event: State::Transition = serde_json::from_str(&text).unwrap();
+
+                self.channel
+                    .do_send(ChannelMessage::Event(ctx.address(), event));
+            }
+            Ok(ws::Message::Binary(bin)) => {
+                let event: State::Transition = bincode::deserialize(&bin).unwrap();
 
                 self.channel
                     .do_send(ChannelMessage::Event(ctx.address(), event));

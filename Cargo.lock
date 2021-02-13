@@ -365,6 +365,7 @@ dependencies = [
  "actix-web",
  "actix-web-actors",
  "aper",
+ "bincode",
  "chrono",
  "rand 0.8.3",
  "serde_json",
@@ -376,6 +377,7 @@ version = "0.1.0"
 dependencies = [
  "aper",
  "chrono",
+ "serde",
  "yew",
 ]
 

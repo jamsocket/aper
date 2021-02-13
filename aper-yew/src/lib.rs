@@ -19,8 +19,9 @@
 
 use aper::{PlayerID, StateMachine, StateUpdateMessage, TransitionEvent};
 use chrono::{DateTime, Utc};
+use serde::Deserialize;
 use std::fmt::Debug;
-use yew::format::Json;
+use yew::format::{Binary, Bincode, Json, Text};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
 use yew::services::WebSocketService;
 use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
@@ -125,7 +126,7 @@ pub enum Msg<State: StateMachine> {
     /// user interaction.
     GameStateTransition(Option<State::Transition>),
     /// A [StateUpdateMessage] was received from the server.
-    ServerMessage(Box<StateUpdateMessage<State>>),
+    ServerMessage(WireWrapped<StateUpdateMessage<State>>),
     /// The status of the connection with the remote server has changed.
     UpdateStatus(Box<Status<State>>),
     /// Trigger a redraw of this View. Redraws are automatically triggered after a
@@ -148,18 +149,45 @@ pub struct StateMachineComponent<View: StateView> {
 
     /// Status of connection with the server.
     status: Status<View::State>,
+
+    /// Whether or not to use binary (bincode) to communicate with the server.
+    /// This is set to whichever the server chose to send as its first message.
+    binary: bool,
+}
+
+#[derive(Debug)]
+pub struct WireWrapped<T: for<'de> Deserialize<'de>> {
+    pub value: T,
+    pub binary: bool,
+}
+
+impl<T: for<'de> Deserialize<'de>> From<Text> for WireWrapped<T> {
+    fn from(text: Text) -> Self {
+        let j: Json<Result<T, _>> = text.into();
+        WireWrapped {
+            value: j.0.unwrap(),
+            binary: false,
+        }
+    }
+}
+
+impl<T: for<'de> Deserialize<'de>> From<Binary> for WireWrapped<T> {
+    fn from(bin: Binary) -> Self {
+        let j: Bincode<Result<T, _>> = bin.into();
+        WireWrapped {
+            value: j.0.unwrap(),
+            binary: true,
+        }
+    }
 }
 
 impl<View: StateView> StateMachineComponent<View> {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
         self.status = Status::WaitingToConnect;
-        let wss_task = WebSocketService::connect_text(
+        let wss_task = WebSocketService::connect(
             &self.props.websocket_url,
-            self.link
-                .callback(|c: Json<Result<StateUpdateMessage<View::State>, _>>| {
-                    Msg::ServerMessage(Box::new(c.0.expect("Error unwrapping message from server")))
-                }),
+            self.link.callback(Msg::ServerMessage),
             self.link
                 .callback(move |result: WebSocketStatus| match result {
                     WebSocketStatus::Opened => {
@@ -194,6 +222,7 @@ impl<View: StateView> Component for StateMachineComponent<View> {
             wss_task: None,
             props,
             status: Status::WaitingToConnect,
+            binary: false,
         };
 
         result.do_connect();
@@ -205,12 +234,18 @@ impl<View: StateView> Component for StateMachineComponent<View> {
         match msg {
             Msg::GameStateTransition(event) => {
                 if let Some(event) = event {
-                    self.wss_task.as_mut().unwrap().send(Json(&event));
+                    if self.binary {
+                        self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
+                    } else {
+                        self.wss_task.as_mut().unwrap().send(Json(&event));
+                    }
                 }
                 false
             }
             Msg::ServerMessage(c) => {
-                match *c {
+                let WireWrapped { value, binary } = c;
+                self.binary = binary;
+                match value {
                     StateUpdateMessage::ReplaceState(state, timestamp, own_player_id) => {
                         if let Status::WaitingForInitialState = self.status {
                         } else {

@@ -1,6 +1,6 @@
-use yew::prelude::*;
-use yew::services::interval::{IntervalTask, IntervalService};
 use std::time::Duration;
+use yew::prelude::*;
+use yew::services::interval::{IntervalService, IntervalTask};
 
 #[derive(Properties, Clone)]
 pub struct Props {
@@ -26,7 +26,7 @@ impl Component for UpdateInterval {
         );
         Self {
             props,
-            interval_task
+            interval_task,
         }
     }
 
@@ -40,7 +40,6 @@ impl Component for UpdateInterval {
     }
 
     fn view(&self) -> Html {
-        return html! {}
+        return html! {};
     }
 }
-
