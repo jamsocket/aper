@@ -56,3 +56,4 @@ focus on scaling Aper up to a production environment:
   deterministic.
 - Pre-built data structures like lists, trees, and sets, and a derive macro
   to turn any struct built with them into a state machine.
+- Pre-built string data structure implementing Operational Transform.
