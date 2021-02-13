@@ -2,12 +2,19 @@ use std::time::Duration;
 use yew::prelude::*;
 use yew::services::interval::{IntervalService, IntervalTask};
 
+/// Props of [UpdateInterval].
 #[derive(Properties, Clone)]
 pub struct Props {
+    /// The [yew::Callback] which gets called at the interval.
     pub callback: Callback<()>,
+
+    /// The number of milliseconds to wait between calls to `callback`.
     pub interval_ms: u64,
 }
 
+/// A Yew component that calls the given callback at a regular interval.
+/// It is a useful way to automatically refresh a [crate::StateView], since the
+/// state view itself cannot own an [IntervalTask].
 pub struct UpdateInterval {
     props: Props,
 

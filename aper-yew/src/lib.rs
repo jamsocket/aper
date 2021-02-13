@@ -17,47 +17,21 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{PlayerID, StateMachine, StateUpdateMessage, TransitionEvent};
+use aper::{PlayerID, StateMachine, StateUpdateMessage};
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
 use std::fmt::Debug;
-use yew::format::{Binary, Bincode, Json, Text};
+use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
 use yew::services::WebSocketService;
 use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
 
 mod update_interval;
+mod state_manager;
+mod wire_wrapped;
 
 pub use update_interval::UpdateInterval;
-
-#[derive(Debug)]
-pub struct StateManager<State: StateMachine> {
-    state: Box<State>,
-    last_server_time: DateTime<Utc>,
-    last_local_time: DateTime<Utc>,
-}
-
-impl<State: StateMachine> StateManager<State> {
-    pub fn get_estimated_server_time(&self) -> DateTime<Utc> {
-        let elapsed = Utc::now().signed_duration_since(self.last_local_time);
-        self.last_server_time + elapsed
-    }
-
-    pub fn new(state: State, server_time: DateTime<Utc>) -> StateManager<State> {
-        StateManager {
-            state: Box::new(state),
-            last_server_time: server_time,
-            last_local_time: Utc::now(),
-        }
-    }
-
-    pub fn process_event(&mut self, event: TransitionEvent<<State as StateMachine>::Transition>) {
-        self.last_local_time = Utc::now();
-        self.last_server_time = event.timestamp;
-
-        self.state.process_event(event);
-    }
-}
+use state_manager::StateManager;
+use wire_wrapped::WireWrapped;
 
 /// Properties for [StateMachineComponent].
 #[derive(Properties, Clone)]
@@ -155,32 +129,6 @@ pub struct StateMachineComponent<View: StateView> {
     binary: bool,
 }
 
-#[derive(Debug)]
-pub struct WireWrapped<T: for<'de> Deserialize<'de>> {
-    pub value: T,
-    pub binary: bool,
-}
-
-impl<T: for<'de> Deserialize<'de>> From<Text> for WireWrapped<T> {
-    fn from(text: Text) -> Self {
-        let j: Json<Result<T, _>> = text.into();
-        WireWrapped {
-            value: j.0.unwrap(),
-            binary: false,
-        }
-    }
-}
-
-impl<T: for<'de> Deserialize<'de>> From<Binary> for WireWrapped<T> {
-    fn from(bin: Binary) -> Self {
-        let j: Bincode<Result<T, _>> = bin.into();
-        WireWrapped {
-            value: j.0.unwrap(),
-            binary: true,
-        }
-    }
-}
-
 impl<View: StateView> StateMachineComponent<View> {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
@@ -203,10 +151,19 @@ impl<View: StateView> StateMachineComponent<View> {
     }
 }
 
+/// Data besides the state which is available to a [StateView].
 pub struct ViewContext<State: StateMachine> {
+    /// A callback for `Transition` events.
     pub callback: Callback<Option<<State as StateMachine>::Transition>>,
+    
+    /// A callback to force a redraw.
     pub redraw: Callback<()>,
+
+    /// The ID of the player whose view this is.
     pub player_id: PlayerID,
+
+    /// An estimate of the time on the server's clock, accounting for the time
+    /// since the last message from the server.
     pub time: DateTime<Utc>,
 }
 
