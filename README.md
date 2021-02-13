@@ -17,7 +17,7 @@ and even with non-WebSocket protocols.
 
 **Aper is rapidly evolving. Consider this a *technology preview*.**
 
-- [Documentation](https://paulgb.github.io/aper/aper/)
+- [Documentation](https://aper.dev/aper/)
 
 ## Roadmap
 
