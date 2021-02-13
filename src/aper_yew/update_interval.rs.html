@@ -46,11 +46,10 @@
 <span id="43">43</span>
 <span id="44">44</span>
 <span id="45">45</span>
-<span id="46">46</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">interval</span>::{<span class="ident">IntervalTask</span>, <span class="ident">IntervalService</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">Duration</span>;
+<span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">interval</span>::{<span class="ident">IntervalService</span>, <span class="ident">IntervalTask</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Properties</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Props</span> {
@@ -76,7 +75,7 @@
         );
         <span class="self">Self</span> {
             <span class="ident">props</span>,
-            <span class="ident">interval_task</span>
+            <span class="ident">interval_task</span>,
         }
     }
 
@@ -90,9 +89,8 @@
     }
 
     <span class="kw">fn</span> <span class="ident">view</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Html</span> {
-        <span class="kw">return</span> <span class="macro">html</span><span class="macro">!</span> {}
+        <span class="kw">return</span> <span class="macro">html</span><span class="macro">!</span> {};
     }
 }
-
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "aper_yew";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
