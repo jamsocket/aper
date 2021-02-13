@@ -36,6 +36,8 @@ Before the first non-preview release, the following need to be sorted out:
 - [ ] Add a separate concept of “player state” in addition to game state. Player state
       includes things like name or cursor position, but cannot be used for state updates,
       and as a result can be sent out-of-order.
+- [ ] The server should allow binary or text connections, and the client should switch between
+      json and bincode depending on whether it has the development flag.
 
 The immediate roadmap has a strong emphasis on figuring out the right interface
 between Aper and application code. Once that's sorted out, longer-term tasks can
