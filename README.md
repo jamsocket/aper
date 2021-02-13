@@ -54,3 +54,5 @@ focus on scaling Aper up to a production environment:
   allow a way to access external resources, non-deterministic computation, etc.
   in a way that does not break the restriction that state updates are
   deterministic.
+- Pre-built data structures like lists, trees, and sets, and a derive macro
+  to turn any struct built with them into a state machine.
