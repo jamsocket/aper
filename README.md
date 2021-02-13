@@ -29,7 +29,7 @@ Before the first non-preview release, the following need to be sorted out:
       websocket connections of background tabs, need to auto-reconnect)
 - [ ] Allow the state machine to handle disconnection.
 - [ ] Allow the state machine to “reject” a transition instead of just treating it
-      as a no-op.
+      as a no-op, in order to avoid propagating it.
 - [ ] Use a factory pattern to produce state machines rather than a no-argument
       `new` function, for flexibility.
 - [ ] Add turn-key “channel creation” UI.
