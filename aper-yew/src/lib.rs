@@ -25,6 +25,10 @@ use yew::services::websocket::{WebSocketStatus, WebSocketTask};
 use yew::services::WebSocketService;
 use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
 
+mod update_interval;
+
+pub use update_interval::UpdateInterval;
+
 #[derive(Debug)]
 pub struct StateManager<State: StateMachine> {
     state: Box<State>,
@@ -124,6 +128,11 @@ pub enum Msg<State: StateMachine> {
     ServerMessage(Box<StateUpdateMessage<State>>),
     /// The status of the connection with the remote server has changed.
     UpdateStatus(Box<Status<State>>),
+    /// Trigger a redraw of this View. Redraws are automatically triggered after a
+    /// [Msg::ServerMessage] is received, so this is used to trigger a redraw that
+    /// is _not_ tied to a state change. The only difference between these redraws will
+    /// be the `time` parameter passed in the context.
+    Redraw,
     /// Do nothing.
     NoOp,
 }
@@ -168,6 +177,7 @@ impl<View: StateView> StateMachineComponent<View> {
 
 pub struct ViewContext<State: StateMachine> {
     pub callback: Callback<Option<<State as StateMachine>::Transition>>,
+    pub redraw: Callback<()>,
     pub player_id: PlayerID,
     pub time: DateTime<Utc>,
 }
@@ -231,6 +241,7 @@ impl<View: StateView> Component for StateMachineComponent<View> {
                 self.status = *st;
                 true
             }
+            Msg::Redraw => true,
             Msg::NoOp => false,
         }
     }
@@ -252,6 +263,7 @@ impl<View: StateView> Component for StateMachineComponent<View> {
             Status::Connected(state_manager, player_id) => {
                 let view_context = ViewContext {
                     callback: self.link.callback(Msg::GameStateTransition),
+                    redraw: self.link.callback(|()| Msg::Redraw),
                     player_id: *player_id,
                     time: state_manager.get_estimated_server_time(),
                 };
