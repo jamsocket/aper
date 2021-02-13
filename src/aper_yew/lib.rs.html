@@ -264,6 +264,18 @@
 <span id="261">261</span>
 <span id="262">262</span>
 <span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper-Yew</span>
 <span class="doccomment">//!</span>
@@ -291,6 +303,10 @@
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">websocket</span>::{<span class="ident">WebSocketStatus</span>, <span class="ident">WebSocketTask</span>};
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">WebSocketService</span>;
 <span class="kw">use</span> <span class="ident">yew</span>::{<span class="ident">html</span>, <span class="ident">Callback</span>, <span class="ident">Component</span>, <span class="ident">ComponentLink</span>, <span class="ident">Html</span>, <span class="ident">Properties</span>, <span class="ident">ShouldRender</span>};
+
+<span class="kw">mod</span> <span class="ident">update_interval</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">update_interval</span>::<span class="ident">UpdateInterval</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StateManager</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> {
@@ -391,6 +407,11 @@
     <span class="ident">ServerMessage</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">StateUpdateMessage</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>),
     <span class="doccomment">/// The status of the connection with the remote server has changed.</span>
     <span class="ident">UpdateStatus</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Status</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="doccomment">/// Trigger a redraw of this View. Redraws are automatically triggered after a</span>
+    <span class="doccomment">/// [Msg::ServerMessage] is received, so this is used to trigger a redraw that</span>
+    <span class="doccomment">/// is _not_ tied to a state change. The only difference between these redraws will</span>
+    <span class="doccomment">/// be the `time` parameter passed in the context.</span>
+    <span class="ident">Redraw</span>,
     <span class="doccomment">/// Do nothing.</span>
     <span class="ident">NoOp</span>,
 }
@@ -435,6 +456,7 @@
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ViewContext</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="ident">callback</span>: <span class="ident">Callback</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">State</span> <span class="kw">as</span> <span class="ident">StateMachine</span><span class="op">&gt;</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">redraw</span>: <span class="ident">Callback</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">player_id</span>: <span class="ident">PlayerID</span>,
     <span class="kw">pub</span> <span class="ident">time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
 }
@@ -498,6 +520,7 @@
                 <span class="self">self</span>.<span class="ident">status</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">st</span>;
                 <span class="bool-val">true</span>
             }
+            <span class="ident">Msg</span>::<span class="ident">Redraw</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
             <span class="ident">Msg</span>::<span class="ident">NoOp</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
     }
@@ -519,6 +542,7 @@
             <span class="ident">Status</span>::<span class="ident">Connected</span>(<span class="ident">state_manager</span>, <span class="ident">player_id</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">view_context</span> <span class="op">=</span> <span class="ident">ViewContext</span> {
                     <span class="ident">callback</span>: <span class="self">self</span>.<span class="ident">link</span>.<span class="ident">callback</span>(<span class="ident">Msg</span>::<span class="ident">GameStateTransition</span>),
+                    <span class="ident">redraw</span>: <span class="self">self</span>.<span class="ident">link</span>.<span class="ident">callback</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">Msg</span>::<span class="ident">Redraw</span>),
                     <span class="ident">player_id</span>: <span class="kw-2">*</span><span class="ident">player_id</span>,
                     <span class="ident">time</span>: <span class="ident">state_manager</span>.<span class="ident">get_estimated_server_time</span>(),
                 };
