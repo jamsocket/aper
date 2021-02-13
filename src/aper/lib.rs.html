@@ -117,10 +117,13 @@
 <span id="114">114</span>
 <span id="115">115</span>
 <span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Aper is a framework for real-time shared state.</span>
+<span class="doccomment">//! Aper is a framework for real-time sharing of arbitrary application state</span>
+<span class="doccomment">//! over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! With Aper, you represent your program state as a state machine by</span>
 <span class="doccomment">//! implementing the [StateMachine] trait. Aper then provides the</span>
@@ -199,6 +202,7 @@
 <span class="doccomment">//!   do not impact the state in another, much like messages in one chat room do not appear in</span>
 <span class="doccomment">//!   another.</span>
 
+<span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::{<span class="ident">Display</span>, <span class="ident">Formatter</span>};
 
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -227,7 +231,7 @@
     <span class="doccomment">/// Instructs the client to completely discard its existing state and replace it</span>
     <span class="doccomment">/// with the provided one. This is currently only used to set the initial state</span>
     <span class="doccomment">/// when a client first connects.</span>
-    <span class="ident">ReplaceState</span>(<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">bound</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>)]</span> <span class="ident">State</span>, <span class="ident">PlayerID</span>),
+    <span class="ident">ReplaceState</span>(<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">bound</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>)]</span> <span class="ident">State</span>, <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>, <span class="ident">PlayerID</span>),
 
     <span class="doccomment">/// Instructs the client to apply the given [TransitionEvent] to its copy of</span>
     <span class="doccomment">/// the state to synchronize it with the server. Currently, all state updates</span>

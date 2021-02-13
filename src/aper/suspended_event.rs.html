@@ -31,7 +31,7 @@
 <span id="28">28</span>
 <span id="29">29</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">SystemTime</span>;
+<span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
 <span class="doccomment">/// Represents a transition that a [crate::StateMachine] would like to receive in the</span>
 <span class="doccomment">/// future from the server, as well as the time that it would like to receive it. Each state machine</span>
@@ -47,7 +47,7 @@
     <span class="doccomment">/// there may be a small delay between the time an event is requested at and the time it is</span>
     <span class="doccomment">/// actually fired. The latter is used as the timestamp when creating the</span>
     <span class="doccomment">/// [crate::TransitionEvent].</span>
-    <span class="kw">pub</span> <span class="ident">time</span>: <span class="ident">SystemTime</span>,
+    <span class="kw">pub</span> <span class="ident">time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// The transition that should be triggered. This is turned into a [crate::TransitionEvent]</span>
     <span class="doccomment">/// instance using `None` as the player, since these events are not considered to be initiated</span>
@@ -56,7 +56,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">time</span>: <span class="ident">SystemTime</span>, <span class="ident">transition</span>: <span class="ident">Transition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>, <span class="ident">transition</span>: <span class="ident">Transition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
         <span class="ident">SuspendedEvent</span> { <span class="ident">time</span>, <span class="ident">transition</span> }
     }
 }

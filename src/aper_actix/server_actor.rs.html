@@ -101,9 +101,9 @@
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">channel_actor</span>::<span class="ident">ChannelActor</span>;
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Addr</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>, <span class="ident">Message</span>};
+<span class="kw">use</span> <span class="ident">aper</span>::<span class="ident">StateMachine</span>;
 <span class="kw">use</span> <span class="ident">rand</span>::<span class="ident">distributions</span>::<span class="ident">Uniform</span>;
 <span class="kw">use</span> <span class="ident">rand</span>::{<span class="ident">thread_rng</span>, <span class="ident">Rng</span>};
-<span class="kw">use</span> <span class="ident">aper</span>::<span class="ident">StateMachine</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 
 <span class="doccomment">/// Tells the server to create a new channel and return its unique name.</span>

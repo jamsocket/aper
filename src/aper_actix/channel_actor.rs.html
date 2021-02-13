@@ -104,12 +104,11 @@
 <span id="101">101</span>
 <span id="102">102</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="kw">use</span> <span class="ident">chrono</span>::<span class="ident">Utc</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Addr</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>};
-<span class="kw">use</span> <span class="ident">aper</span>::{
-    <span class="ident">PlayerID</span>, <span class="ident">StateMachine</span>, <span class="ident">StateUpdateMessage</span>, <span class="ident">TransitionEvent</span>,
-};
+<span class="kw">use</span> <span class="ident">aper</span>::{<span class="ident">PlayerID</span>, <span class="ident">StateMachine</span>, <span class="ident">StateUpdateMessage</span>, <span class="ident">TransitionEvent</span>};
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">messages</span>::{<span class="ident">ChannelMessage</span>, <span class="ident">WrappedStateUpdateMessage</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">player_actor</span>::<span class="ident">PlayerActor</span>;
@@ -158,9 +157,9 @@
         <span class="self">self</span>.<span class="ident">suspended_event</span>.<span class="ident">replace</span>(<span class="ident">get_suspended_event</span>, <span class="ident">ctx</span>);
 
         <span class="kw">for</span> <span class="ident">listener</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">listeners</span> {
-            <span class="ident">listener</span>.<span class="ident">do_send</span>(<span class="ident">WrappedStateUpdateMessage</span>(<span class="ident">StateUpdateMessage</span>::<span class="ident">TransitionState</span>(
-                <span class="ident">event</span>.<span class="ident">clone</span>(),
-            )));
+            <span class="ident">listener</span>.<span class="ident">do_send</span>(<span class="ident">WrappedStateUpdateMessage</span>(
+                <span class="ident">StateUpdateMessage</span>::<span class="ident">TransitionState</span>(<span class="ident">event</span>.<span class="ident">clone</span>()),
+            ));
         }
     }
 }
@@ -185,6 +184,7 @@
 
                 <span class="ident">addr</span>.<span class="ident">do_send</span>(<span class="ident">WrappedStateUpdateMessage</span>(<span class="ident">StateUpdateMessage</span>::<span class="ident">ReplaceState</span>(
                     <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">clone</span>(),
+                    <span class="ident">Utc</span>::<span class="ident">now</span>(),
                     <span class="ident">id</span>,
                 )));
 

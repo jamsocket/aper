@@ -35,7 +35,7 @@
 <span id="32">32</span>
 <span id="33">33</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">SystemTime</span>;
+<span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
@@ -48,7 +48,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="ident">player_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PlayerID</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">transition</span>: <span class="ident">Transition</span>,
-    <span class="kw">pub</span> <span class="ident">timestamp</span>: <span class="ident">SystemTime</span>,
+    <span class="kw">pub</span> <span class="ident">timestamp</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
@@ -56,7 +56,7 @@
         <span class="ident">TransitionEvent</span> {
             <span class="ident">player_id</span>: <span class="prelude-val">Some</span>(<span class="ident">player_id</span>),
             <span class="ident">transition</span>,
-            <span class="ident">timestamp</span>: <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">SystemTime</span>::<span class="ident">now</span>(),
+            <span class="ident">timestamp</span>: <span class="ident">Utc</span>::<span class="ident">now</span>(),
         }
     }
 
@@ -64,7 +64,7 @@
         <span class="ident">TransitionEvent</span> {
             <span class="ident">player_id</span>: <span class="prelude-val">None</span>,
             <span class="ident">transition</span>,
-            <span class="ident">timestamp</span>: <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">SystemTime</span>::<span class="ident">now</span>(),
+            <span class="ident">timestamp</span>: <span class="ident">Utc</span>::<span class="ident">now</span>(),
         }
     }
 }
