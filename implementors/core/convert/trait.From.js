@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["aper_yew"] = [{"text":"impl&lt;T:&nbsp;for&lt;'de&gt; Deserialize&lt;'de&gt;&gt; From&lt;Result&lt;String, Error&gt;&gt; for WireWrapped&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;for&lt;'de&gt; Deserialize&lt;'de&gt;&gt; From&lt;Result&lt;Vec&lt;u8&gt;, Error&gt;&gt; for WireWrapped&lt;T&gt;","synthetic":false,"types":[]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

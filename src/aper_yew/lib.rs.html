@@ -268,49 +268,6 @@
 <span id="265">265</span>
 <span id="266">266</span>
 <span id="267">267</span>
-<span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-<span id="285">285</span>
-<span id="286">286</span>
-<span id="287">287</span>
-<span id="288">288</span>
-<span id="289">289</span>
-<span id="290">290</span>
-<span id="291">291</span>
-<span id="292">292</span>
-<span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
-<span id="302">302</span>
-<span id="303">303</span>
-<span id="304">304</span>
-<span id="305">305</span>
-<span id="306">306</span>
-<span id="307">307</span>
-<span id="308">308</span>
-<span id="309">309</span>
-<span id="310">310</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper-Yew</span>
 <span class="doccomment">//!</span>
@@ -331,47 +288,21 @@
 <span class="doccomment">//! contain stateful components by embedding them in the resulting [yew::Html]</span>
 <span class="doccomment">//! just as they would in a regular Yew component.</span>
 
-<span class="kw">use</span> <span class="ident">aper</span>::{<span class="ident">PlayerID</span>, <span class="ident">StateMachine</span>, <span class="ident">StateUpdateMessage</span>, <span class="ident">TransitionEvent</span>};
+<span class="kw">use</span> <span class="ident">aper</span>::{<span class="ident">PlayerID</span>, <span class="ident">StateMachine</span>, <span class="ident">StateUpdateMessage</span>};
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
-<span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Deserialize</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
-<span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">format</span>::{<span class="ident">Binary</span>, <span class="ident">Bincode</span>, <span class="ident">Json</span>, <span class="ident">Text</span>};
+<span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">format</span>::{<span class="ident">Bincode</span>, <span class="ident">Json</span>};
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">websocket</span>::{<span class="ident">WebSocketStatus</span>, <span class="ident">WebSocketTask</span>};
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">WebSocketService</span>;
 <span class="kw">use</span> <span class="ident">yew</span>::{<span class="ident">html</span>, <span class="ident">Callback</span>, <span class="ident">Component</span>, <span class="ident">ComponentLink</span>, <span class="ident">Html</span>, <span class="ident">Properties</span>, <span class="ident">ShouldRender</span>};
 
 <span class="kw">mod</span> <span class="ident">update_interval</span>;
+<span class="kw">mod</span> <span class="ident">state_manager</span>;
+<span class="kw">mod</span> <span class="ident">wire_wrapped</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">update_interval</span>::<span class="ident">UpdateInterval</span>;
-
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StateManager</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> {
-    <span class="ident">state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
-    <span class="ident">last_server_time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
-    <span class="ident">last_local_time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> <span class="ident">StateManager</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_estimated_server_time</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">elapsed</span> <span class="op">=</span> <span class="ident">Utc</span>::<span class="ident">now</span>().<span class="ident">signed_duration_since</span>(<span class="self">self</span>.<span class="ident">last_local_time</span>);
-        <span class="self">self</span>.<span class="ident">last_server_time</span> <span class="op">+</span> <span class="ident">elapsed</span>
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">state</span>: <span class="ident">State</span>, <span class="ident">server_time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StateManager</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span> {
-        <span class="ident">StateManager</span> {
-            <span class="ident">state</span>: <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">state</span>),
-            <span class="ident">last_server_time</span>: <span class="ident">server_time</span>,
-            <span class="ident">last_local_time</span>: <span class="ident">Utc</span>::<span class="ident">now</span>(),
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">process_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">State</span> <span class="kw">as</span> <span class="ident">StateMachine</span><span class="op">&gt;</span>::<span class="ident">Transition</span><span class="op">&gt;</span>) {
-        <span class="self">self</span>.<span class="ident">last_local_time</span> <span class="op">=</span> <span class="ident">Utc</span>::<span class="ident">now</span>();
-        <span class="self">self</span>.<span class="ident">last_server_time</span> <span class="op">=</span> <span class="ident">event</span>.<span class="ident">timestamp</span>;
-
-        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">process_event</span>(<span class="ident">event</span>);
-    }
-}
+<span class="kw">use</span> <span class="ident">state_manager</span>::<span class="ident">StateManager</span>;
+<span class="kw">use</span> <span class="ident">wire_wrapped</span>::<span class="ident">WireWrapped</span>;
 
 <span class="doccomment">/// Properties for [StateMachineComponent].</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Properties</span>, <span class="ident">Clone</span>)]</span>
@@ -469,32 +400,6 @@
     <span class="ident">binary</span>: <span class="ident">bool</span>,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">WireWrapped</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="ident">value</span>: <span class="ident">T</span>,
-    <span class="kw">pub</span> <span class="ident">binary</span>: <span class="ident">bool</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Text</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">WireWrapped</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">text</span>: <span class="ident">Text</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">j</span>: <span class="ident">Json</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">text</span>.<span class="ident">into</span>();
-        <span class="ident">WireWrapped</span> {
-            <span class="ident">value</span>: <span class="ident">j</span>.<span class="number">0</span>.<span class="ident">unwrap</span>(),
-            <span class="ident">binary</span>: <span class="bool-val">false</span>,
-        }
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Binary</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">WireWrapped</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">bin</span>: <span class="ident">Binary</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">j</span>: <span class="ident">Bincode</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bin</span>.<span class="ident">into</span>();
-        <span class="ident">WireWrapped</span> {
-            <span class="ident">value</span>: <span class="ident">j</span>.<span class="number">0</span>.<span class="ident">unwrap</span>(),
-            <span class="ident">binary</span>: <span class="bool-val">true</span>,
-        }
-    }
-}
-
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">View</span>: <span class="ident">StateView</span><span class="op">&gt;</span> <span class="ident">StateMachineComponent</span><span class="op">&lt;</span><span class="ident">View</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Initiate a connection to the remote server.</span>
     <span class="kw">fn</span> <span class="ident">do_connect</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
@@ -517,10 +422,19 @@
     }
 }
 
+<span class="doccomment">/// Data besides the state which is available to a [StateView].</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ViewContext</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// A callback for `Transition` events.</span>
     <span class="kw">pub</span> <span class="ident">callback</span>: <span class="ident">Callback</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">State</span> <span class="kw">as</span> <span class="ident">StateMachine</span><span class="op">&gt;</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    
+    <span class="doccomment">/// A callback to force a redraw.</span>
     <span class="kw">pub</span> <span class="ident">redraw</span>: <span class="ident">Callback</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
+
+    <span class="doccomment">/// The ID of the player whose view this is.</span>
     <span class="kw">pub</span> <span class="ident">player_id</span>: <span class="ident">PlayerID</span>,
+
+    <span class="doccomment">/// An estimate of the time on the server&#39;s clock, accounting for the time</span>
+    <span class="doccomment">/// since the last message from the server.</span>
     <span class="kw">pub</span> <span class="ident">time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
 }
 
