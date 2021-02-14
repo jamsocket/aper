@@ -27,6 +27,9 @@ impl<Transition> SuspendedEvent<Transition> {
         SuspendedEvent { time, transition }
     }
 
+    /// Create a new [SuspendedEvent] that has the same time as this one, but whose transition is
+    /// the result of applying the provided function to it. This is useful when nesting state
+    /// machines.
     pub fn map_transition<NewTransition>(self, fun: impl FnOnce(Transition) -> NewTransition) -> SuspendedEvent<NewTransition> {
         SuspendedEvent::new(self.time, fun(self.transition))
     }

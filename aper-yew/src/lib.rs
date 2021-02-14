@@ -259,7 +259,7 @@ impl<View: StateView> Component for StateMachineComponent<View> {
                     player_id: *player_id,
                     time: state_manager.get_estimated_server_time(),
                 };
-                self.props.view.view(&state_manager.state, &view_context)
+                self.props.view.view(state_manager.get_state(), &view_context)
             }
             Status::ErrorConnecting => html! {{"Error connecting."}},
         }

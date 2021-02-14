@@ -1,7 +1,7 @@
 use crate::suspended_event::SuspendedEvent;
 use crate::transition_event::TransitionEvent;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+use std::{fmt::Debug, marker::PhantomData};
 
 /// This trait provides the methods that Aper needs to be able to interact with
 /// an object as a state machine.
@@ -54,8 +54,24 @@ pub trait StateMachine:
     }
 }
 
+/// A trait indicating that a struct can be used to create a [StateMachine] for a given type.
+/// If your [StateMachine] does not need to be initialized with any external data or state,
+/// implement [std::default::Default] on it to avoid the need for a factory.
 pub trait StateMachineFactory<State: StateMachine>:
-    Sized + Unpin + 'static + Send + Clone + Serialize + for<'d> Deserialize<'d> + Debug
+    Sized + Unpin + 'static + Send
 {
     fn create(&mut self) -> State;
+}
+
+/// [StateMachineFactory] implementation that uses the `default` method of the relevant
+/// [StateMachine] type.
+#[derive(Default)]
+struct DefaultStateMachineFactory<State: StateMachine + Default> {
+    _phantom: PhantomData<State>
+}
+
+impl<State: StateMachine + Default> StateMachineFactory<State> for DefaultStateMachineFactory<State> {
+    fn create(&mut self) -> State {
+        Default::default()
+    }
 }
