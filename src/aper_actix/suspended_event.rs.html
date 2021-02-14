@@ -52,6 +52,9 @@
 <span id="49">49</span>
 <span id="50">50</span>
 <span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">channel_actor</span>::<span class="ident">ChannelActor</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">messages</span>::<span class="ident">ChannelMessage</span>;
@@ -91,16 +94,19 @@
         }
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">suspended_event</span>) <span class="op">=</span> <span class="ident">suspended_event</span> {
-            <span class="kw">let</span> <span class="ident">duration</span> <span class="op">=</span> <span class="ident">suspended_event</span>
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">duration</span>) <span class="op">=</span> <span class="ident">suspended_event</span>
                 .<span class="ident">time</span>
                 .<span class="ident">signed_duration_since</span>(<span class="ident">Utc</span>::<span class="ident">now</span>())
                 .<span class="ident">to_std</span>()
-                .<span class="ident">unwrap_or_default</span>();
-            <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">notify_later</span>(
-                <span class="ident">ChannelMessage</span>::<span class="ident">Tick</span>(<span class="ident">suspended_event</span>.<span class="ident">transition</span>.<span class="ident">clone</span>()),
-                <span class="ident">duration</span>,
-            );
-            <span class="self">self</span>.<span class="ident">suspended_event</span> <span class="op">=</span> <span class="prelude-val">Some</span>((<span class="ident">suspended_event</span>, <span class="ident">handle</span>))
+            {
+                <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">notify_later</span>(
+                    <span class="ident">ChannelMessage</span>::<span class="ident">Tick</span>(<span class="ident">suspended_event</span>.<span class="ident">transition</span>.<span class="ident">clone</span>()),
+                    <span class="ident">duration</span>,
+                );
+                <span class="self">self</span>.<span class="ident">suspended_event</span> <span class="op">=</span> <span class="prelude-val">Some</span>((<span class="ident">suspended_event</span>, <span class="ident">handle</span>))
+            } <span class="kw">else</span> {
+                <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;Negative duration encountered.&quot;</span>)
+            }
         }
     }
 }
