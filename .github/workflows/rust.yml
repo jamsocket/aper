@@ -20,7 +20,7 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Build docs
-      run: cargo doc --open --workspace --no-deps
+      run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --workspace --no-deps
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@4.0.0
       with:
