@@ -95,7 +95,7 @@
                 .<span class="ident">time</span>
                 .<span class="ident">signed_duration_since</span>(<span class="ident">Utc</span>::<span class="ident">now</span>())
                 .<span class="ident">to_std</span>()
-                .<span class="ident">expect</span>(<span class="string">&quot;Error subtracting time.&quot;</span>);
+                .<span class="ident">unwrap_or_default</span>();
             <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">notify_later</span>(
                 <span class="ident">ChannelMessage</span>::<span class="ident">Tick</span>(<span class="ident">suspended_event</span>.<span class="ident">transition</span>.<span class="ident">clone</span>()),
                 <span class="ident">duration</span>,
