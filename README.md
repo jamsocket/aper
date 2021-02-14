@@ -33,9 +33,6 @@ Before the first non-preview release, the following need to be sorted out:
 - [x] Use a factory pattern to produce state machines rather than a no-argument
       `new` function, for flexibility.
 - [ ] Add turn-key “channel creation” UI.
-- [ ] Add a separate concept of “player state” in addition to game state. Player state
-      includes things like name or cursor position, but cannot be used for state updates,
-      and as a result can be sent out-of-order.
 - [x] The server should allow binary or text connections, and the client should switch between
       json and bincode depending on whether it has the development flag.
 
@@ -43,6 +40,10 @@ The immediate roadmap has a strong emphasis on figuring out the right interface
 between Aper and application code. Once that's sorted out, longer-term tasks can
 focus on scaling Aper up to a production environment:
 
+- Add a separate concept of “player state” in addition to game state. Player state
+  includes things like name or cursor position, but cannot be used for state updates,
+  and as a result can be sent out-of-order.
+- Make state machines more composable.
 - Integrating with authentication/permissions. I don't plan for Aper to ever
   be opinionated about an auth framework, but it needs to provide hooks to
   allow it to integrate with other systems.
