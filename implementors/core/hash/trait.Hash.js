@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["aper"] = [{"text":"impl Hash for PlayerID","synthetic":false,"types":[]}];
+implementors["aper"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"struct\" href=\"aper/struct.PlayerID.html\" title=\"struct aper::PlayerID\">PlayerID</a>","synthetic":false,"types":["aper::PlayerID"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

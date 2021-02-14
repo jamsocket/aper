@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["aper"] = [{"text":"impl PartialOrd&lt;PlayerID&gt; for PlayerID","synthetic":false,"types":[]}];
+implementors["aper"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a>&lt;<a class=\"struct\" href=\"aper/struct.PlayerID.html\" title=\"struct aper::PlayerID\">PlayerID</a>&gt; for <a class=\"struct\" href=\"aper/struct.PlayerID.html\" title=\"struct aper::PlayerID\">PlayerID</a>","synthetic":false,"types":["aper::PlayerID"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
