@@ -40,7 +40,7 @@ impl<State: StateMachine> SuspendedEventManager<State> {
                 .time
                 .signed_duration_since(Utc::now())
                 .to_std()
-                .expect("Error subtracting time.");
+                .unwrap_or_default();
             let handle = ctx.notify_later(
                 ChannelMessage::Tick(suspended_event.transition.clone()),
                 duration,
