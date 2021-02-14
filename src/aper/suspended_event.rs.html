@@ -30,6 +30,10 @@
 <span id="27">27</span>
 <span id="28">28</span>
 <span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
@@ -58,6 +62,10 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>, <span class="ident">transition</span>: <span class="ident">Transition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
         <span class="ident">SuspendedEvent</span> { <span class="ident">time</span>, <span class="ident">transition</span> }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_transition</span><span class="op">&lt;</span><span class="ident">NewTransition</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">fun</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="ident">Transition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NewTransition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">NewTransition</span><span class="op">&gt;</span> {
+        <span class="ident">SuspendedEvent</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">time</span>, <span class="ident">fun</span>(<span class="self">self</span>.<span class="ident">transition</span>))
     }
 }
 </pre></div>

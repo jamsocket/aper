@@ -137,9 +137,9 @@
 
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">new_without_default</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span> <span class="op">+</span> <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">ChannelActor</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ChannelActor</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">state</span>: <span class="ident">State</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ChannelActor</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span> {
         <span class="ident">ChannelActor</span> {
-            <span class="ident">state</span>: <span class="ident">State</span>::<span class="ident">new</span>(),
+            <span class="ident">state</span>,
             <span class="ident">listeners</span>: <span class="ident">Default</span>::<span class="ident">default</span>(),
             <span class="ident">addr_to_id</span>: <span class="ident">Default</span>::<span class="ident">default</span>(),
             <span class="ident">token_to_player_id</span>: <span class="ident">Default</span>::<span class="ident">default</span>(),

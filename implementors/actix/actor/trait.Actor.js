@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["aper_actix"] = [{"text":"impl&lt;State:&nbsp;StateMachine&gt; Actor for ChannelActor&lt;State&gt;","synthetic":false,"types":[]},{"text":"impl&lt;State:&nbsp;StateMachine&gt; Actor for PlayerActor&lt;State&gt;","synthetic":false,"types":[]},{"text":"impl&lt;State:&nbsp;StateMachine&gt; Actor for ServerActor&lt;State&gt;","synthetic":false,"types":[]}];
+implementors["aper_actix"] = [{"text":"impl&lt;State:&nbsp;StateMachine&gt; Actor for ChannelActor&lt;State&gt;","synthetic":false,"types":[]},{"text":"impl&lt;State:&nbsp;StateMachine&gt; Actor for PlayerActor&lt;State&gt;","synthetic":false,"types":[]},{"text":"impl&lt;State:&nbsp;StateMachine, Factory:&nbsp;StateMachineFactory&lt;State&gt;&gt; Actor for ServerActor&lt;State, Factory&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
