@@ -30,7 +30,7 @@ Before the first non-preview release, the following need to be sorted out:
 - [ ] Allow the state machine to handle disconnection.
 - [ ] Allow the state machine to “reject” a transition instead of just treating it
       as a no-op, in order to avoid propagating it.
-- [ ] Use a factory pattern to produce state machines rather than a no-argument
+- [x] Use a factory pattern to produce state machines rather than a no-argument
       `new` function, for flexibility.
 - [ ] Add turn-key “channel creation” UI.
 - [ ] Add a separate concept of “player state” in addition to game state. Player state
