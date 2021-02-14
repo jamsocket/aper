@@ -530,7 +530,7 @@
                     <span class="ident">player_id</span>: <span class="kw-2">*</span><span class="ident">player_id</span>,
                     <span class="ident">time</span>: <span class="ident">state_manager</span>.<span class="ident">get_estimated_server_time</span>(),
                 };
-                <span class="self">self</span>.<span class="ident">props</span>.<span class="ident">view</span>.<span class="ident">view</span>(<span class="kw-2">&amp;</span><span class="ident">state_manager</span>.<span class="ident">state</span>, <span class="kw-2">&amp;</span><span class="ident">view_context</span>)
+                <span class="self">self</span>.<span class="ident">props</span>.<span class="ident">view</span>.<span class="ident">view</span>(<span class="ident">state_manager</span>.<span class="ident">get_state</span>(), <span class="kw-2">&amp;</span><span class="ident">view_context</span>)
             }
             <span class="ident">Status</span>::<span class="ident">ErrorConnecting</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">html</span><span class="macro">!</span> {{<span class="string">&quot;Error connecting.&quot;</span>}},
         }

@@ -30,14 +30,30 @@
 <span id="27">27</span>
 <span id="28">28</span>
 <span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Deserialize</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">format</span>::{<span class="ident">Binary</span>, <span class="ident">Bincode</span>, <span class="ident">Json</span>, <span class="ident">Text</span>};
 
+<span class="doccomment">/// A format (conforming to the spec used by [yew::format]) that</span>
+<span class="doccomment">/// dynamically interprets messages as either JSON or bincode, depending</span>
+<span class="doccomment">/// on whether they are received as text or binary (respectively).</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">WireWrapped</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// The value decoded from the wire.</span>
     <span class="kw">pub</span> <span class="ident">value</span>: <span class="ident">T</span>,
+
+    <span class="doccomment">/// True if the message was received in binary.</span>
+    <span class="doccomment">/// This is used to decide whether we should use text or binary to</span>
+    <span class="doccomment">/// respond back to the server.</span>
     <span class="kw">pub</span> <span class="ident">binary</span>: <span class="ident">bool</span>,
 }
 
