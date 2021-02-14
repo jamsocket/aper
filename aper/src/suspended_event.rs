@@ -26,4 +26,8 @@ impl<Transition> SuspendedEvent<Transition> {
     pub fn new(time: DateTime<Utc>, transition: Transition) -> SuspendedEvent<Transition> {
         SuspendedEvent { time, transition }
     }
+
+    pub fn map_transition<NewTransition>(self, fun: impl FnOnce(Transition) -> NewTransition) -> SuspendedEvent<NewTransition> {
+        SuspendedEvent::new(self.time, fun(self.transition))
+    }
 }

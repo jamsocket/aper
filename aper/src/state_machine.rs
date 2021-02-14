@@ -24,14 +24,6 @@ pub trait StateMachine:
         + for<'d> Deserialize<'d>
         + Debug;
 
-    /// Every state machine currently needs to be able to be constructed without arguments.
-    /// Eventually, this requirement will likely be relaxed and a factory pattern used instead
-    /// in places that currently call `new()`.
-    ///
-    /// Unlike the other methods of a state machine, this one does *not* need to be
-    /// deterministic. You can, for example, incorporate randomness or the current time in this.
-    fn new() -> Self;
-
     /// Update the state machine according to the given [TransitionEvent]. This method *must* be
     /// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]
     /// must result in the same state, even at a different time and on a different machine. This
@@ -60,4 +52,10 @@ pub trait StateMachine:
     fn get_suspended_event(&self) -> Option<SuspendedEvent<Self::Transition>> {
         None
     }
+}
+
+pub trait StateMachineFactory<State: StateMachine>:
+    Sized + Unpin + 'static + Send + Clone + Serialize + for<'d> Deserialize<'d> + Debug
+{
+    fn create(&mut self) -> State;
 }

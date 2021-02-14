@@ -85,7 +85,7 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
 
-pub use state_machine::StateMachine;
+pub use state_machine::{StateMachine, StateMachineFactory};
 pub use suspended_event::SuspendedEvent;
 pub use transition_event::TransitionEvent;
 

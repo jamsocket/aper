@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::channel_actor::ChannelActor;
 use actix::{Actor, Addr, Context, Handler, Message};
-use aper::StateMachine;
+use aper::{StateMachine, StateMachineFactory};
 use rand::distributions::Uniform;
 use rand::{thread_rng, Rng};
 use std::marker::PhantomData;
@@ -36,14 +36,16 @@ impl<State: StateMachine> GetChannelMessage<State> {
 /// players initially negotiate with the [ServerActor] to get the right address
 /// of the desired channel (and possibly create a new one) before they are connected
 /// to it.
-pub struct ServerActor<State: StateMachine> {
+pub struct ServerActor<State: StateMachine, Factory: StateMachineFactory<State>> {
     channels: HashMap<String, Addr<ChannelActor<State>>>,
+    factory: Factory,
 }
 
-impl<State: StateMachine> Default for ServerActor<State> {
-    fn default() -> Self {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> ServerActor<State, Factory> {
+    pub fn new(factory: Factory) -> Self {
         ServerActor {
             channels: Default::default(),
+            factory,
         }
     }
 }
@@ -58,13 +60,14 @@ fn random_alphanumeric_string() -> String {
         .collect()
 }
 
-impl<State: StateMachine> ServerActor<State> {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> ServerActor<State, Factory> {
     fn create_new_channel(&mut self) -> String {
         for _ in 1..100 {
             // TODO: this loop is ugly but ensures that we pick a room that doesn't exist.
             let channel_id = random_alphanumeric_string();
             if !self.channels.contains_key(&channel_id) {
-                let channel = ChannelActor::new().start();
+                let state = self.factory.create();
+                let channel = ChannelActor::new(state).start();
                 self.channels.insert(channel_id.clone(), channel);
                 return channel_id;
             }
@@ -74,11 +77,11 @@ impl<State: StateMachine> ServerActor<State> {
     }
 }
 
-impl<State: StateMachine> Actor for ServerActor<State> {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> Actor for ServerActor<State, Factory> {
     type Context = Context<Self>;
 }
 
-impl<State: StateMachine> Handler<GetChannelMessage<State>> for ServerActor<State> {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> Handler<GetChannelMessage<State>> for ServerActor<State, Factory> {
     type Result = Option<Addr<ChannelActor<State>>>;
 
     fn handle(&mut self, msg: GetChannelMessage<State>, _ctx: &mut Context<Self>) -> Self::Result {
@@ -86,7 +89,7 @@ impl<State: StateMachine> Handler<GetChannelMessage<State>> for ServerActor<Stat
     }
 }
 
-impl<State: StateMachine> Handler<CreateChannelMessage> for ServerActor<State> {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> Handler<CreateChannelMessage> for ServerActor<State, Factory> {
     type Result = String;
 
     fn handle(&mut self, _msg: CreateChannelMessage, _ctx: &mut Context<Self>) -> Self::Result {

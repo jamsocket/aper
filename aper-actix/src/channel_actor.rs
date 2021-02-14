@@ -31,9 +31,9 @@ pub struct ChannelActor<State: StateMachine> {
 
 #[allow(clippy::new_without_default)]
 impl<State: StateMachine + Clone> ChannelActor<State> {
-    pub fn new() -> ChannelActor<State> {
+    pub fn new(state: State) -> ChannelActor<State> {
         ChannelActor {
-            state: State::new(),
+            state,
             listeners: Default::default(),
             addr_to_id: Default::default(),
             token_to_player_id: Default::default(),
