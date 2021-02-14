@@ -36,16 +36,19 @@ impl<State: StateMachine> SuspendedEventManager<State> {
         }
 
         if let Some(suspended_event) = suspended_event {
-            let duration = suspended_event
+            if let Ok(duration) = suspended_event
                 .time
                 .signed_duration_since(Utc::now())
                 .to_std()
-                .unwrap_or_default();
-            let handle = ctx.notify_later(
-                ChannelMessage::Tick(suspended_event.transition.clone()),
-                duration,
-            );
-            self.suspended_event = Some((suspended_event, handle))
+            {
+                let handle = ctx.notify_later(
+                    ChannelMessage::Tick(suspended_event.transition.clone()),
+                    duration,
+                );
+                self.suspended_event = Some((suspended_event, handle))
+            } else {
+                println!("Negative duration encountered.")
+            }
         }
     }
 }
