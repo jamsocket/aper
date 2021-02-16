@@ -34,9 +34,10 @@
 <span id="31">31</span>
 <span id="32">32</span>
 <span id="33">33</span>
+<span id="34">34</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
-
+<span class="kw">use</span> <span class="ident">chrono</span>::<span class="ident">serde</span>::<span class="ident">ts_milliseconds</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PlayerID</span>;
@@ -48,6 +49,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="ident">player_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PlayerID</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">transition</span>: <span class="ident">Transition</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">with</span> <span class="op">=</span> <span class="string">&quot;ts_milliseconds&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">timestamp</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
 }
 
