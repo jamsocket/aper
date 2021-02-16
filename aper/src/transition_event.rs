@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-
+use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
 
 use crate::PlayerID;
@@ -11,6 +11,7 @@ use crate::PlayerID;
 pub struct TransitionEvent<Transition> {
     pub player_id: Option<PlayerID>,
     pub transition: Transition,
+    #[serde(with = "ts_milliseconds")]
     pub timestamp: DateTime<Utc>,
 }
 
