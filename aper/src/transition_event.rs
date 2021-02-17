@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use chrono::serde::ts_milliseconds;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::PlayerID;
@@ -7,7 +7,7 @@ use crate::PlayerID;
 /// A transition with associated metadata: which player triggered it and when.
 /// The player ID is optional, since `SuspendedEvent`s do not have a player associated
 /// with them.
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct TransitionEvent<Transition> {
     pub player_id: Option<PlayerID>,
     pub transition: Transition,

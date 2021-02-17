@@ -56,9 +56,7 @@ pub trait StateMachine:
 /// A trait indicating that a struct can be used to create a [StateMachine] for a given type.
 /// If your [StateMachine] does not need to be initialized with any external data or state,
 /// implement [std::default::Default] on it to avoid the need for a factory.
-pub trait StateMachineFactory<State: StateMachine>:
-    Sized + Unpin + 'static + Send
-{
+pub trait StateMachineFactory<State: StateMachine>: Sized + Unpin + 'static + Send {
     fn create(&mut self) -> State;
 }
 
@@ -66,10 +64,12 @@ pub trait StateMachineFactory<State: StateMachine>:
 /// [StateMachine] type.
 #[derive(Default)]
 struct DefaultStateMachineFactory<State: StateMachine + Default> {
-    _phantom: PhantomData<State>
+    _phantom: PhantomData<State>,
 }
 
-impl<State: StateMachine + Default> StateMachineFactory<State> for DefaultStateMachineFactory<State> {
+impl<State: StateMachine + Default> StateMachineFactory<State>
+    for DefaultStateMachineFactory<State>
+{
     fn create(&mut self) -> State {
         Default::default()
     }

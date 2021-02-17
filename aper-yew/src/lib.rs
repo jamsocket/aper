@@ -25,12 +25,12 @@ use yew::services::websocket::{WebSocketStatus, WebSocketTask};
 use yew::services::WebSocketService;
 use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
 
-mod update_interval;
 mod state_manager;
+mod update_interval;
 mod wire_wrapped;
 
-pub use update_interval::UpdateInterval;
 use state_manager::StateManager;
+pub use update_interval::UpdateInterval;
 use wire_wrapped::WireWrapped;
 
 /// Properties for [StateMachineComponent].
@@ -155,7 +155,7 @@ impl<View: StateView> StateMachineComponent<View> {
 pub struct ViewContext<State: StateMachine> {
     /// A callback for `Transition` events.
     pub callback: Callback<Option<<State as StateMachine>::Transition>>,
-    
+
     /// A callback to force a redraw.
     pub redraw: Callback<()>,
 
@@ -259,7 +259,9 @@ impl<View: StateView> Component for StateMachineComponent<View> {
                     player_id: *player_id,
                     time: state_manager.get_estimated_server_time(),
                 };
-                self.props.view.view(state_manager.get_state(), &view_context)
+                self.props
+                    .view
+                    .view(state_manager.get_state(), &view_context)
             }
             Status::ErrorConnecting => html! {{"Error connecting."}},
         }

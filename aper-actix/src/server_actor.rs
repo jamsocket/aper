@@ -77,11 +77,15 @@ impl<State: StateMachine, Factory: StateMachineFactory<State>> ServerActor<State
     }
 }
 
-impl<State: StateMachine, Factory: StateMachineFactory<State>> Actor for ServerActor<State, Factory> {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> Actor
+    for ServerActor<State, Factory>
+{
     type Context = Context<Self>;
 }
 
-impl<State: StateMachine, Factory: StateMachineFactory<State>> Handler<GetChannelMessage<State>> for ServerActor<State, Factory> {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> Handler<GetChannelMessage<State>>
+    for ServerActor<State, Factory>
+{
     type Result = Option<Addr<ChannelActor<State>>>;
 
     fn handle(&mut self, msg: GetChannelMessage<State>, _ctx: &mut Context<Self>) -> Self::Result {
@@ -89,7 +93,9 @@ impl<State: StateMachine, Factory: StateMachineFactory<State>> Handler<GetChanne
     }
 }
 
-impl<State: StateMachine, Factory: StateMachineFactory<State>> Handler<CreateChannelMessage> for ServerActor<State, Factory> {
+impl<State: StateMachine, Factory: StateMachineFactory<State>> Handler<CreateChannelMessage>
+    for ServerActor<State, Factory>
+{
     type Result = String;
 
     fn handle(&mut self, _msg: CreateChannelMessage, _ctx: &mut Context<Self>) -> Self::Result {

@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 ///
 /// Storing and maintaining the suspended events is the responsibility of the code that owns the
 /// [crate::StateMachine] object.
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct SuspendedEvent<Transition> {
     /// When the event should be triggered. Note that this is not necessarily equal to the timestamp
     /// field on the [crate::TransitionEvent] that is created when this event is triggered, since
@@ -30,7 +30,10 @@ impl<Transition> SuspendedEvent<Transition> {
     /// Create a new [SuspendedEvent] that has the same time as this one, but whose transition is
     /// the result of applying the provided function to it. This is useful when nesting state
     /// machines.
-    pub fn map_transition<NewTransition>(self, fun: impl FnOnce(Transition) -> NewTransition) -> SuspendedEvent<NewTransition> {
+    pub fn map_transition<NewTransition>(
+        self,
+        fun: impl FnOnce(Transition) -> NewTransition,
+    ) -> SuspendedEvent<NewTransition> {
         SuspendedEvent::new(self.time, fun(self.transition))
     }
 }
