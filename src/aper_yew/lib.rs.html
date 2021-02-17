@@ -326,7 +326,7 @@
 <span class="doccomment">/// can be used for rendering.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateView</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Clone</span> {
     <span class="doccomment">/// Defines the struct used to represent the state that this [StateView] renders.</span>
-    <span class="kw">type</span> <span class="ident">State</span>: <span class="ident">StateMachine</span>;
+    <span class="kw">type</span> <span class="ident">State</span>: <span class="ident">StateMachine</span> <span class="op">+</span> <span class="ident">Debug</span>;
 
     <span class="doccomment">/// Render the given state into a [yew::Html] result.</span>
     <span class="doccomment">///</span>

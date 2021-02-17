@@ -77,12 +77,11 @@
 <span id="74">74</span>
 <span id="75">75</span>
 <span id="76">76</span>
-<span id="77">77</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">suspended_event</span>::<span class="ident">SuspendedEvent</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">transition_event</span>::<span class="ident">TransitionEvent</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fmt</span>::<span class="ident">Debug</span>, <span class="ident">marker</span>::<span class="ident">PhantomData</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 
 <span class="doccomment">/// This trait provides the methods that Aper needs to be able to interact with</span>
 <span class="doccomment">/// an object as a state machine.</span>
@@ -91,7 +90,7 @@
 <span class="doccomment">/// state machine. It&#39;s up to you to implement accessor methods (or use public</span>
 <span class="doccomment">/// fields) in order to expose the data necessary to render your views.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateMachine</span>:
-    <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Serialize</span> <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Debug</span>
+    <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Serialize</span> <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span>
 {
     <span class="doccomment">/// The [StateMachine::Transition] type associates another type with this state machine</span>
     <span class="doccomment">/// as its transitions.</span>
@@ -102,8 +101,7 @@
         <span class="op">+</span> <span class="ident">PartialEq</span>
         <span class="op">+</span> <span class="ident">Clone</span>
         <span class="op">+</span> <span class="ident">Serialize</span>
-        <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span>
-        <span class="op">+</span> <span class="ident">Debug</span>;
+        <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Update the state machine according to the given [TransitionEvent]. This method *must* be</span>
     <span class="doccomment">/// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]</span>
@@ -130,7 +128,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Since they are not associated with a particular player, suspended events trigger</span>
     <span class="doccomment">/// `process_event` with a `None` as the player in the [TransitionEvent].</span>
-    <span class="kw">fn</span> <span class="ident">get_suspended_event</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">suspended_event</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="prelude-val">None</span>
     }
 }

@@ -119,6 +119,36 @@
 <span id="116">116</span>
 <span id="117">117</span>
 <span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper</span>
 <span class="doccomment">//!</span>
@@ -169,6 +199,36 @@
 <span class="doccomment">//! to the end of a list, two clients receiving the transitions in a different</span>
 <span class="doccomment">//! order would have internal states which represented different orders of the</span>
 <span class="doccomment">//! list.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! # use aper::{StateMachine, TransitionEvent};</span>
+<span class="doccomment">//! # use serde::{Serialize, Deserialize};</span>
+<span class="doccomment">//! #[derive(Serialize, Deserialize, Clone)]</span>
+<span class="doccomment">//! struct Counter(i64);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Serialize, Deserialize, Clone, PartialEq)]</span>
+<span class="doccomment">//! enum CounterTransition {</span>
+<span class="doccomment">//!     Reset,</span>
+<span class="doccomment">//!     Increment(i64),</span>
+<span class="doccomment">//!     Decrement(i64),</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! impl StateMachine for Counter {</span>
+<span class="doccomment">//!     type Transition = CounterTransition;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     fn process_event(&amp;mut self, event: TransitionEvent&lt;CounterTransition&gt;) {</span>
+<span class="doccomment">//!         match event.transition {</span>
+<span class="doccomment">//!             CounterTransition::Reset =&gt; { self.0 = 0 },</span>
+<span class="doccomment">//!             CounterTransition::Increment(amount) =&gt; { self.0 += amount },</span>
+<span class="doccomment">//!             CounterTransition::Decrement(amount) =&gt; { self.0 -= amount },</span>
+<span class="doccomment">//!         }</span>
+<span class="doccomment">//!     }</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! fn main() {</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Why not CRDT?</span>
 <span class="doccomment">//!</span>

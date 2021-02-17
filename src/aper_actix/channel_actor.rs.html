@@ -153,8 +153,8 @@
         <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>,
     ) {
         <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">process_event</span>(<span class="ident">event</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">get_suspended_event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">get_suspended_event</span>();
-        <span class="self">self</span>.<span class="ident">suspended_event</span>.<span class="ident">replace</span>(<span class="ident">get_suspended_event</span>, <span class="ident">ctx</span>);
+        <span class="kw">let</span> <span class="ident">suspended_event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">suspended_event</span>();
+        <span class="self">self</span>.<span class="ident">suspended_event</span>.<span class="ident">replace</span>(<span class="ident">suspended_event</span>, <span class="ident">ctx</span>);
 
         <span class="kw">for</span> <span class="ident">listener</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">listeners</span> {
             <span class="ident">listener</span>.<span class="ident">do_send</span>(<span class="ident">WrappedStateUpdateMessage</span>(
