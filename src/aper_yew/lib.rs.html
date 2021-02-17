@@ -268,6 +268,8 @@
 <span id="265">265</span>
 <span id="266">266</span>
 <span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper-Yew</span>
 <span class="doccomment">//!</span>
@@ -296,12 +298,12 @@
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">WebSocketService</span>;
 <span class="kw">use</span> <span class="ident">yew</span>::{<span class="ident">html</span>, <span class="ident">Callback</span>, <span class="ident">Component</span>, <span class="ident">ComponentLink</span>, <span class="ident">Html</span>, <span class="ident">Properties</span>, <span class="ident">ShouldRender</span>};
 
-<span class="kw">mod</span> <span class="ident">update_interval</span>;
 <span class="kw">mod</span> <span class="ident">state_manager</span>;
+<span class="kw">mod</span> <span class="ident">update_interval</span>;
 <span class="kw">mod</span> <span class="ident">wire_wrapped</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">update_interval</span>::<span class="ident">UpdateInterval</span>;
 <span class="kw">use</span> <span class="ident">state_manager</span>::<span class="ident">StateManager</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">update_interval</span>::<span class="ident">UpdateInterval</span>;
 <span class="kw">use</span> <span class="ident">wire_wrapped</span>::<span class="ident">WireWrapped</span>;
 
 <span class="doccomment">/// Properties for [StateMachineComponent].</span>
@@ -426,7 +428,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ViewContext</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> {
     <span class="doccomment">/// A callback for `Transition` events.</span>
     <span class="kw">pub</span> <span class="ident">callback</span>: <span class="ident">Callback</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">State</span> <span class="kw">as</span> <span class="ident">StateMachine</span><span class="op">&gt;</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    
+
     <span class="doccomment">/// A callback to force a redraw.</span>
     <span class="kw">pub</span> <span class="ident">redraw</span>: <span class="ident">Callback</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
 
@@ -530,7 +532,9 @@
                     <span class="ident">player_id</span>: <span class="kw-2">*</span><span class="ident">player_id</span>,
                     <span class="ident">time</span>: <span class="ident">state_manager</span>.<span class="ident">get_estimated_server_time</span>(),
                 };
-                <span class="self">self</span>.<span class="ident">props</span>.<span class="ident">view</span>.<span class="ident">view</span>(<span class="ident">state_manager</span>.<span class="ident">get_state</span>(), <span class="kw-2">&amp;</span><span class="ident">view_context</span>)
+                <span class="self">self</span>.<span class="ident">props</span>
+                    .<span class="ident">view</span>
+                    .<span class="ident">view</span>(<span class="ident">state_manager</span>.<span class="ident">get_state</span>(), <span class="kw-2">&amp;</span><span class="ident">view_context</span>)
             }
             <span class="ident">Status</span>::<span class="ident">ErrorConnecting</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">html</span><span class="macro">!</span> {{<span class="string">&quot;Error connecting.&quot;</span>}},
         }

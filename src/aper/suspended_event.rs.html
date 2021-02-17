@@ -37,6 +37,9 @@
 <span id="34">34</span>
 <span id="35">35</span>
 <span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
@@ -47,7 +50,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Storing and maintaining the suspended events is the responsibility of the code that owns the</span>
 <span class="doccomment">/// [crate::StateMachine] object.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>, <span class="ident">Ord</span>, <span class="ident">PartialOrd</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">&gt;</span> {
     <span class="doccomment">/// When the event should be triggered. Note that this is not necessarily equal to the timestamp</span>
     <span class="doccomment">/// field on the [crate::TransitionEvent] that is created when this event is triggered, since</span>
@@ -70,7 +73,10 @@
     <span class="doccomment">/// Create a new [SuspendedEvent] that has the same time as this one, but whose transition is</span>
     <span class="doccomment">/// the result of applying the provided function to it. This is useful when nesting state</span>
     <span class="doccomment">/// machines.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_transition</span><span class="op">&lt;</span><span class="ident">NewTransition</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">fun</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="ident">Transition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NewTransition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">NewTransition</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_transition</span><span class="op">&lt;</span><span class="ident">NewTransition</span><span class="op">&gt;</span>(
+        <span class="self">self</span>,
+        <span class="ident">fun</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="ident">Transition</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NewTransition</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="ident">NewTransition</span><span class="op">&gt;</span> {
         <span class="ident">SuspendedEvent</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">time</span>, <span class="ident">fun</span>(<span class="self">self</span>.<span class="ident">transition</span>))
     }
 }
