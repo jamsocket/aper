@@ -1,13 +1,13 @@
 [package]
 name = "aper"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 homepage = "https://aper.dev"
 description = "Synchronized state machines over WebSockets"
 repository = "https://github.com/aper-dev/aper"
 license = "MIT"
-readme = "README.md"
+readme = "../README.md"
 keywords = ["webassembly"]
 categories = ["data-structures", "web-programming::websocket", "wasm"]
 
