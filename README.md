@@ -1,5 +1,8 @@
 # Aper
 
+[![crates.io](https://img.shields.io/crates/v/aper.svg)](https://crates.io/crates/aper)
+[![docs.rs](https://img.shields.io/badge/docs.rs-yew-green)](https://docs.rs/aper/)
+
 Aper is a framework for real-time sharing of arbitrary application state
 over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
 Its use-cases include real-time browser-based collaboration tools and
