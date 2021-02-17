@@ -1,7 +1,7 @@
 use crate::suspended_event::SuspendedEvent;
 use crate::transition_event::TransitionEvent;
 use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, marker::PhantomData};
+use std::marker::PhantomData;
 
 /// This trait provides the methods that Aper needs to be able to interact with
 /// an object as a state machine.
@@ -10,7 +10,7 @@ use std::{fmt::Debug, marker::PhantomData};
 /// state machine. It's up to you to implement accessor methods (or use public
 /// fields) in order to expose the data necessary to render your views.
 pub trait StateMachine:
-    Sized + Unpin + 'static + Send + Clone + Serialize + for<'d> Deserialize<'d> + Debug
+    Sized + Unpin + 'static + Send + Clone + Serialize + for<'d> Deserialize<'d>
 {
     /// The [StateMachine::Transition] type associates another type with this state machine
     /// as its transitions.
@@ -21,8 +21,7 @@ pub trait StateMachine:
         + PartialEq
         + Clone
         + Serialize
-        + for<'d> Deserialize<'d>
-        + Debug;
+        + for<'d> Deserialize<'d>;
 
     /// Update the state machine according to the given [TransitionEvent]. This method *must* be
     /// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]
@@ -49,7 +48,7 @@ pub trait StateMachine:
     ///
     /// Since they are not associated with a particular player, suspended events trigger
     /// `process_event` with a `None` as the player in the [TransitionEvent].
-    fn get_suspended_event(&self) -> Option<SuspendedEvent<Self::Transition>> {
+    fn suspended_event(&self) -> Option<SuspendedEvent<Self::Transition>> {
         None
     }
 }

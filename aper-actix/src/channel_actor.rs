@@ -47,8 +47,8 @@ impl<State: StateMachine + Clone> ChannelActor<State> {
         ctx: &mut Context<Self>,
     ) {
         self.state.process_event(event.clone());
-        let get_suspended_event = self.state.get_suspended_event();
-        self.suspended_event.replace(get_suspended_event, ctx);
+        let suspended_event = self.state.suspended_event();
+        self.suspended_event.replace(suspended_event, ctx);
 
         for listener in &self.listeners {
             listener.do_send(WrappedStateUpdateMessage(

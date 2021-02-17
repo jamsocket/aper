@@ -55,7 +55,7 @@ pub struct Props<View: StateView> {
 /// can be used for rendering.
 pub trait StateView: Sized + 'static + Debug + Clone {
     /// Defines the struct used to represent the state that this [StateView] renders.
-    type State: StateMachine;
+    type State: StateMachine + Debug;
 
     /// Render the given state into a [yew::Html] result.
     ///

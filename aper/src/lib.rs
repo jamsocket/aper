@@ -48,6 +48,36 @@
 //! order would have internal states which represented different orders of the
 //! list.
 //!
+//! ```rust
+//! # use aper::{StateMachine, TransitionEvent};
+//! # use serde::{Serialize, Deserialize};
+//! #[derive(Serialize, Deserialize, Clone)]
+//! struct Counter(i64);
+//!
+//! #[derive(Serialize, Deserialize, Clone, PartialEq)]
+//! enum CounterTransition {
+//!     Reset,
+//!     Increment(i64),
+//!     Decrement(i64),
+//! }
+//!
+//! impl StateMachine for Counter {
+//!     type Transition = CounterTransition;
+//!
+//!     fn process_event(&mut self, event: TransitionEvent<CounterTransition>) {
+//!         match event.transition {
+//!             CounterTransition::Reset => { self.0 = 0 },
+//!             CounterTransition::Increment(amount) => { self.0 += amount },
+//!             CounterTransition::Decrement(amount) => { self.0 -= amount },
+//!         }
+//!     }
+//! }
+//!
+//! fn main() {
+//!
+//! }
+//! ```
+//!
 //! ## Why not CRDT?
 //!
 //! [Conflict-free replicated data types](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type)
