@@ -1,2 +1,2 @@
 pub mod atom;
-mod opaque_index;
+mod zeno_index;
