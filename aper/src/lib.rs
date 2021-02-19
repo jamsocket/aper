@@ -114,9 +114,8 @@ use serde::{Deserialize, Serialize};
 pub use state_machine::{StateMachine, StateMachineFactory};
 pub use suspended_event::SuspendedEvent;
 pub use transition_event::TransitionEvent;
-pub use data_structures::atom::{Atom, ReplaceAtom};
 
-mod data_structures;
+pub mod data_structures;
 mod state_machine;
 mod suspended_event;
 mod transition_event;
