@@ -47,7 +47,6 @@ impl<
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ReplaceAtom<T: Clone + PartialEq + Debug + Unpin>(T);
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

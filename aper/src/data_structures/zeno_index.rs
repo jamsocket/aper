@@ -49,7 +49,7 @@ impl FractionByte {
                 } else {
                     FractionByte::new_between_bytes(lhs, rhs)
                 }
-            },
+            }
 
             (FractionByte::Byte(lhs), FractionByte::Magic) => {
                 FractionByte::new_between_bytes(lhs, MAGIC_CEIL)
@@ -59,7 +59,7 @@ impl FractionByte {
                 FractionByte::new_between_bytes(MAGIC_FLOOR, rhs)
             }
 
-            _ => None
+            _ => None,
         }
     }
 }
@@ -80,20 +80,21 @@ impl Ord for FractionByte {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (FractionByte::Magic, FractionByte::Magic) => Ordering::Equal,
-            (FractionByte::Byte(lhs), FractionByte::Magic) =>
+            (FractionByte::Byte(lhs), FractionByte::Magic) => {
                 if *lhs <= MAGIC_FLOOR {
                     Ordering::Less
                 } else {
                     Ordering::Greater
                 }
-            (FractionByte::Magic, FractionByte::Byte(rhs)) =>
+            }
+            (FractionByte::Magic, FractionByte::Byte(rhs)) => {
                 if *rhs <= MAGIC_FLOOR {
                     Ordering::Greater
                 } else {
                     Ordering::Less
                 }
-            (FractionByte::Byte(lhs), FractionByte::Byte(rhs)) =>
-                lhs.cmp(rhs)
+            }
+            (FractionByte::Byte(lhs), FractionByte::Byte(rhs)) => lhs.cmp(rhs),
         }
     }
 }
@@ -124,21 +125,25 @@ impl Ord for FractionByte {
 ///
 /// 0.5 * (1/256)^N + sum<sub>i=1..N</sub> (z_i * (1/256)^i)
 ///
-/// 
+///
 #[derive(PartialEq, Eq, Clone, Debug)]
-struct ZenoIndex(Vec<u8>);
+pub struct ZenoIndex(Vec<u8>);
 
 impl ZenoIndex {
     fn digit(&self, i: usize) -> FractionByte {
-        self.0.get(i).cloned().map(FractionByte::Byte).unwrap_or_default()
+        self.0
+            .get(i)
+            .cloned()
+            .map(FractionByte::Byte)
+            .unwrap_or_default()
     }
 }
 
 impl ZenoIndex {
-    fn new_before(fs: &ZenoIndex) -> ZenoIndex {
+    pub fn new_before(fs: &ZenoIndex) -> ZenoIndex {
         for i in 0..fs.0.len() {
             if fs.0[i] > u8::MIN {
-                let mut bytes: Vec<u8> = fs.0[0..(i+1)].into();
+                let mut bytes: Vec<u8> = fs.0[0..(i + 1)].into();
                 bytes[i] -= 1;
                 return ZenoIndex(bytes);
             }
@@ -149,10 +154,10 @@ impl ZenoIndex {
         ZenoIndex(bytes)
     }
 
-    fn new_after(fs: &ZenoIndex) -> ZenoIndex {
+    pub fn new_after(fs: &ZenoIndex) -> ZenoIndex {
         for i in 0..fs.0.len() {
             if fs.0[i] < u8::MAX {
-                let mut bytes: Vec<u8> = fs.0[0..(i+1)].into();
+                let mut bytes: Vec<u8> = fs.0[0..(i + 1)].into();
                 bytes[i] += 1;
                 return ZenoIndex(bytes);
             }
@@ -163,60 +168,57 @@ impl ZenoIndex {
         ZenoIndex(bytes)
     }
 
-    fn new_between(left: &ZenoIndex, right: &ZenoIndex) -> ZenoIndex {
+    pub fn new_between(left: &ZenoIndex, right: &ZenoIndex) -> ZenoIndex {
         for i in 0..=left.0.len() {
             // Find the first index at which left and right values differ.
             let ld = left.digit(i);
             let rd = right.digit(i);
             if ld < rd {
                 return match FractionByte::new_between(ld, rd) {
-                    Some(FractionByte::Magic) => {
-                        ZenoIndex(left.0[0..(i-1)].into())
-                    },
+                    Some(FractionByte::Magic) => ZenoIndex(left.0[0..(i - 1)].into()),
                     Some(FractionByte::Byte(b)) => {
-                        let mut bytes: Vec<u8> = left.0[0..(i-1)].into();
+                        let mut bytes: Vec<u8> = left.0[0..(i - 1)].into();
                         bytes.push(b);
                         ZenoIndex(bytes)
-                    },
+                    }
                     None => {
-                        for j in (i+1)..(left.0.len() + 1) {
+                        for j in (i + 1)..(left.0.len() + 1) {
                             match left.digit(j) {
                                 FractionByte::Magic => {
                                     let mut bytes: Vec<u8> = left.0[0..j].into();
                                     bytes.push(MAGIC_CEIL);
-                                    return ZenoIndex(bytes)
+                                    return ZenoIndex(bytes);
                                 }
                                 FractionByte::Byte(b) => {
                                     if b < u8::MAX {
                                         let mut bytes: Vec<u8> = left.0[0..j].into();
                                         bytes.push(b + 1);
-                                        return ZenoIndex(bytes)
+                                        return ZenoIndex(bytes);
                                     }
                                 }
                             }
                         }
 
-                        for j in (i+1)..(right.0.len() + 1) {
+                        for j in (i + 1)..(right.0.len() + 1) {
                             match right.digit(j) {
                                 FractionByte::Magic => {
                                     let mut bytes: Vec<u8> = right.0[0..j].into();
                                     bytes.push(MAGIC_FLOOR);
-                                    return ZenoIndex(bytes)
+                                    return ZenoIndex(bytes);
                                 }
                                 FractionByte::Byte(b) => {
                                     if b > u8::MIN {
                                         let mut bytes: Vec<u8> = right.0[0..j].into();
                                         bytes.push(b - 1);
-                                        return ZenoIndex(bytes)
+                                        return ZenoIndex(bytes);
                                     }
                                 }
                             }
                         }
 
                         panic!("Should never get here")
-
                     }
-                }
+                };
             } else if ld > rd {
                 panic!("left should be less than right.")
             }
@@ -287,18 +289,18 @@ mod tests {
             indices.append(&mut high)
         }
 
-        for i in 0..(indices.len()-1) {
-            assert!(indices[i] < indices[i+1])
+        for i in 0..(indices.len() - 1) {
+            assert!(indices[i] < indices[i + 1])
         }
 
         for _ in 0..12 {
             let mut new_indices: Vec<ZenoIndex> = Vec::new();
-            for i in 0..(indices.len()-1) {
-                let cb = ZenoIndex::new_between(&indices[i], &indices[i+1]);
+            for i in 0..(indices.len() - 1) {
+                let cb = ZenoIndex::new_between(&indices[i], &indices[i + 1]);
                 assert!(&indices[i] < &cb);
-                assert!(&cb < &indices[i+1]);
+                assert!(&cb < &indices[i + 1]);
                 new_indices.push(cb);
-                new_indices.push(indices[i+1].clone());
+                new_indices.push(indices[i + 1].clone());
             }
 
             indices = new_indices;
@@ -324,36 +326,23 @@ mod tests {
 
     #[test]
     fn test_fraction_byte_new_between_bytes() {
-        assert_eq!(Some(byte(8)),
-                   FractionByte::new_between_bytes(7, 9));
-        assert_eq!(None,
-                   FractionByte::new_between_bytes(5, 6));
-        assert_eq!(None,
-                   FractionByte::new_between_bytes(5, 5));
-        assert_eq!(None,
-                   FractionByte::new_between_bytes(5, 4));
+        assert_eq!(Some(byte(8)), FractionByte::new_between_bytes(7, 9));
+        assert_eq!(None, FractionByte::new_between_bytes(5, 6));
+        assert_eq!(None, FractionByte::new_between_bytes(5, 5));
+        assert_eq!(None, FractionByte::new_between_bytes(5, 4));
     }
 
     #[test]
     fn test_fraction_byte_new_between() {
-        assert_eq!(Some(byte(8)),
-                   FractionByte::new_between(byte(7), byte(9)));
-        assert_eq!(Some(MAGIC),
-                   FractionByte::new_between(byte(7), byte(192)));
-        assert_eq!(Some(byte(67)),
-                   FractionByte::new_between(byte(7), MAGIC));
-        assert_eq!(Some(byte(126)),
-                   FractionByte::new_between(byte(125), MAGIC));
-        assert_eq!(Some(byte(127)),
-                   FractionByte::new_between(byte(126), MAGIC));
-        assert_eq!(Some(byte(128)),
-                   FractionByte::new_between(MAGIC, byte(129)));
-        assert_eq!(None,
-                   FractionByte::new_between(byte(127), MAGIC));
-        assert_eq!(None,
-                   FractionByte::new_between( MAGIC, byte(128)));
-        assert_eq!(Some(byte(191)),
-                   FractionByte::new_between( MAGIC, byte(255)));
+        assert_eq!(Some(byte(8)), FractionByte::new_between(byte(7), byte(9)));
+        assert_eq!(Some(MAGIC), FractionByte::new_between(byte(7), byte(192)));
+        assert_eq!(Some(byte(67)), FractionByte::new_between(byte(7), MAGIC));
+        assert_eq!(Some(byte(126)), FractionByte::new_between(byte(125), MAGIC));
+        assert_eq!(Some(byte(127)), FractionByte::new_between(byte(126), MAGIC));
+        assert_eq!(Some(byte(128)), FractionByte::new_between(MAGIC, byte(129)));
+        assert_eq!(None, FractionByte::new_between(byte(127), MAGIC));
+        assert_eq!(None, FractionByte::new_between(MAGIC, byte(128)));
+        assert_eq!(Some(byte(191)), FractionByte::new_between(MAGIC, byte(255)));
         assert_eq!(None, FractionByte::new_between(MAGIC, MAGIC));
         assert_eq!(None, FractionByte::new_between(byte(191), byte(191)));
     }
