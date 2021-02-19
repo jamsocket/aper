@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["aper"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"aper/data_structures/struct.ZenoIndex.html\" title=\"struct aper::data_structures::ZenoIndex\">ZenoIndex</a>","synthetic":false,"types":["aper::data_structures::zeno_index::ZenoIndex"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
