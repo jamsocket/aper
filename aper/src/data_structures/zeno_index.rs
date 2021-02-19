@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct OpaqueIndex(Vec<u8>);
@@ -126,7 +127,7 @@ impl Ord for FractionByte {
 /// 0.5 * (1/256)^N + sum<sub>i=1..N</sub> (z_i * (1/256)^i)
 ///
 ///
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
 pub struct ZenoIndex(Vec<u8>);
 
 impl ZenoIndex {
