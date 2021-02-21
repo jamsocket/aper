@@ -1,5 +1,5 @@
-use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct OpaqueIndex(Vec<u8>);
