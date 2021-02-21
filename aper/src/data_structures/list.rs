@@ -11,6 +11,7 @@ use crate::data_structures::ZenoIndex;
 enum ListOperation<T> {
     Insert(ZenoIndex, Uuid, T),
     Append(Uuid, T),
+    Prepend(Uuid, T),
     Delete(Uuid),
     Move(Uuid, ZenoIndex),
 }
@@ -38,9 +39,18 @@ impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone +
                 } else {
                     ZenoIndex::default()
                 };
-
-                self.items.insert(location, id);
-                self.pool.insert(id, value);
+                self.insert_at_location(location, id, value)
+            }
+            ListOperation::Prepend(id, value) => {
+                let location = if let Some((first_location, _)) = self.items.iter().next() {
+                    ZenoIndex::new_before(first_location)
+                } else {
+                    ZenoIndex::default()
+                };
+                self.insert_at_location(location, id, value)
+            }
+            ListOperation::Insert(location, uuid, value) => {
+                self.insert_at_location(location, uuid, value)
             }
             _ => unimplemented!()
         }
@@ -48,12 +58,22 @@ impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone +
 }
 
 impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone + PartialEq + Debug> List<T> {
+    fn insert_at_location(&mut self, location: ZenoIndex, id: Uuid, value: T) {
+        self.items.insert(location, id);
+        self.pool.insert(id, value);
+    }
+
     pub fn append(&self, value: T) -> ListOperation<T> {
         let id = Uuid::new_v4();
         ListOperation::Append(id, value)
     }
 
-    pub fn insert(&self, location: ZenoIndex, value: T) -> ListOperation<T> {
+    pub fn prepend(&self, value: T) -> ListOperation<T> {
+        let id = Uuid::new_v4();
+        ListOperation::Prepend(id, value)
+    }
+
+    fn insert(&self, location: ZenoIndex, value: T) -> ListOperation<T> {
         let id = Uuid::new_v4();
         ListOperation::Insert(location, id, value)
     }
@@ -85,6 +105,8 @@ mod tests {
     fn test_list() {
         let mut list: List<i64> = List::default();
 
+        // Test Append.
+
         list.process_event(TransitionEvent::new_tick_event(
             list.append(5)));
 
@@ -94,11 +116,45 @@ mod tests {
         list.process_event(TransitionEvent::new_tick_event(
             list.append(143)));
 
+        // Test Prepend.
+
+        list.process_event(TransitionEvent::new_tick_event(
+            list.prepend(99)));
+
         {
             let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
-            assert_eq!(vec![5, 3, 143], result);
+            assert_eq!(vec![99, 5, 3, 143], result);
         }
 
+        // Test Insert.
+
+        let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
+
+        list.process_event(TransitionEvent::new_tick_event(
+            list.insert(
+                ZenoIndex::new_between(&locations[2], &locations[3]),
+                44
+            )
+        ));
+
+        list.process_event(TransitionEvent::new_tick_event(
+            list.insert(
+                ZenoIndex::new_between(&locations[0], &locations[1]),
+                23
+            )
+        ));
+
+        list.process_event(TransitionEvent::new_tick_event(
+            list.insert(
+                ZenoIndex::new_between(&locations[1], &locations[2]),
+                84
+            )
+        ));
+
+        {
+            let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
+            assert_eq!(vec![99, 23, 5, 84, 3, 44, 143], result);
+        }
 
     }
 }
