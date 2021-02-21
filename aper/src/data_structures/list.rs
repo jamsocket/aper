@@ -103,7 +103,7 @@ impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone +
             move |(location, id)| ListItem {
                 location: location.clone(),
                 id: id.clone(),
-                value: &self.pool[id]
+                value: &self.pool[id],
             }
         )
     }
@@ -140,35 +140,36 @@ mod tests {
 
         // Test Insert.
         {
-        let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
+            let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-        list.process_event(TransitionEvent::new_tick_event(
-            list.insert(
-                ZenoIndex::new_between(&locations[2], &locations[3]),
-                44
-            )
-        ));
+            list.process_event(TransitionEvent::new_tick_event(
+                list.insert(
+                    ZenoIndex::new_between(&locations[2], &locations[3]),
+                    44,
+                )
+            ));
 
-        list.process_event(TransitionEvent::new_tick_event(
-            list.insert(
-                ZenoIndex::new_between(&locations[0], &locations[1]),
-                23
-            )
-        ));
+            list.process_event(TransitionEvent::new_tick_event(
+                list.insert(
+                    ZenoIndex::new_between(&locations[0], &locations[1]),
+                    23,
+                )
+            ));
 
-        list.process_event(TransitionEvent::new_tick_event(
-            list.insert(
-                ZenoIndex::new_between(&locations[1], &locations[2]),
-                84
-            )
-        ));
+            list.process_event(TransitionEvent::new_tick_event(
+                list.insert(
+                    ZenoIndex::new_between(&locations[1], &locations[2]),
+                    84,
+                )
+            ));
 
-        {
-            let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
-            assert_eq!(vec![99, 23, 5, 84, 3, 44, 143], result);
+            {
+                let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
+                assert_eq!(vec![99, 23, 5, 84, 3, 44, 143], result);
+            }
         }
-    }
 
+        // Test Delete.
         {
             let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
 
@@ -186,5 +187,25 @@ mod tests {
             }
         }
 
+        // Test Move.
+        {
+            let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
+            let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
+
+            list.process_event(TransitionEvent::new_tick_event(
+                list.move_item(uuids[0], ZenoIndex::new_between(
+                    &locations[2], &locations[3]
+                ))
+            ));
+
+            list.process_event(TransitionEvent::new_tick_event(
+                list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])
+            )));
+
+            {
+                let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
+                assert_eq!(vec![143, 23, 3, 99, 44], result);
+            }
+        }
     }
 }
