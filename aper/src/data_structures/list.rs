@@ -40,7 +40,7 @@ impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone +
                 } else {
                     ZenoIndex::default()
                 };
-                self.insert_at_location(location, id, value)
+                self.do_insert(location, id, value)
             }
             ListOperation::Prepend(id, value) => {
                 let location = if let Some((first_location, _)) = self.items.iter().next() {
@@ -48,27 +48,37 @@ impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone +
                 } else {
                     ZenoIndex::default()
                 };
-                self.insert_at_location(location, id, value)
+                self.do_insert(location, id, value)
             }
             ListOperation::Insert(location, id, value) => {
-                self.insert_at_location(location, id, value)
+                self.do_insert(location, id, value)
             }
             ListOperation::Delete(id) => {
-                self.delete_by_uuid(id)
+                self.do_delete(id)
             }
-            _ => unimplemented!()
+            ListOperation::Move(id, location) => {
+                self.do_move(id, location)
+            }
         }
     }
 }
 
 impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone + PartialEq + Debug> List<T> {
-    fn insert_at_location(&mut self, location: ZenoIndex, id: Uuid, value: T) {
+    fn do_insert(&mut self, location: ZenoIndex, id: Uuid, value: T) {
         self.items.insert(location.clone(), id);
         self.items_inv.insert(id, location);
         self.pool.insert(id, value);
     }
 
-    fn delete_by_uuid(&mut self, id: Uuid) {
+    fn do_move(&mut self, id: Uuid, location: ZenoIndex) {
+        if let Some(location) = self.items_inv.remove(&id) {
+            self.items.remove(&location);
+        }
+        self.items.insert(location.clone(), id);
+        self.items_inv.insert(id, location);
+    }
+
+    fn do_delete(&mut self, id: Uuid) {
         if let Some(location) = self.items_inv.remove(&id) {
             self.items.remove(&location);
         }
