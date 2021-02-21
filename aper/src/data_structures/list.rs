@@ -25,6 +25,7 @@ struct ListItem<'a, T> {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 struct List<T: 'static + Unpin + Send + Clone + PartialEq + Debug> {
     items: BTreeMap<ZenoIndex, Uuid>,
+    items_inv: BTreeMap<Uuid, ZenoIndex>,
     pool: HashMap<Uuid, T>,
 }
 
@@ -49,8 +50,11 @@ impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone +
                 };
                 self.insert_at_location(location, id, value)
             }
-            ListOperation::Insert(location, uuid, value) => {
-                self.insert_at_location(location, uuid, value)
+            ListOperation::Insert(location, id, value) => {
+                self.insert_at_location(location, id, value)
+            }
+            ListOperation::Delete(id) => {
+                self.delete_by_uuid(id)
             }
             _ => unimplemented!()
         }
@@ -59,8 +63,16 @@ impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone +
 
 impl<T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone + PartialEq + Debug> List<T> {
     fn insert_at_location(&mut self, location: ZenoIndex, id: Uuid, value: T) {
-        self.items.insert(location, id);
+        self.items.insert(location.clone(), id);
+        self.items_inv.insert(id, location);
         self.pool.insert(id, value);
+    }
+
+    fn delete_by_uuid(&mut self, id: Uuid) {
+        if let Some(location) = self.items_inv.remove(&id) {
+            self.items.remove(&location);
+        }
+        self.pool.remove(&id);
     }
 
     pub fn append(&self, value: T) -> ListOperation<T> {
