@@ -84,7 +84,7 @@
 //! allow you to represent complex update logic.
 //!
 //! By relying on a central authority, a state-machine approach allows you to
-//! implement data structures with arbitrary update logic, such as automic moves
+//! implement data structures with arbitrary update logic, such as atomic moves
 //! of a value between two data structures, or the rules of a board game.
 //!
 //! ## Vocabulary Conventions
