@@ -1,6 +1,7 @@
 use crate::suspended_event::SuspendedEvent;
-use crate::transition_event::TransitionEvent;
-use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 /// This trait provides the methods that Aper needs to be able to interact with
@@ -10,24 +11,17 @@ use std::marker::PhantomData;
 /// state machine. It's up to you to implement accessor methods (or use public
 /// fields) in order to expose the data necessary to render your views.
 pub trait StateMachine:
-    Sized + Unpin + 'static + Send + Clone + Serialize + for<'d> Deserialize<'d>
+    Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug
 {
     /// The [StateMachine::Transition] type associates another type with this state machine
     /// as its transitions.
-    type Transition: Sized
-        + Unpin
-        + 'static
-        + Send
-        + PartialEq
-        + Clone
-        + Serialize
-        + for<'d> Deserialize<'d>;
+    type Transition: Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug;
 
     /// Update the state machine according to the given [TransitionEvent]. This method *must* be
     /// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]
     /// must result in the same state, even at a different time and on a different machine. This
     /// is the requirement that allows Aper to keep the state in sync across multiple machines.
-    fn process_event(&mut self, transition_event: TransitionEvent<Self::Transition>);
+    fn apply(&mut self, transition: Self::Transition);
 
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of

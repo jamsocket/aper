@@ -49,12 +49,12 @@
 //! list.
 //!
 //! ```rust
-//! # use aper::{StateMachine, TransitionEvent};
+//! # use aper::{StateMachine};
 //! # use serde::{Serialize, Deserialize};
-//! #[derive(Serialize, Deserialize, Clone)]
+//! #[derive(Serialize, Deserialize, Clone, Debug)]
 //! struct Counter(i64);
 //!
-//! #[derive(Serialize, Deserialize, Clone, PartialEq)]
+//! #[derive(Serialize, Deserialize, Clone, Debug)]
 //! enum CounterTransition {
 //!     Reset,
 //!     Increment(i64),
@@ -64,11 +64,11 @@
 //! impl StateMachine for Counter {
 //!     type Transition = CounterTransition;
 //!
-//!     fn process_event(&mut self, event: TransitionEvent<CounterTransition>) {
-//!         match event.transition {
-//!             CounterTransition::Reset => { self.0 = 0 },
-//!             CounterTransition::Increment(amount) => { self.0 += amount },
-//!             CounterTransition::Decrement(amount) => { self.0 -= amount },
+//!     fn apply(&mut self, event: CounterTransition) {
+//!         match event {
+//!             CounterTransition::Reset => { self.0 = 0 }
+//!             CounterTransition::Increment(amount) => { self.0 += amount }
+//!             CounterTransition::Decrement(amount) => { self.0 -= amount }
 //!         }
 //!     }
 //! }
@@ -109,16 +109,14 @@
 use chrono::{DateTime, Utc};
 use std::fmt::{Display, Formatter};
 
+use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
-
 pub use state_machine::{StateMachine, StateMachineFactory};
 pub use suspended_event::SuspendedEvent;
-pub use transition_event::TransitionEvent;
 
 pub mod data_structures;
 mod state_machine;
 mod suspended_event;
-mod transition_event;
 
 /// An opaque identifier for a single connected user.
 #[derive(Clone, Hash, Debug, PartialEq, Ord, PartialOrd, Eq, Serialize, Deserialize, Copy)]
@@ -136,10 +134,14 @@ pub enum StateUpdateMessage<State: StateMachine> {
     /// Instructs the client to completely discard its existing state and replace it
     /// with the provided one. This is currently only used to set the initial state
     /// when a client first connects.
-    ReplaceState(#[serde(bound = "")] State, DateTime<Utc>, PlayerID),
+    ReplaceState(
+        #[serde(bound = "")] State,
+        #[serde(with = "ts_milliseconds")] DateTime<Utc>,
+        PlayerID,
+    ),
 
     /// Instructs the client to apply the given [TransitionEvent] to its copy of
     /// the state to synchronize it with the server. Currently, all state updates
     /// after the initial state is sent are sent through [StateUpdateMessage::TransitionState].
-    TransitionState(#[serde(bound = "")] TransitionEvent<State::Transition>),
+    TransitionState(#[serde(bound = "")] State::Transition),
 }

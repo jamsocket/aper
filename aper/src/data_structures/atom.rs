@@ -1,4 +1,5 @@
-use crate::{StateMachine, TransitionEvent};
+use crate::StateMachine;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
@@ -10,10 +11,7 @@ pub struct Atom<T: Clone + PartialEq + Debug + Unpin> {
     value: T,
 }
 
-impl<
-        T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone + PartialEq + Debug,
-    > Atom<T>
-{
+impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug> Atom<T> {
     /// Create a new [Atom] with a given initial value.
     pub fn new(initial: T) -> Self {
         Atom { value: initial }
@@ -31,15 +29,23 @@ impl<
     }
 }
 
-impl<
-        T: 'static + Serialize + for<'de> Deserialize<'de> + Unpin + Send + Clone + PartialEq + Debug,
-    > StateMachine for Atom<T>
+impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug>
+    StateMachine for Atom<T>
 {
     type Transition = ReplaceAtom<T>;
 
-    fn process_event(&mut self, transition_event: TransitionEvent<Self::Transition>) {
-        let ReplaceAtom(v) = transition_event.transition;
+    fn apply(&mut self, transition_event: Self::Transition) {
+        let ReplaceAtom(v) = transition_event;
         self.value = v;
+    }
+}
+
+impl<
+        T: Default + 'static + Clone + PartialEq + Debug + Unpin + Send + Serialize + DeserializeOwned,
+    > Default for Atom<T>
+{
+    fn default() -> Self {
+        Atom::new(Default::default())
     }
 }
 
@@ -56,7 +62,7 @@ mod tests {
         let mut atom = Atom::new(5);
         assert_eq!(5, *atom.value());
 
-        atom.process_event(TransitionEvent::new_tick_event(atom.replace(8)));
+        atom.apply(atom.replace(8));
 
         assert_eq!(8, *atom.value());
     }

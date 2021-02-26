@@ -46,7 +46,7 @@ impl<State: StateMachine + Clone> ChannelActor<State> {
         event: TransitionEvent<State::Transition>,
         ctx: &mut Context<Self>,
     ) {
-        self.state.process_event(event.clone());
+        self.state.apply(event.clone());
         let suspended_event = self.state.suspended_event();
         self.suspended_event.replace(suspended_event, ctx);
 

@@ -30,7 +30,7 @@ impl<State: StateMachine> StateManager<State> {
         self.last_local_time = Utc::now();
         self.last_server_time = event.timestamp;
 
-        self.state.process_event(event);
+        self.state.apply(event);
     }
 
     pub fn get_state(&self) -> &State {

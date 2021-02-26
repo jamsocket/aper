@@ -5,23 +5,24 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::data_structures::ZenoIndex;
-use crate::{StateMachine, TransitionEvent};
-use serde::de::DeserializeOwned;
+use crate::StateMachine;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
-pub enum ListOperation<T> {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(bound = "")]
+pub enum ListOperation<T: StateMachine> {
     Insert(ZenoIndex, Uuid, T),
     Append(Uuid, T),
     Prepend(Uuid, T),
     Delete(Uuid),
     Move(Uuid, ZenoIndex),
+    Apply(Uuid, <T as StateMachine>::Transition),
 }
 
 /// Represents a view of an entry in a list during iteration. Each
 /// item contains a borrow of its `value`; its `location` as a [ZenoIndex],
 /// and a unique identifier which is opaque but must be passed for
 /// [List::delete] and [List::move_item] calls.
-pub struct ListItem<'a, T> {
+pub struct ListItem<'a, T: StateMachine> {
     pub value: &'a T,
     pub location: ZenoIndex,
     pub id: Uuid,
@@ -30,19 +31,18 @@ pub struct ListItem<'a, T> {
 /// Represents a list of items, similar to a `Vec`, but designed to be robust
 /// to concurrent modifications from multiple users.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
-pub struct List<T: 'static + Unpin + Send + Clone + PartialEq + Debug> {
+#[serde(bound = "")]
+pub struct List<T: StateMachine> {
     items: BTreeMap<ZenoIndex, Uuid>,
     items_inv: BTreeMap<Uuid, ZenoIndex>,
     pool: HashMap<Uuid, T>,
 }
 
-impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug>
-    StateMachine for List<T>
-{
+impl<T: StateMachine> StateMachine for List<T> {
     type Transition = ListOperation<T>;
 
-    fn process_event(&mut self, transition_event: TransitionEvent<Self::Transition>) {
-        match transition_event.transition {
+    fn apply(&mut self, transition_event: Self::Transition) {
+        match transition_event {
             ListOperation::Append(id, value) => {
                 let location = if let Some((last_location, _)) = self.items.iter().next_back() {
                     ZenoIndex::new_after(last_location)
@@ -62,11 +62,18 @@ impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialE
             ListOperation::Insert(location, id, value) => self.do_insert(location, id, value),
             ListOperation::Delete(id) => self.do_delete(id),
             ListOperation::Move(id, location) => self.do_move(id, location),
+            ListOperation::Apply(id, transition) => {
+                if let Some(v) = self.pool.get_mut(&id) {
+                    v.apply(transition)
+                } else {
+                    // TODO: resolve conflict.
+                }
+            }
         }
     }
 }
 
-impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug> List<T> {
+impl<T: StateMachine> List<T> {
     fn do_insert(&mut self, location: ZenoIndex, id: Uuid, value: T) {
         self.items.insert(location.clone(), id);
         self.items_inv.insert(id, location);
@@ -137,25 +144,26 @@ impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialE
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data_structures::Atom;
 
     #[test]
     fn test_list() {
-        let mut list: List<i64> = List::default();
+        let mut list: List<Atom<i64>> = List::default();
 
         // Test Append.
 
-        list.process_event(TransitionEvent::new_tick_event(list.append(5)));
+        list.apply(list.append(Atom::new(5)));
 
-        list.process_event(TransitionEvent::new_tick_event(list.append(3)));
+        list.apply(list.append(Atom::new(3)));
 
-        list.process_event(TransitionEvent::new_tick_event(list.append(143)));
+        list.apply(list.append(Atom::new(143)));
 
         // Test Prepend.
 
-        list.process_event(TransitionEvent::new_tick_event(list.prepend(99)));
+        list.apply(list.prepend(Atom::new(99)));
 
         {
-            let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
+            let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
             assert_eq!(vec![99, 5, 3, 143], result);
         }
 
@@ -163,20 +171,23 @@ mod tests {
         {
             let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-            list.process_event(TransitionEvent::new_tick_event(
-                list.insert(ZenoIndex::new_between(&locations[2], &locations[3]), 44),
+            list.apply(list.insert(
+                ZenoIndex::new_between(&locations[2], &locations[3]),
+                Atom::new(44),
             ));
 
-            list.process_event(TransitionEvent::new_tick_event(
-                list.insert(ZenoIndex::new_between(&locations[0], &locations[1]), 23),
+            list.apply(list.insert(
+                ZenoIndex::new_between(&locations[0], &locations[1]),
+                Atom::new(23),
             ));
 
-            list.process_event(TransitionEvent::new_tick_event(
-                list.insert(ZenoIndex::new_between(&locations[1], &locations[2]), 84),
+            list.apply(list.insert(
+                ZenoIndex::new_between(&locations[1], &locations[2]),
+                Atom::new(84),
             ));
 
             {
-                let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
+                let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
                 assert_eq!(vec![99, 23, 5, 84, 3, 44, 143], result);
             }
         }
@@ -185,12 +196,12 @@ mod tests {
         {
             let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
 
-            list.process_event(TransitionEvent::new_tick_event(list.delete(uuids[2])));
+            list.apply(list.delete(uuids[2]));
 
-            list.process_event(TransitionEvent::new_tick_event(list.delete(uuids[3])));
+            list.apply(list.delete(uuids[3]));
 
             {
-                let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
+                let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
                 assert_eq!(vec![99, 23, 3, 44, 143], result);
             }
         }
@@ -200,17 +211,15 @@ mod tests {
             let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
             let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-            list.process_event(TransitionEvent::new_tick_event(list.move_item(
+            list.apply(list.move_item(
                 uuids[0],
                 ZenoIndex::new_between(&locations[2], &locations[3]),
-            )));
-
-            list.process_event(TransitionEvent::new_tick_event(
-                list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])),
             ));
 
+            list.apply(list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])));
+
             {
-                let result: Vec<i64> = list.iter().map(|d| *d.value).collect();
+                let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
                 assert_eq!(vec![143, 23, 3, 99, 44], result);
             }
         }
