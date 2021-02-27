@@ -65,10 +65,10 @@ Now, we can represent these same transitions in a way that they don't conflict.
 # }
 
 fn main() {
-    let item = ToDoListItem::new("Buy gorceries".to_string());
+    let mut item = ToDoListItem::new("Buy gorceries".to_string());
 
     assert_eq!("Buy gorceries", item.label().value());
-    assert_eq!(false, item.done().value());
+    assert_eq!(&false, item.done().value());
 
     let mark_done = item.map_done(|d| d.replace(true));
     let fix_typo = item.map_label(|d| d.replace("Buy groceries".to_string()));
@@ -79,7 +79,7 @@ fn main() {
     item.apply(fix_typo);
 
     assert_eq!("Buy groceries", item.label().value());
-    assert_eq!(true, item.done().value());
+    assert_eq!(&true, item.done().value());
 }
 ```
 
