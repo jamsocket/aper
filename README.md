@@ -21,7 +21,8 @@ and even with non-WebSocket protocols.
 
 **Aper is rapidly evolving. Consider this a *technology preview*.**
 
-- [Documentation](https://aper.dev/aper/)
+- [Documentation](https://docs.rs/aper/)
+- [Getting Started with Aper guide](https://aper.dev/)
 - [Redwords](https://redwords.paulbutler.org), an experimental multiplayer word game built with Aper.
 
 ## Roadmap
