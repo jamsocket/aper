@@ -164,10 +164,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="derive-macro"><a class="header" href="#derive-macro">Derive macro</a></h1>
-<p>In the last section, we were introducte to the <code>Atom</code> state machine.
+<p>In the last section, we were introduced to the <code>Atom</code> state machine.
 If networks were infinitely fast, <code>Atom</code> might be the only state 
 machine we ever needed: every time a user changed the state, we'd 
-just end the new entire state to every other user and be done with it.</p>
+just send the new entire state to every other user and be done with it.</p>
 <p>In practice, the reason we can't do this is that without infinitely 
 fast networks, it's possible for different users to make conflicting 
 changes. For example, let's say we represented a to-do list item
@@ -256,7 +256,7 @@ which is a function from the type of that field (e.g. <code>Atom&lt;bool&gt;</co
 a type of that field's transition (<code>ReplaceAtom&lt;bool&gt;</code>). They return a 
 transition that can be applied to the parent struct (<code>ToDoListItem</code>), 
 which combines the transition you constructed in the map with an 
-indication of which field it is to be applied to.</p>
+indication of which field of the parent struct it is to be applied to.</p>
 <p>To better understand this approach, it might be good to understand 
 what we <em>can't</em> do. For one thing, we can't apply the field's 
 <code>ReplaceAtom</code> transition directly to the <code>ToDoListItem</code> struct that
@@ -266,8 +266,8 @@ contains it:</p>
 
     let mark_done = item.done().replace(true);
 
-    // This will fail to compile because `done()` exposes a read-only
-    // borrow of the Atom.
+    // This will fail to compile because `done()` exposes a non-mutable
+    // borrow of the Atom, but `apply()` requires a mutable borrow.
     item.done().apply(mark_done);
 }
 </code></pre>
@@ -278,8 +278,9 @@ contains it:</p>
 
     let mark_done = item.done().replace(true);
 
-    // This will fail to compile because `mark_done` is a `ReplaceAtom&lt;bool&gt;`
-    // but `item.apply()` expects a `ToDoListItemTransition`.
+    // This will fail to compile because `mark_done` is a
+    // `ReplaceAtom&lt;bool&gt;` but `item.apply()` expects a
+    // `ToDoListItemTransition`.
     item.apply(mark_done);
 }
 </code></pre>
