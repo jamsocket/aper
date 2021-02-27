@@ -1,6 +1,8 @@
 # Building a state machine
 
-For example, let's say we have a counter (this is not a state machine):
+To solidify the concept of state machines, let's start with a simple
+example. Here's a simple data structure representing a counter. It stores
+an integer and gives us methods to modify it.
 
 ```rust
 struct Counter {value: i64}
@@ -22,21 +24,28 @@ impl Counter {
 # fn main() {}
 ```
 
-We can rewrite this as a state machine like this:
+By inspecting the code, you can see that `Counter` satisfies condition #3 of a state machine
+in Aper: its updates are deterministic. It does *not*, however, satisfy conditions #1 and
+#2: it does not implement `StateMachine`, and methods other than `apply` mutate the state.
+
+(By the way, a good way to check if #2 is satisfied is to look for which methods take `&mut self`.
+In an Aper state machine, only `apply` should need a mutable reference to `self`.)
+
+We can make this into a state machine like this:
 
 ```rust
-# use aper::StateMachine;
-# use serde::{Serialize, Deserialize};
-#
-# #[derive(Serialize, Deserialize, Debug, Clone)]
-# struct Counter {value: i64}
-#
-# #[derive(Serialize, Deserialize, Debug, Clone)]
-# enum CounterTransition {
-#    Add(i64),
-#    Subtract(i64),
-#    Reset,
-# }
+use aper::StateMachine;
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Counter {value: i64}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+enum CounterTransition {
+   Add(i64),
+   Subtract(i64),
+   Reset,
+}
 
 impl StateMachine for Counter {
     type Transition = CounterTransition;
@@ -55,42 +64,6 @@ impl StateMachine for Counter {
         }
     }
 }
-# fn main() {}
-```
-
-
-```rust
-# use aper::StateMachine;
-# use serde::{Serialize, Deserialize};
-#
-# #[derive(Serialize, Deserialize, Debug, Clone)]
-# struct Counter {value: i64}
-#
-# #[derive(Serialize, Deserialize, Debug, Clone)]
-# enum CounterTransition {
-#    Add(i64),
-#    Subtract(i64),
-#    Reset,
-# }
-
-impl StateMachine for Counter {
-    type Transition = CounterTransition;
-
-    fn apply(&mut self, event: CounterTransition) {
-        match event {
-            CounterTransition::Add(i) => {
-                self.value += i;
-            }
-            CounterTransition::Subtract(i) => {
-                self.value -= i;
-            }
-            CounterTransition::Reset => {
-                self.value = 0;
-            }
-        }
-    }
-}
-
 # fn main() {}
 ```
 
@@ -127,3 +100,7 @@ impl Counter {
 ```
 
 Notice how these no longer require a mutable reference to `self`, since they do not actually make any changes, they just return an object *representing* the change.
+
+I started by showing you how to implement your own state machine because I wanted you to see that it isn't
+scary, but implementing state machines from scratch isn't the only way to use Aper. In the next few sections,
+I'll show you how to build state machines by composing together primitives provided by Aper.
