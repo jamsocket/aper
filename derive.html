@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Introduction - Getting Started with Aper</title>
+        <title>Derive macro - Getting Started with Aper</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="'./introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="'./introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html" class="active"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -163,35 +163,123 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>Aper is a framework that lets you synchronize program state between users. In Aper, all state is represented as a <strong>state machine</strong>, which means that:</p>
-<ol>
-<li>It implements the <code>StateMachine</code> trait, which has one method: <code>apply</code>.</li>
-<li><strong>All</strong> changes to state flow through the <code>apply</code> method, which takes a single argument
-(the type of that argument is up to you).</li>
-<li>Updates to state are entirely deterministic. They may depend on the current state and any data
-that is contained in the transition value, and nothing else.</li>
-</ol>
-<p>#1 is enforced by Rust's type system, but it's your responsibility to satisfy #2 and #3. In particular,
-accessing the current time, non-determistic random number generators, or external data in <code>apply</code> is
-a violation of #3.</p>
-<h2 id="keeping-state-in-sync"><a class="header" href="#keeping-state-in-sync">Keeping State in Sync</a></h2>
-<p>In principal, the way that Aper keeps state in sync is pretty simple: when a client connects, they receive a full copy of the latest copy of the state. Thereafter, they receive a real-time stream of <code>Transition</code>s. Every client receives the same transitions in the same order, so their states are updated in lockstep. <strong>This is why it's important that <code>apply</code> is deterministic.</strong> If it were not, states could become divergent even if they received the same transition stream.</p>
-<p>Note that for this model to work, the client can't immediately apply a transition to its local state, because the client doesn't know whether another client is sending the server a transition at the same time. The client has two options:</p>
-<ul>
-<li>Accept this latency. Depending on the use-case, a few hundred milliseconds of latency might be tolerable and the simpler model is easier to reason about.</li>
-<li>Keep two copies of the state, called <code>optimist</code> and <code>pessimist</code>, as well as a FIFO queue <code>stash</code> of local transitions. As local transitions fire, push them to <code>stash</code> and proactively apply them to <code>optimist</code>. <code>optimist</code> is used to render the view, so local transitions appear automatically. When the server sends a transition, check if it is the next transition in our <code>stash</code>. If so, pop it from the <code>stash</code> and apply it to <code>pessimist</code>. Otherwise, we apply the server-sent transition to <code>pessimist</code>, then clone it and apply every transition in the <code>stash</code> to the clone. This clone becomes the new value of <code>optimist</code>, and the old value is discarded.</li>
-</ul>
-<p>Aper implements both of these approaches.</p>
+                        <h1 id="derive-macro"><a class="header" href="#derive-macro">Derive macro</a></h1>
+<p>If networks were infinitely fast, <code>Atom</code> could be the only state machine we needed: every time the user changed the state, we'd just send the new state to every client and update them all instantly.</p>
+<p>In practice, the reason we can't do this is that without infinitely fast networks, it's possible for different users to make conflicting changes. For example, let's say we represented a to-do list item with an Atom:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use aper::data_structures::Atom;
+
+struct ToDoListItem {
+    done: bool,
+    label: String,
+}
+
+type ToDoListAtom = Atom&lt;ToDoListItem&gt;;
+<span class="boring">}
+</span></code></pre></pre>
+<p>Suppose you and I both modified this item at the same time. You marked it as done, and I fixed a typo in the label. Your edit hits the server first, so the server's state is briefly updated with the item marked as “done”. But my transition was sent at the same time as yours, and because an Atom captures the entire value, it includes the old value of <code>done</code>! My edit undoes yours.</p>
+<p>To avoid this, we can push <code>Atom</code>s deeper down into the data structure. Aper facilitates this with a <code>derive</code> macro:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use aper::StateMachine;
+use aper::data_structures::Atom;
+use aper_derive::StateMachine;
+use serde::{Serialize, Deserialize};
+
+#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+struct ToDoListItem {
+    done: Atom&lt;bool&gt;,
+    label: Atom&lt;String&gt;,
+}
+
+impl ToDoListItem {
+    pub fn new(label: String) -&gt; Self {
+        ToDoListItem {
+            done: Atom::new(false),
+            label: Atom::new(label),
+        }
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Now, we can represent these same transitions in a way that they don't conflict.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">use aper::StateMachine;
+</span><span class="boring">use aper::data_structures::Atom;
+</span><span class="boring">use aper_derive::StateMachine;
+</span><span class="boring">use serde::{Serialize, Deserialize};
+</span><span class="boring">
+</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+</span><span class="boring">struct ToDoListItem {
+</span><span class="boring">    done: Atom&lt;bool&gt;,
+</span><span class="boring">    label: Atom&lt;String&gt;,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl ToDoListItem {
+</span><span class="boring">    pub fn new(label: String) -&gt; Self {
+</span><span class="boring">        ToDoListItem {
+</span><span class="boring">            done: Atom::new(false),
+</span><span class="boring">            label: Atom::new(label),
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+fn main() {
+    let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
+
+    assert_eq!(&quot;Buy gorceries&quot;, item.label().value());
+    assert_eq!(&amp;false, item.done().value());
+
+    let mark_done = item.map_done(|d| d.replace(true));
+    let fix_typo = item.map_label(|d| d.replace(&quot;Buy groceries&quot;.to_string()));
+
+    // Unlike before, the order in which the transitions are applied
+    // does not matter.
+    item.apply(mark_done);
+    item.apply(fix_typo);
+
+    assert_eq!(&quot;Buy groceries&quot;, item.label().value());
+    assert_eq!(&amp;true, item.done().value());
+}
+</code></pre></pre>
+<p>The methods <code>map_done</code> and <code>map_label</code> are generated by the derive macro by prepending <code>map_</code> to each field. They take a single argument, which is a function from the type of that field (e.g. <code>Atom&lt;bool&gt;</code>) to a type of that field's transition (<code>ReplaceAtom&lt;bool&gt;</code>). They return a transition that can be applied to the parent struct (<code>ToDoListItem</code>), which combines the transition you constructed in the map with an indication of which field it is to be applied to.</p>
+<p>To better understand this approach, it might be good to understand what we <em>can't</em> do. For one thing, we can't apply the field's transition to it directly:</p>
+<pre><code class="language-rust ignore">fn main() {
+    let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
+
+    let mark_done = item.done().replace(true);
+
+    // This will fail to compile because `done()` exposes a read-only
+    // borrow of the Atom.
+    item.done().apply(mark_done);
+}
+</code></pre>
+<p>Nor can we apply the <code>Atom</code>'s state change directly to the <code>ToDoListItem</code>:</p>
+<pre><code class="language-rust ignore">fn main() {
+    let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
+
+    let mark_done = item.done().replace(true);
+
+    // This will fail to compile because `mark_done` is a `ReplaceAtom&lt;bool&gt;`
+    // but `item.apply()` expects a `ToDoListItemTransition`.
+    item.apply(mark_done);
+}
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
+                            <a rel="prev" href="atoms.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
 
                         
-                            <a rel="next" href="managing_state.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="lists.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -203,9 +291,13 @@ a violation of #3.</p>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
+                    <a rel="prev" href="atoms.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
 
                 
-                    <a rel="next" href="managing_state.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="lists.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
