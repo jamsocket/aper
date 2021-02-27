@@ -236,8 +236,8 @@ impl StateMachine for Counter {
 </span><span class="boring">   Subtract(i64),
 </span><span class="boring">   Reset,
 </span><span class="boring">}
-</span>
-impl Counter {
+</span><span class="boring">
+</span>impl Counter {
     pub fn add(&amp;self, i: i64) -&gt; CounterTransition {
         CounterTransition::Add(i)
     }

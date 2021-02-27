@@ -266,8 +266,8 @@ impl StateMachine for Counter {
 </span><span class="boring">   Subtract(i64),
 </span><span class="boring">   Reset,
 </span><span class="boring">}
-</span>
-impl Counter {
+</span><span class="boring">
+</span>impl Counter {
     pub fn add(&amp;self, i: i64) -&gt; CounterTransition {
         CounterTransition::Add(i)
     }
@@ -398,8 +398,8 @@ conflict.</p>
 </span><span class="boring">        }
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-fn main() {
+</span><span class="boring">
+</span>fn main() {
     let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
 
     assert_eq!(&quot;Buy gorceries&quot;, item.label().value());
@@ -408,8 +408,8 @@ fn main() {
     let mark_done = item.map_done(|d| d.replace(true));
     let fix_typo = item.map_label(|d| d.replace(&quot;Buy groceries&quot;.to_string()));
 
-    // Unlike before, the order in which the transitions are applied
-    // does not matter.
+    // Unlike with `ToDoListAtom`, the order in which the transitions 
+    // are applied here does not matter.
     item.apply(mark_done);
     item.apply(fix_typo);
 
@@ -426,7 +426,8 @@ which combines the transition you constructed in the map with an
 indication of which field it is to be applied to.</p>
 <p>To better understand this approach, it might be good to understand 
 what we <em>can't</em> do. For one thing, we can't apply the field's 
-transition to it directly:</p>
+<code>ReplaceAtom</code> transition directly to the <code>ToDoListItem</code> struct that
+contains it:</p>
 <pre><code class="language-rust ignore">fn main() {
     let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
 
@@ -473,76 +474,185 @@ transition to it directly:</p>
 </span><span class="boring">    }
 </span><span class="boring">}
 </span>
-<span class="boring">fn main() {
-</span>let mut to_do_list: List&lt;ToDoListItem&gt; = Default::default();
+fn main() {
+	let mut to_do_list: List&lt;ToDoListItem&gt; = Default::default();
 
-// Initially, the list is empty. We need to add things to it.
+	// Initially, the list is empty. We need to add things to it.
 
-// Append generates and returns an identifier which we can later
-// use to identify the record.
-let (dog_food_id, dog_food_transition) = to_do_list.append(
-		ToDoListItem::new(&quot;Get dog food&quot;.to_string())
-);
+	// Append generates and returns an identifier which we can later
+	// use to identify the record.
+	// The methods `append`, `prepend`, and `insert` of `List`
+	// return a `(id, transition)` pair, where the `id` can be used
+	// to refer to the element once it has been inserted.
+	let (dog_food_id, dog_food_transition) = to_do_list.append(
+			ToDoListItem::new(&quot;Get dog food&quot;.to_string())
+	);
 
-to_do_list.apply(dog_food_transition);
+	to_do_list.apply(dog_food_transition);
 
-let (lunch_id, lunch_transition) = to_do_list.append(
-		ToDoListItem::new(&quot;Make lunch&quot;.to_string())
-);
+	let (lunch_id, lunch_transition) = to_do_list.append(
+			ToDoListItem::new(&quot;Make lunch&quot;.to_string())
+	);
 
-to_do_list.apply(lunch_transition);
+	to_do_list.apply(lunch_transition);
 
-let emphasize_dog_food = to_do_list.map_item(dog_food_id,
-	|it| it.map_label(|lbl| lbl.replace(&quot;Get DOG FOOD!&quot;.to_string())));
+	let emphasize_dog_food = to_do_list.map_item(dog_food_id,
+		|it| it.map_label(|lbl| lbl.replace(&quot;Get DOG FOOD!&quot;.to_string()
+		)));
 
-to_do_list.apply(emphasize_dog_food);
+	to_do_list.apply(emphasize_dog_food);
 
-let mark_lunch_done = to_do_list.map_item(lunch_id,
-	|it| it.map_done(|done| done.replace(true)));
-<span class="boring">}
-</span></code></pre>
-<p>If this method of calling <code>map_*</code> seems tedious, don't worry! Later when we actually implement the UI, it will take care of itself due to the fact that the view hierarchy usually maps directly to the state machine hierarchy.</p>
+	let mark_lunch_done = to_do_list.map_item(lunch_id,
+		|it| it.map_done(|done| done.replace(true)));
+}
+</code></pre>
+<p>If this method of calling <code>map_*</code> seems tedious, don't worry! Later 
+when we actually implement the UI, we will see a design patter that
+allows us to eliminate the need for <code>map_*</code> methods.</p>
 <h1 id="designing-with-state-machines"><a class="header" href="#designing-with-state-machines">Designing with state machines</a></h1>
-<p>When working with state machines, situations often come up where there are multiple ways to represent the same state. We saw this already with the <code>ToDoListItem</code> example, where the state could be either:</p>
+<p>When working with state machines, situations often come up where there 
+are multiple ways to represent the same state. We saw this already 
+with the <code>ToDoListItem</code> <a href="derive.html">example</a>, where the state could be 
+either:</p>
 <ol>
-<li>A single <code>Atom</code> of a <code>ToDoListItem</code> struct with primitive types for fields, or</li>
-<li>A struct with two <code>Atom</code> fields, with each atom containing a primitive type.</li>
+<li>A single <code>Atom</code> of a <code>ToDoListItem</code> struct with primitive types for 
+fields, or</li>
+<li>A struct of two <code>Atom</code> fields, with each atom containing a 
+primitive type, implementing <code>StateMachine</code> through the <code>derive</code> 
+macro.</li>
 </ol>
-<p>Both approaches are exactly equivalent when it comes to representing data <em>at rest</em>. They differ only in how merges are handled when (in this case) multiple fields are modified at the same time. For the to-do list example, we decided that #2 was the right approach, but there may be other data types for which #1 is the best approach.</p>
-<p>This points out an important aspect of Aper that is central to its philosophy. Aper's focus is on providing <strong>semantics for describing what happens when concurrent modifications happen to the same data structure</strong>. The underlying storage Aper uses to do this is incidental.</p>
+<p>Both approaches are functionally equivalent when it comes to 
+representing data <em>at rest</em>. They differ only in how merges are 
+handled when (in this case) multiple fields are modified at the same 
+time. For the to-do list example, we decided that #2 was the right 
+approach, but there may be other data types for which #1 is the best 
+approach.</p>
+<p>This points to an important aspect of Aper that is central to its 
+design philosophy. Aper's focus is on helping you to express the 
+<strong>semantics of merging concurrent modifications to the same data 
+structure</strong>. The underlying data structures Aper provides are just a 
+means to that end.</p>
 <h1 id="implementing-new-state-machines"><a class="header" href="#implementing-new-state-machines">Implementing new state machines</a></h1>
-<p>So far, we've created state machines by composing primitive, pre-built state machines and using the derive macro. For more flexibility, you can also implement your own.</p>
-<p>I teased with an example of this with the <code>Counter</code>. As a slightly more complex example, let's implement Tic Tac Toe.</p>
-<pre><code class="language-rust noplaypen">use aper::StateMachine;
-use serde::{Serialize, Deserialize};
+<p>So far, we've created state machines by composing primitive, pre-built 
+state machines and using the derive macro. For more flexibility, you 
+can also implement your own. This may be useful when you want to
+implement a shared data structure that can't be expressed efficiently 
+with Aper's built-in data structures, or when your program state
+involves complex update logic. A great example of the latter is games,
+in which the games rules determine how state is updated.</p>
+<p>To demonstrate this, let's implement a state machine representing
+the game Tic Tac Toe.</p>
+<p>Tic Tac Toe has two players, X and O, which we can represent as
+an enum:</p>
+<pre><code class="language-rust noplaypen">use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
-enum Player {
-    X,
-    O,
-}
+enum Player { X, O }
+</code></pre>
+<p>There are three possible states to a tic tac toe game: the game
+is underway and waiting on a particular player to play next;
+the game has ended with a winner; or the game has ended in
+a tie where the board is filled but no player has won. We will
+represent all three of these with the <code>GameStatus</code> struct:</p>
+<pre><code class="language-rust noplaypen"><span class="boring">use serde::{Serialize, Deserialize};
+</span><span class="boring">#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+</span><span class="boring">enum Player { X, O }
+</span><span class="boring">
+</span>#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+enum GameStatus {
+    /// Indicates that the game is ongoing and the provided
+    /// player is next.
+    NextPlayer(Player),
 
-// The board is a 3x3 grid, flattened into an array:
-// 0 | 1 | 2
+    /// Indicates that the game has been won by the given player.
+    Won(Player),
+
+    /// Indicates that the game has ended in a tie.
+    Tie,
+}
+</code></pre>
+<p>The board is a 3x3 grid. For simplicity, let's flatten this into
+an array with 9 entries. Each grid space can either be an <code>X</code>,
+an <code>O</code>, or empty. We can thus represent each grid cell as an
+<code>Option&lt;Player&gt;</code>.</p>
+<p>The board cells correspond to indices in the flattened grid as
+follows:</p>
+<pre><code class="language-rust noplaypen">// 0 | 1 | 2
 // --+---+--
 // 3 | 4 | 5
 // --+---+--
 // 6 | 7 | 8
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
+</code></pre>
+<p>Combining the <code>GameStatus</code> with the grid, we have a game state that
+looks like this:</p>
+<pre><code class="language-rust noplaypen"><span class="boring">use serde::{Serialize, Deserialize};
+</span><span class="boring">#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+</span><span class="boring">enum Player { X, O }
+</span><span class="boring">
+</span><span class="boring">#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+</span><span class="boring">enum GameStatus {
+</span><span class="boring">    /// Indicates that the game is ongoing and the provided
+</span><span class="boring">    /// player is next.
+</span><span class="boring">    NextPlayer(Player),
+</span><span class="boring">
+</span><span class="boring">    /// Indicates that the game has been won by the given player.
+</span><span class="boring">    Won(Player),
+</span><span class="boring">
+</span><span class="boring">    /// Indicates that the game has ended in a tie.
+</span><span class="boring">    Tie,
+</span><span class="boring">}
+</span><span class="boring">
+</span>#[derive(Serialize, Deserialize, Clone, Debug)]
 struct TicTacToe {
+    /// The current state of the board as a flattened 3x3 grid.
     board: [Option&lt;Player&gt;; 9],
-    next_player: Option&lt;Player&gt;, // None if the game has ended.
-}
 
-impl TicTacToe {
+    /// The next player to play, or `None` if the game has ended.
+    status: GameStatus,
+}
+</code></pre>
+<p>Next, we need to implement some of the game logic. We need to be
+able to construct a new game, and also to be able to check if a
+player has won and also if the game has ended in a tie.</p>
+<pre><code class="language-rust noplaypen"><span class="boring">use serde::{Serialize, Deserialize};
+</span><span class="boring">#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+</span><span class="boring">enum Player { X, O }
+</span><span class="boring">
+</span><span class="boring">#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+</span><span class="boring">enum GameStatus {
+</span><span class="boring">    /// Indicates that the game is ongoing and the provided
+</span><span class="boring">    /// player is next.
+</span><span class="boring">    NextPlayer(Player),
+</span><span class="boring">
+</span><span class="boring">    /// Indicates that the game has been won by the given player.
+</span><span class="boring">    Won(Player),
+</span><span class="boring">
+</span><span class="boring">    /// Indicates that the game has ended in a tie.
+</span><span class="boring">    Tie,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Serialize, Deserialize, Clone, Debug)]
+</span><span class="boring">struct TicTacToe {
+</span><span class="boring">    /// The current state of the board as a flattened 3x3 grid.
+</span><span class="boring">    board: [Option&lt;Player&gt;; 9],
+</span><span class="boring">
+</span><span class="boring">    /// The next player to play, or `None` if the game has ended.
+</span><span class="boring">    status: GameStatus,
+</span><span class="boring">}
+</span><span class="boring">
+</span>impl TicTacToe {
     pub fn new() -&gt; TicTacToe {
         TicTacToe {
+            // Start with an empty board.
             board: [None; 9],
-            next_player: Some(Player::O),
+            // We'll default to player `O` going first.
+            status: GameStatus::NextPlayer(Player::O),
         }
     }
 
+    /// Given an array of three grid indices, check whether
+    /// the same player has a mark in all three. If so, return
+    /// the value of that player. Otherwise, return `None`.
     fn check_seq(&amp;self, seq: &amp;[usize; 3]) -&gt; Option&lt;Player&gt; {
         let v1 = self.board[seq[0]]?;
         let v2 = self.board[seq[1]]?;
@@ -555,14 +665,22 @@ impl TicTacToe {
         }
     }
 
-  fn winner(&amp;self) -&gt; Option&lt;Player&gt; {
+    /// Return the value of the player who has won if the
+    /// game has ended, or else return `None`.
+    fn winner(&amp;self) -&gt; Option&lt;Player&gt; {
+        // To win tic tac toe, a player must occupy every
+        // cell in either a column, row, or diagonal. There
+        // are eight sets of three cells we need to check.
         let seq_to_check: [[usize; 3]; 8] = [
+            // Three rows.
             [0, 1, 2],
             [3, 4, 5],
             [6, 7, 8],
+            // Three columns.
             [0, 3, 6],
             [1, 4, 7],
             [2, 5, 8],
+            // Two diagonals.
             [0, 4, 8],
             [2, 4, 6],
         ];
@@ -576,40 +694,148 @@ impl TicTacToe {
 
         None
     }
-}
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct TicTacToePlay(usize);
+    /// Return `true` if the game has ended in a tie because
+    /// there are no empty grid cells available to play.
+    fn tie(&amp;self) -&gt; bool {
+        self.board.iter().all(|d| d.is_some())
+    }
+}
+</code></pre>
+<p>The last step is to make <code>TicTacToe</code> a valid <code>StateMachine</code>.
+We'll start by creating <code>TicTacToeMove</code>, which represents the
+current player making a play for a given grid cell. The grid
+cell is provided by its flattened index.</p>
+<pre><code class="language-rust noplaypen"><span class="boring">use serde::{Serialize, Deserialize};
+</span>#[derive(Serialize, Deserialize, Clone, Debug)]
+struct TicTacToeMove(usize);
+</code></pre>
+<p>Finally, we can implement <code>StateMachine</code> for <code>TicTacToe</code>, using
+<code>TicTacToeMove</code> as the transition.</p>
+<pre><code class="language-rust noplaypen"><span class="boring">use serde::{Serialize, Deserialize};
+</span><span class="boring">#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+</span><span class="boring">enum Player { X, O }
+</span><span class="boring">
+</span><span class="boring">#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+</span><span class="boring">enum GameStatus {
+</span><span class="boring">    /// Indicates that the game is ongoing and the provided
+</span><span class="boring">    /// player is next.
+</span><span class="boring">    NextPlayer(Player),
+</span><span class="boring">
+</span><span class="boring">    /// Indicates that the game has been won by the given player.
+</span><span class="boring">    Won(Player),
+</span><span class="boring">
+</span><span class="boring">    /// Indicates that the game has ended in a tie.
+</span><span class="boring">    Tie,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Serialize, Deserialize, Clone, Debug)]
+</span><span class="boring">struct TicTacToe {
+</span><span class="boring">    /// The current state of the board as a flattened 3x3 grid.
+</span><span class="boring">    board: [Option&lt;Player&gt;; 9],
+</span><span class="boring">
+</span><span class="boring">    /// The next player to play, or `None` if the game has ended.
+</span><span class="boring">    status: GameStatus,
+</span><span class="boring">}
+</span><span class="boring">impl TicTacToe {
+</span><span class="boring">    pub fn new() -&gt; TicTacToe {
+</span><span class="boring">        TicTacToe {
+</span><span class="boring">            // Start with an empty board.
+</span><span class="boring">            board: [None; 9],
+</span><span class="boring">            // We'll default to player `O` going first.
+</span><span class="boring">            status: GameStatus::NextPlayer(Player::O),
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    /// Given an array of three grid indices, check whether
+</span><span class="boring">    /// the same player has a mark in all three. If so, return
+</span><span class="boring">    /// the value of that player. Otherwise, return `None`.
+</span><span class="boring">    fn check_seq(&amp;self, seq: &amp;[usize; 3]) -&gt; Option&lt;Player&gt; {
+</span><span class="boring">        let v1 = self.board[seq[0]]?;
+</span><span class="boring">        let v2 = self.board[seq[1]]?;
+</span><span class="boring">        let v3 = self.board[seq[2]]?;
+</span><span class="boring">
+</span><span class="boring">        if (v1 == v2) &amp;&amp; (v2 == v3) {
+</span><span class="boring">            Some(v1)
+</span><span class="boring">        } else {
+</span><span class="boring">            None
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    /// Return the value of the player who has won if the
+</span><span class="boring">    /// game has ended, or else return `None`.
+</span><span class="boring">    fn winner(&amp;self) -&gt; Option&lt;Player&gt; {
+</span><span class="boring">        // To win tic tac toe, a player must occupy every
+</span><span class="boring">        // cell in either a column, row, or diagonal. There
+</span><span class="boring">        // are eight sets of three cells we need to check.
+</span><span class="boring">        let seq_to_check: [[usize; 3]; 8] = [
+</span><span class="boring">            // Three rows.
+</span><span class="boring">            [0, 1, 2],
+</span><span class="boring">            [3, 4, 5],
+</span><span class="boring">            [6, 7, 8],
+</span><span class="boring">            // Three columns.
+</span><span class="boring">            [0, 3, 6],
+</span><span class="boring">            [1, 4, 7],
+</span><span class="boring">            [2, 5, 8],
+</span><span class="boring">            // Two diagonals.
+</span><span class="boring">            [0, 4, 8],
+</span><span class="boring">            [2, 4, 6],
+</span><span class="boring">        ];
+</span><span class="boring">
+</span><span class="boring">        for seq in &amp;seq_to_check {
+</span><span class="boring">            let result = self.check_seq(seq);
+</span><span class="boring">            if result.is_some() {
+</span><span class="boring">                return result;
+</span><span class="boring">            }
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        None
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    /// Return `true` if the game has ended in a tie because
+</span><span class="boring">    /// there are no empty grid cells available to play.
+</span><span class="boring">    fn tie(&amp;self) -&gt; bool {
+</span><span class="boring">        self.board.iter().all(|d| d.is_some())
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">#[derive(Serialize, Deserialize, Clone, Debug)]
+</span><span class="boring">struct TicTacToeMove(usize);
+</span><span class="boring">
+</span>use aper::StateMachine;
 
 impl StateMachine for TicTacToe {
-    type Transition = TicTacToePlay;
+    type Transition = TicTacToeMove;
     
-    fn apply(&amp;mut self, play: TicTacToePlay) {
-        let this_player = if let Some(this_player) = self.next_player {
+    fn apply(&amp;mut self, play: TicTacToeMove) {
+        let this_player = if let GameStatus::NextPlayer(this_player)
+                = self.status {
             this_player
         } else {
-            // The game has already been won, don't accept another play.
+            // The game has already ended, don't accept another play.
             return;
         };
-        let TicTacToePlay(play_index) = play;
+        let TicTacToeMove(play_index) = play;
         if self.board[play_index].is_some() {
             // Can't play over something that has already been played!
             return;
         }
         // Insert this play into the board.
-        self.board[play_index] = self.next_player;
+        self.board[play_index] = Some(this_player);
         
         // Check for a winner.
-        if self.winner().is_some() {
-            self.next_player = None;
+        if let Some(winner) = self.winner() {
+            self.status = GameStatus::Won(winner);
+            return;
+        } else if self.tie() {
+            self.status = GameStatus::Tie;
             return;
         }
 
         // Update the next player.
         if Player::X == this_player {
-            self.next_player = Some(Player::O);
+            self.status = GameStatus::NextPlayer(Player::O);
         } else {
-            self.next_player = Some(Player::X);
+            self.status = GameStatus::NextPlayer(Player::X);
         }
     }
 }

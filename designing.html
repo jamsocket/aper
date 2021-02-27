@@ -164,13 +164,28 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="designing-with-state-machines"><a class="header" href="#designing-with-state-machines">Designing with state machines</a></h1>
-<p>When working with state machines, situations often come up where there are multiple ways to represent the same state. We saw this already with the <code>ToDoListItem</code> example, where the state could be either:</p>
+<p>When working with state machines, situations often come up where there 
+are multiple ways to represent the same state. We saw this already 
+with the <code>ToDoListItem</code> <a href="derive.html">example</a>, where the state could be 
+either:</p>
 <ol>
-<li>A single <code>Atom</code> of a <code>ToDoListItem</code> struct with primitive types for fields, or</li>
-<li>A struct with two <code>Atom</code> fields, with each atom containing a primitive type.</li>
+<li>A single <code>Atom</code> of a <code>ToDoListItem</code> struct with primitive types for 
+fields, or</li>
+<li>A struct of two <code>Atom</code> fields, with each atom containing a 
+primitive type, implementing <code>StateMachine</code> through the <code>derive</code> 
+macro.</li>
 </ol>
-<p>Both approaches are exactly equivalent when it comes to representing data <em>at rest</em>. They differ only in how merges are handled when (in this case) multiple fields are modified at the same time. For the to-do list example, we decided that #2 was the right approach, but there may be other data types for which #1 is the best approach.</p>
-<p>This points out an important aspect of Aper that is central to its philosophy. Aper's focus is on providing <strong>semantics for describing what happens when concurrent modifications happen to the same data structure</strong>. The underlying storage Aper uses to do this is incidental.</p>
+<p>Both approaches are functionally equivalent when it comes to 
+representing data <em>at rest</em>. They differ only in how merges are 
+handled when (in this case) multiple fields are modified at the same 
+time. For the to-do list example, we decided that #2 was the right 
+approach, but there may be other data types for which #1 is the best 
+approach.</p>
+<p>This points to an important aspect of Aper that is central to its 
+design philosophy. Aper's focus is on helping you to express the 
+<strong>semantics of merging concurrent modifications to the same data 
+structure</strong>. The underlying data structures Aper provides are just a 
+means to that end.</p>
 
                     </main>
 

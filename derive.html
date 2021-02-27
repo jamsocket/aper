@@ -231,8 +231,8 @@ conflict.</p>
 </span><span class="boring">        }
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-fn main() {
+</span><span class="boring">
+</span>fn main() {
     let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
 
     assert_eq!(&quot;Buy gorceries&quot;, item.label().value());
@@ -241,8 +241,8 @@ fn main() {
     let mark_done = item.map_done(|d| d.replace(true));
     let fix_typo = item.map_label(|d| d.replace(&quot;Buy groceries&quot;.to_string()));
 
-    // Unlike before, the order in which the transitions are applied
-    // does not matter.
+    // Unlike with `ToDoListAtom`, the order in which the transitions 
+    // are applied here does not matter.
     item.apply(mark_done);
     item.apply(fix_typo);
 
@@ -259,7 +259,8 @@ which combines the transition you constructed in the map with an
 indication of which field it is to be applied to.</p>
 <p>To better understand this approach, it might be good to understand 
 what we <em>can't</em> do. For one thing, we can't apply the field's 
-transition to it directly:</p>
+<code>ReplaceAtom</code> transition directly to the <code>ToDoListItem</code> struct that
+contains it:</p>
 <pre><code class="language-rust ignore">fn main() {
     let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
 
