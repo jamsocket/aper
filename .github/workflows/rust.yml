@@ -23,6 +23,8 @@ jobs:
     #  run: rustup toolchain install nightly
     #- name: Build docs
     #  run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --workspace --no-deps
+    - name: Install mdbook
+      run: cargo install mdbook
     - name: Build book
       run: mdbook build book
     - name: Deploy 🚀
