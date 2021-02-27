@@ -3,4 +3,5 @@ members = [
     "aper",
     "aper-actix",
     "aper-yew",
+    "book/tests",
 ]
