@@ -1,5 +1,9 @@
 #[macro_use]
 extern crate doc_comment;
 
-doctest!("../../src/building.md");
+extern crate aper;
+
 doctest!("../../src/atoms.md");
+doctest!("../../src/building.md");
+doctest!("../../src/derive.md");
+

@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "aper",
+    "aper/aper_derive",
     "aper-actix",
     "aper-yew",
     "book/tests",
