@@ -35,8 +35,8 @@ fn main() {
     // Construct a new `ReplaceAtom` transition.
     let transition = atom.replace(6);
 
-    // Remember, calling `.replace` does not actually change any state -- only a call to
-    // `.apply` can do that.
+    // Remember, calling `.replace` does not actually change any
+    // state -- only a call to `.apply` can do that.
     assert_eq!(&5, atom.value());
     
     atom.apply(transition);

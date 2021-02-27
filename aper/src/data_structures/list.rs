@@ -43,7 +43,7 @@ impl<T: StateMachine> Default for List<T> {
         List {
             items: Default::default(),
             items_inv: Default::default(),
-            pool: Default::default()
+            pool: Default::default(),
         }
     }
 }
@@ -143,8 +143,11 @@ impl<T: StateMachine> List<T> {
         ListOperation::Move(id, new_location)
     }
 
-    pub fn map_item(&self, id: Uuid, fun: impl FnOnce(&T) ->
-        <T as StateMachine>::Transition) -> <Self as StateMachine>::Transition {
+    pub fn map_item(
+        &self,
+        id: Uuid,
+        fun: impl FnOnce(&T) -> <T as StateMachine>::Transition,
+    ) -> <Self as StateMachine>::Transition {
         if let Some(it) = self.pool.get(&id) {
             ListOperation::Apply(id, fun(it))
         } else {
@@ -193,20 +196,29 @@ mod tests {
         {
             let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-            list.apply(list.insert(
-                ZenoIndex::new_between(&locations[2], &locations[3]),
-                Atom::new(44),
-            ).1);
+            list.apply(
+                list.insert(
+                    ZenoIndex::new_between(&locations[2], &locations[3]),
+                    Atom::new(44),
+                )
+                .1,
+            );
 
-            list.apply(list.insert(
-                ZenoIndex::new_between(&locations[0], &locations[1]),
-                Atom::new(23),
-            ).1);
+            list.apply(
+                list.insert(
+                    ZenoIndex::new_between(&locations[0], &locations[1]),
+                    Atom::new(23),
+                )
+                .1,
+            );
 
-            list.apply(list.insert(
-                ZenoIndex::new_between(&locations[1], &locations[2]),
-                Atom::new(84),
-            ).1);
+            list.apply(
+                list.insert(
+                    ZenoIndex::new_between(&locations[1], &locations[2]),
+                    Atom::new(84),
+                )
+                .1,
+            );
 
             {
                 let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();

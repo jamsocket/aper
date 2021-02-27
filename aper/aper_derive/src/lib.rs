@@ -37,12 +37,18 @@ impl<'a> Field<'a> {
             ty: &field.ty,
             apply_variant,
             transition_ty,
-            map_fn_name
+            map_fn_name,
         }
     }
 
     fn generate_accessor(&self, enum_name: &Ident) -> TokenStream {
-        let Field { name, ty, map_fn_name, apply_variant , transition_ty} = self;
+        let Field {
+            name,
+            ty,
+            map_fn_name,
+            apply_variant,
+            transition_ty,
+        } = self;
 
         let gen = quote! {
             pub fn #name(&self) -> &#ty {
@@ -57,7 +63,9 @@ impl<'a> Field<'a> {
     }
 
     fn generate_enum_variant(&self) -> TokenStream {
-        let Field { apply_variant, ty, .. } = self;
+        let Field {
+            apply_variant, ty, ..
+        } = self;
         let gen: TokenStream = quote! {
             #apply_variant(<#ty as StateMachine>::Transition),
         };
