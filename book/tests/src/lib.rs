@@ -6,4 +6,5 @@ extern crate aper;
 doctest!("../../src/atoms.md");
 doctest!("../../src/building.md");
 doctest!("../../src/derive.md");
+doctest!("../../src/implementing.md");
 doctest!("../../src/lists.md");
