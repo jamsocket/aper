@@ -82,7 +82,7 @@ Now, any attempt to modify the state of the counter must flow through `apply` as
 #    Subtract(i64),
 #    Reset,
 # }
-
+#
 impl Counter {
     pub fn add(&self, i: i64) -> CounterTransition {
         CounterTransition::Add(i)

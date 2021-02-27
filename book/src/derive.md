@@ -77,7 +77,7 @@ conflict.
 #         }
 #     }
 # }
-
+#
 fn main() {
     let mut item = ToDoListItem::new("Buy gorceries".to_string());
 
@@ -87,8 +87,8 @@ fn main() {
     let mark_done = item.map_done(|d| d.replace(true));
     let fix_typo = item.map_label(|d| d.replace("Buy groceries".to_string()));
 
-    // Unlike before, the order in which the transitions are applied
-    // does not matter.
+    // Unlike with `ToDoListAtom`, the order in which the transitions 
+    // are applied here does not matter.
     item.apply(mark_done);
     item.apply(fix_typo);
 
@@ -107,7 +107,8 @@ indication of which field it is to be applied to.
 
 To better understand this approach, it might be good to understand 
 what we *can't* do. For one thing, we can't apply the field's 
-transition to it directly:
+`ReplaceAtom` transition directly to the `ToDoListItem` struct that
+contains it:
 
 ```rust,ignore
 fn main() {

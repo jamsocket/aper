@@ -4,3 +4,4 @@ language = "en"
 multilingual = false
 src = "src"
 title = "Getting Started with Aper"
+default-theme = "rust"

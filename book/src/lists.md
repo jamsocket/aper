@@ -26,33 +26,39 @@ use aper::data_structures::List;
 #     }
 # }
 
-# fn main() {
-let mut to_do_list: List<ToDoListItem> = Default::default();
+fn main() {
+	let mut to_do_list: List<ToDoListItem> = Default::default();
 
-// Initially, the list is empty. We need to add things to it.
+	// Initially, the list is empty. We need to add things to it.
 
-// Append generates and returns an identifier which we can later
-// use to identify the record.
-let (dog_food_id, dog_food_transition) = to_do_list.append(
-		ToDoListItem::new("Get dog food".to_string())
-);
+	// Append generates and returns an identifier which we can later
+	// use to identify the record.
+	// The methods `append`, `prepend`, and `insert` of `List`
+	// return a `(id, transition)` pair, where the `id` can be used
+	// to refer to the element once it has been inserted.
+	let (dog_food_id, dog_food_transition) = to_do_list.append(
+			ToDoListItem::new("Get dog food".to_string())
+	);
 
-to_do_list.apply(dog_food_transition);
+	to_do_list.apply(dog_food_transition);
 
-let (lunch_id, lunch_transition) = to_do_list.append(
-		ToDoListItem::new("Make lunch".to_string())
-);
+	let (lunch_id, lunch_transition) = to_do_list.append(
+			ToDoListItem::new("Make lunch".to_string())
+	);
 
-to_do_list.apply(lunch_transition);
+	to_do_list.apply(lunch_transition);
 
-let emphasize_dog_food = to_do_list.map_item(dog_food_id,
-	|it| it.map_label(|lbl| lbl.replace("Get DOG FOOD!".to_string())));
+	let emphasize_dog_food = to_do_list.map_item(dog_food_id,
+		|it| it.map_label(|lbl| lbl.replace("Get DOG FOOD!".to_string()
+		)));
 
-to_do_list.apply(emphasize_dog_food);
+	to_do_list.apply(emphasize_dog_food);
 
-let mark_lunch_done = to_do_list.map_item(lunch_id,
-	|it| it.map_done(|done| done.replace(true)));
-# }
+	let mark_lunch_done = to_do_list.map_item(lunch_id,
+		|it| it.map_done(|done| done.replace(true)));
+}
 ```
 
-If this method of calling `map_*` seems tedious, don't worry! Later when we actually implement the UI, it will take care of itself due to the fact that the view hierarchy usually maps directly to the state machine hierarchy.
+If this method of calling `map_*` seems tedious, don't worry! Later 
+when we actually implement the UI, we will see a design patter that
+allows us to eliminate the need for `map_*` methods.

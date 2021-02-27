@@ -1,40 +1,142 @@
 # Implementing new state machines
 
-So far, we've created state machines by composing primitive, pre-built state machines and using the derive macro. For more flexibility, you can also implement your own.
+So far, we've created state machines by composing primitive, pre-built 
+state machines and using the derive macro. For more flexibility, you 
+can also implement your own. This may be useful when you want to
+implement a shared data structure that can't be expressed efficiently 
+with Aper's built-in data structures, or when your program state
+involves complex update logic. A great example of the latter is games,
+in which the games rules determine how state is updated.
 
-I teased with an example of this with the `Counter`. As a slightly more complex example, let's implement Tic Tac Toe.
+To demonstrate this, let's implement a state machine representing
+the game Tic Tac Toe.
+
+Tic Tac Toe has two players, X and O, which we can represent as
+an enum:
 
 ```rust,noplaypen
-use aper::StateMachine;
 use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
-enum Player {
-    X,
-    O,
-}
+enum Player { X, O }
+```
 
-// The board is a 3x3 grid, flattened into an array:
+There are three possible states to a tic tac toe game: the game
+is underway and waiting on a particular player to play next;
+the game has ended with a winner; or the game has ended in
+a tie where the board is filled but no player has won. We will
+represent all three of these with the `GameStatus` struct:
+
+```rust,noplaypen
+# use serde::{Serialize, Deserialize};
+# #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+# enum Player { X, O }
+#
+#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+enum GameStatus {
+    /// Indicates that the game is ongoing and the provided
+    /// player is next.
+    NextPlayer(Player),
+
+    /// Indicates that the game has been won by the given player.
+    Won(Player),
+
+    /// Indicates that the game has ended in a tie.
+    Tie,
+}
+```
+
+The board is a 3x3 grid. For simplicity, let's flatten this into
+an array with 9 entries. Each grid space can either be an `X`,
+an `O`, or empty. We can thus represent each grid cell as an
+`Option<Player>`.
+
+The board cells correspond to indices in the flattened grid as
+follows:
+
+```rust,noplaypen
 // 0 | 1 | 2
 // --+---+--
 // 3 | 4 | 5
 // --+---+--
 // 6 | 7 | 8
+```
 
+Combining the `GameStatus` with the grid, we have a game state that
+looks like this:
+
+```rust,noplaypen
+# use serde::{Serialize, Deserialize};
+# #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+# enum Player { X, O }
+#
+# #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+# enum GameStatus {
+#     /// Indicates that the game is ongoing and the provided
+#     /// player is next.
+#     NextPlayer(Player),
+#
+#     /// Indicates that the game has been won by the given player.
+#     Won(Player),
+#
+#     /// Indicates that the game has ended in a tie.
+#     Tie,
+# }
+#
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct TicTacToe {
+    /// The current state of the board as a flattened 3x3 grid.
     board: [Option<Player>; 9],
-    next_player: Option<Player>, // None if the game has ended.
-}
 
+    /// The next player to play, or `None` if the game has ended.
+    status: GameStatus,
+}
+```
+
+Next, we need to implement some of the game logic. We need to be
+able to construct a new game, and also to be able to check if a
+player has won and also if the game has ended in a tie.
+
+```rust,noplaypen
+# use serde::{Serialize, Deserialize};
+# #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+# enum Player { X, O }
+#
+# #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+# enum GameStatus {
+#     /// Indicates that the game is ongoing and the provided
+#     /// player is next.
+#     NextPlayer(Player),
+#
+#     /// Indicates that the game has been won by the given player.
+#     Won(Player),
+#
+#     /// Indicates that the game has ended in a tie.
+#     Tie,
+# }
+#
+# #[derive(Serialize, Deserialize, Clone, Debug)]
+# struct TicTacToe {
+#     /// The current state of the board as a flattened 3x3 grid.
+#     board: [Option<Player>; 9],
+#
+#     /// The next player to play, or `None` if the game has ended.
+#     status: GameStatus,
+# }
+#
 impl TicTacToe {
     pub fn new() -> TicTacToe {
         TicTacToe {
+            // Start with an empty board.
             board: [None; 9],
-            next_player: Some(Player::O),
+            // We'll default to player `O` going first.
+            status: GameStatus::NextPlayer(Player::O),
         }
     }
 
+    /// Given an array of three grid indices, check whether
+    /// the same player has a mark in all three. If so, return
+    /// the value of that player. Otherwise, return `None`.
     fn check_seq(&self, seq: &[usize; 3]) -> Option<Player> {
         let v1 = self.board[seq[0]]?;
         let v2 = self.board[seq[1]]?;
@@ -47,14 +149,22 @@ impl TicTacToe {
         }
     }
 
-  fn winner(&self) -> Option<Player> {
+    /// Return the value of the player who has won if the
+    /// game has ended, or else return `None`.
+    fn winner(&self) -> Option<Player> {
+        // To win tic tac toe, a player must occupy every
+        // cell in either a column, row, or diagonal. There
+        // are eight sets of three cells we need to check.
         let seq_to_check: [[usize; 3]; 8] = [
+            // Three rows.
             [0, 1, 2],
             [3, 4, 5],
             [6, 7, 8],
+            // Three columns.
             [0, 3, 6],
             [1, 4, 7],
             [2, 5, 8],
+            // Two diagonals.
             [0, 4, 8],
             [2, 4, 6],
         ];
@@ -68,40 +178,154 @@ impl TicTacToe {
 
         None
     }
-}
 
+    /// Return `true` if the game has ended in a tie because
+    /// there are no empty grid cells available to play.
+    fn tie(&self) -> bool {
+        self.board.iter().all(|d| d.is_some())
+    }
+}
+```
+
+The last step is to make `TicTacToe` a valid `StateMachine`.
+We'll start by creating `TicTacToeMove`, which represents the
+current player making a play for a given grid cell. The grid
+cell is provided by its flattened index.
+
+```rust,noplaypen
+# use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Clone, Debug)]
-struct TicTacToePlay(usize);
+struct TicTacToeMove(usize);
+```
+
+Finally, we can implement `StateMachine` for `TicTacToe`, using
+`TicTacToeMove` as the transition.
+
+```rust,noplaypen
+# use serde::{Serialize, Deserialize};
+# #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+# enum Player { X, O }
+#
+# #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+# enum GameStatus {
+#     /// Indicates that the game is ongoing and the provided
+#     /// player is next.
+#     NextPlayer(Player),
+#
+#     /// Indicates that the game has been won by the given player.
+#     Won(Player),
+#
+#     /// Indicates that the game has ended in a tie.
+#     Tie,
+# }
+#
+# #[derive(Serialize, Deserialize, Clone, Debug)]
+# struct TicTacToe {
+#     /// The current state of the board as a flattened 3x3 grid.
+#     board: [Option<Player>; 9],
+#
+#     /// The next player to play, or `None` if the game has ended.
+#     status: GameStatus,
+# }
+# impl TicTacToe {
+#     pub fn new() -> TicTacToe {
+#         TicTacToe {
+#             // Start with an empty board.
+#             board: [None; 9],
+#             // We'll default to player `O` going first.
+#             status: GameStatus::NextPlayer(Player::O),
+#         }
+#     }
+# 
+#     /// Given an array of three grid indices, check whether
+#     /// the same player has a mark in all three. If so, return
+#     /// the value of that player. Otherwise, return `None`.
+#     fn check_seq(&self, seq: &[usize; 3]) -> Option<Player> {
+#         let v1 = self.board[seq[0]]?;
+#         let v2 = self.board[seq[1]]?;
+#         let v3 = self.board[seq[2]]?;
+# 
+#         if (v1 == v2) && (v2 == v3) {
+#             Some(v1)
+#         } else {
+#             None
+#         }
+#     }
+# 
+#     /// Return the value of the player who has won if the
+#     /// game has ended, or else return `None`.
+#     fn winner(&self) -> Option<Player> {
+#         // To win tic tac toe, a player must occupy every
+#         // cell in either a column, row, or diagonal. There
+#         // are eight sets of three cells we need to check.
+#         let seq_to_check: [[usize; 3]; 8] = [
+#             // Three rows.
+#             [0, 1, 2],
+#             [3, 4, 5],
+#             [6, 7, 8],
+#             // Three columns.
+#             [0, 3, 6],
+#             [1, 4, 7],
+#             [2, 5, 8],
+#             // Two diagonals.
+#             [0, 4, 8],
+#             [2, 4, 6],
+#         ];
+# 
+#         for seq in &seq_to_check {
+#             let result = self.check_seq(seq);
+#             if result.is_some() {
+#                 return result;
+#             }
+#         }
+# 
+#         None
+#     }
+# 
+#     /// Return `true` if the game has ended in a tie because
+#     /// there are no empty grid cells available to play.
+#     fn tie(&self) -> bool {
+#         self.board.iter().all(|d| d.is_some())
+#     }
+# }
+# #[derive(Serialize, Deserialize, Clone, Debug)]
+# struct TicTacToeMove(usize);
+#
+use aper::StateMachine;
 
 impl StateMachine for TicTacToe {
-    type Transition = TicTacToePlay;
+    type Transition = TicTacToeMove;
     
-    fn apply(&mut self, play: TicTacToePlay) {
-        let this_player = if let Some(this_player) = self.next_player {
+    fn apply(&mut self, play: TicTacToeMove) {
+        let this_player = if let GameStatus::NextPlayer(this_player)
+                = self.status {
             this_player
         } else {
-            // The game has already been won, don't accept another play.
+            // The game has already ended, don't accept another play.
             return;
         };
-        let TicTacToePlay(play_index) = play;
+        let TicTacToeMove(play_index) = play;
         if self.board[play_index].is_some() {
             // Can't play over something that has already been played!
             return;
         }
         // Insert this play into the board.
-        self.board[play_index] = self.next_player;
+        self.board[play_index] = Some(this_player);
         
         // Check for a winner.
-        if self.winner().is_some() {
-            self.next_player = None;
+        if let Some(winner) = self.winner() {
+            self.status = GameStatus::Won(winner);
+            return;
+        } else if self.tie() {
+            self.status = GameStatus::Tie;
             return;
         }
 
         // Update the next player.
         if Player::X == this_player {
-            self.next_player = Some(Player::O);
+            self.status = GameStatus::NextPlayer(Player::O);
         } else {
-            self.next_player = Some(Player::X);
+            self.status = GameStatus::NextPlayer(Player::X);
         }
     }
 }
