@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="'./introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html" class="active"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html" class="active"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -164,12 +164,15 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="derive-macro"><a class="header" href="#derive-macro">Derive macro</a></h1>
-<p>If networks were infinitely fast, <code>Atom</code> could be the only state machine we needed: every time the user changed the state, we'd just send the new state to every client and update them all instantly.</p>
-<p>In practice, the reason we can't do this is that without infinitely fast networks, it's possible for different users to make conflicting changes. For example, let's say we represented a to-do list item with an Atom:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use aper::data_structures::Atom;
+<p>In the last section, we were introducte to the <code>Atom</code> state machine.
+If networks were infinitely fast, <code>Atom</code> might be the only state 
+machine we ever needed: every time a user changed the state, we'd 
+just end the new entire state to every other user and be done with it.</p>
+<p>In practice, the reason we can't do this is that without infinitely 
+fast networks, it's possible for different users to make conflicting 
+changes. For example, let's say we represented a to-do list item
+as a state machine by wrapping it in an <code>Atom</code>:</p>
+<pre><code class="language-rust noplaypen">use aper::data_structures::Atom;
 
 struct ToDoListItem {
     done: bool,
@@ -177,16 +180,20 @@ struct ToDoListItem {
 }
 
 type ToDoListAtom = Atom&lt;ToDoListItem&gt;;
-<span class="boring">}
-</span></code></pre></pre>
-<p>Suppose you and I both modified this item at the same time. You marked it as done, and I fixed a typo in the label. Your edit hits the server first, so the server's state is briefly updated with the item marked as “done”. But my transition was sent at the same time as yours, and because an Atom captures the entire value, it includes the old value of <code>done</code>! My edit undoes yours.</p>
-<p>To avoid this, we can push <code>Atom</code>s deeper down into the data structure. Aper facilitates this with a <code>derive</code> macro:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use aper::StateMachine;
+</code></pre>
+<p>Imagine that you and I are using a shared to-do list app that took
+this approach to representing state. Suppose we both modified this 
+item at the same time: you marked it as <strong>done</strong>, and I fixed a typo 
+in the <strong>label</strong>. Your edit hits the server first, so the server's 
+state is briefly updated with the item marked as <strong>done</strong>. But my 
+transition was sent at the same time as yours, and because an Atom 
+update carries with it the entire value, it includes the old state
+of <strong>done</strong>. When my edit is applied, it has the effect of undoing
+yours. <a href="https://www.youtube.com/watch?v=gcyOoPDlSuU">How rude</a>.</p>
+<p>To avoid this, we can push <code>Atom</code>s deeper down into the data 
+structure. Aper facilitates this with a <code>derive</code> macro:</p>
+<pre><code class="language-rust noplaypen">use aper::StateMachine;
 use aper::data_structures::Atom;
-use aper_derive::StateMachine;
 use serde::{Serialize, Deserialize};
 
 #[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
@@ -203,12 +210,11 @@ impl ToDoListItem {
         }
     }
 }
-<span class="boring">}
-</span></code></pre></pre>
-<p>Now, we can represent these same transitions in a way that they don't conflict.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">use aper::StateMachine;
+</code></pre>
+<p>Now, we can represent these same transitions in a way that they don't 
+conflict.</p>
+<pre><code class="language-rust noplaypen"><span class="boring">use aper::StateMachine;
 </span><span class="boring">use aper::data_structures::Atom;
-</span><span class="boring">use aper_derive::StateMachine;
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">
 </span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
@@ -243,9 +249,17 @@ fn main() {
     assert_eq!(&quot;Buy groceries&quot;, item.label().value());
     assert_eq!(&amp;true, item.done().value());
 }
-</code></pre></pre>
-<p>The methods <code>map_done</code> and <code>map_label</code> are generated by the derive macro by prepending <code>map_</code> to each field. They take a single argument, which is a function from the type of that field (e.g. <code>Atom&lt;bool&gt;</code>) to a type of that field's transition (<code>ReplaceAtom&lt;bool&gt;</code>). They return a transition that can be applied to the parent struct (<code>ToDoListItem</code>), which combines the transition you constructed in the map with an indication of which field it is to be applied to.</p>
-<p>To better understand this approach, it might be good to understand what we <em>can't</em> do. For one thing, we can't apply the field's transition to it directly:</p>
+</code></pre>
+<p>The methods <code>map_done</code> and <code>map_label</code> are generated by the derive 
+macro by prepending <code>map_</code> to each field. They take a single argument, 
+which is a function from the type of that field (e.g. <code>Atom&lt;bool&gt;</code>) to 
+a type of that field's transition (<code>ReplaceAtom&lt;bool&gt;</code>). They return a 
+transition that can be applied to the parent struct (<code>ToDoListItem</code>), 
+which combines the transition you constructed in the map with an 
+indication of which field it is to be applied to.</p>
+<p>To better understand this approach, it might be good to understand 
+what we <em>can't</em> do. For one thing, we can't apply the field's 
+transition to it directly:</p>
 <pre><code class="language-rust ignore">fn main() {
     let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
 
@@ -256,7 +270,8 @@ fn main() {
     item.done().apply(mark_done);
 }
 </code></pre>
-<p>Nor can we apply the <code>Atom</code>'s state change directly to the <code>ToDoListItem</code>:</p>
+<p>Nor can we apply the <code>Atom</code>'s state change directly to the 
+<code>ToDoListItem</code>:</p>
 <pre><code class="language-rust ignore">fn main() {
     let mut item = ToDoListItem::new(&quot;Buy gorceries&quot;.to_string());
 

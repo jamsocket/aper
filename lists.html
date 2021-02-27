@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="'./introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html" class="active"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html" class="active"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -166,10 +166,9 @@
                         <h1 id="lists"><a class="header" href="#lists">Lists</a></h1>
 <p>Another built-in data structure is the <code>List</code>. Lists are ordered sequence that you can iterate over, and arbitrarily insert/remove from. The values in a list are themselves state machines (if you never want to modify the inner state of values on a list, you can use <code>Constant</code> as a wrapper around the values.)</p>
 <p>Let's use the <code>ToDoListItem</code> from the last section to create a <code>ToDoList</code></p>
-<pre><pre class="playground"><code class="language-rust">use aper::data_structures::List;
+<pre><code class="language-rust noplaypen">use aper::data_structures::List;
 <span class="boring">use aper::StateMachine;
 </span><span class="boring">use aper::data_structures::Atom;
-</span><span class="boring">use aper_derive::StateMachine;
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">use std::default::Default;
 </span><span class="boring">
@@ -215,7 +214,7 @@ to_do_list.apply(emphasize_dog_food);
 let mark_lunch_done = to_do_list.map_item(lunch_id,
 	|it| it.map_done(|done| done.replace(true)));
 <span class="boring">}
-</span></code></pre></pre>
+</span></code></pre>
 <p>If this method of calling <code>map_*</code> seems tedious, don't worry! Later when we actually implement the UI, it will take care of itself due to the fact that the view hierarchy usually maps directly to the state machine hierarchy.</p>
 
                     </main>

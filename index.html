@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="'./introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -164,19 +164,22 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>Aper is a framework that lets you synchronize program state between users. In Aper, all state is represented as a <strong>state machine</strong>, which means that:</p>
+<p><strong>Aper</strong> is a Rust library for representing data that can be read and written to by multiple users in real time.</p>
+<p>Use-cases of Aper include managing the state of an application with real-time collaboration features, or synchronizing the game state of a multiplayer game.</p>
+<p>The core <code>aper</code> library implements the underlying data structures and algorithms, but is agnostic to the actual mechanism for transfering data on a network. The crates <code>aper-yew</code> and <code>aper-actix</code> provide a client and server aimed at synchronizing state across multiple <code>WebAssembly</code> clients using <code>WebSockets</code>.</p>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h2>
+<p>In Aper, all state must be represented as a <strong>state machine</strong>, which means that:</p>
 <ol>
-<li>It implements the <code>StateMachine</code> trait, which has one method: <code>apply</code>.</li>
-<li><strong>All</strong> changes to state flow through the <code>apply</code> method, which takes a single argument
-(the type of that argument is up to you).</li>
+<li>It implements the <code>StateMachine</code> trait, which has one type argument (<code>Transition</code>) and one method: <code>apply(t: Transition)</code>.</li>
+<li><strong>All</strong> changes to its internal state flow through this <code>apply</code> method.</li>
 <li>Updates to state are entirely deterministic. They may depend on the current state and any data
 that is contained in the transition value, and nothing else.</li>
 </ol>
 <p>#1 is enforced by Rust's type system, but it's your responsibility to satisfy #2 and #3. In particular,
 accessing the current time, non-determistic random number generators, or external data in <code>apply</code> is
 a violation of #3.</p>
-<h2 id="keeping-state-in-sync"><a class="header" href="#keeping-state-in-sync">Keeping State in Sync</a></h2>
-<p>In principal, the way that Aper keeps state in sync is pretty simple: when a client connects, they receive a full copy of the latest copy of the state. Thereafter, they receive a real-time stream of <code>Transition</code>s. Every client receives the same transitions in the same order, so their states are updated in lockstep. <strong>This is why it's important that <code>apply</code> is deterministic.</strong> If it were not, states could become divergent even if they received the same transition stream.</p>
+<h3 id="keeping-state-in-sync"><a class="header" href="#keeping-state-in-sync">Keeping State in Sync</a></h3>
+<p>In principle, the way that Aper keeps state in sync is pretty simple: when a client connects, they receive a full copy of the latest copy of the state. Thereafter, they receive a real-time stream of <code>Transition</code>s. Every client receives the same transitions in the same order, so their states are updated in lockstep. <strong>This is why it's important that <code>apply</code> is deterministic.</strong> If it were not, states could become divergent even if they received the same transition stream.</p>
 <p>Note that for this model to work, the client can't immediately apply a transition to its local state, because the client doesn't know whether another client is sending the server a transition at the same time. The client has two options:</p>
 <ul>
 <li>Accept this latency. Depending on the use-case, a few hundred milliseconds of latency might be tolerable and the simpler model is easier to reason about.</li>

@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="'./introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html" class="active"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="managing_state.html"><strong aria-hidden="true">2.</strong> Managing State</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="building.html" class="active"><strong aria-hidden="true">2.1.</strong> Building a state machine</a></li><li class="chapter-item expanded "><a href="atoms.html"><strong aria-hidden="true">2.2.</strong> Constants and Atoms</a></li><li class="chapter-item expanded "><a href="derive.html"><strong aria-hidden="true">2.3.</strong> Derive macro</a></li><li class="chapter-item expanded "><a href="lists.html"><strong aria-hidden="true">2.4.</strong> Lists</a></li><li class="chapter-item expanded "><a href="designing.html"><strong aria-hidden="true">2.5.</strong> Designing with state machines</a></li><li class="chapter-item expanded "><a href="implementing.html"><strong aria-hidden="true">2.6.</strong> Implementing new state machines</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -167,7 +167,7 @@
 <p>To solidify the concept of state machines, let's start with a simple
 example. Here's a simple data structure representing a counter. It stores
 an integer and gives us methods to modify it.</p>
-<pre><pre class="playground"><code class="language-rust">struct Counter {value: i64}
+<pre><code class="language-rust noplaypen">struct Counter {value: i64}
 
 impl Counter {
     pub fn add(&amp;mut self, i: i64) {
@@ -184,14 +184,14 @@ impl Counter {
 }
 
 <span class="boring">fn main() {}
-</span></code></pre></pre>
-<p>By inspecting the code, you can see that <code>Counter</code> satisfies condition #3 of a state machine
+</span></code></pre>
+<p>By inspecting the code, you can see that <code>Counter</code> satisfies <a href="introduction.html">condition #3</a> of a state machine
 in Aper: its updates are deterministic. It does <em>not</em>, however, satisfy conditions #1 and
 #2: it does not implement <code>StateMachine</code>, and methods other than <code>apply</code> mutate the state.</p>
 <p>(By the way, a good way to check if #2 is satisfied is to look for which methods take <code>&amp;mut self</code>.
-In an Aper state machine, only <code>apply</code> should need a mutable reference to <code>self</code>.)</p>
-<p>We can make this into a state machine like this:</p>
-<pre><pre class="playground"><code class="language-rust">use aper::StateMachine;
+In an Aper state machine, <strong>only</strong> <code>apply</code> should need a mutable reference to <code>self</code>.)</p>
+<p>We can turn <code>Counter</code> into a state machine like this:</p>
+<pre><code class="language-rust noplaypen">use aper::StateMachine;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -222,9 +222,9 @@ impl StateMachine for Counter {
     }
 }
 <span class="boring">fn main() {}
-</span></code></pre></pre>
+</span></code></pre>
 <p>Now, any attempt to modify the state of the counter must flow through <code>apply</code> as a <code>CounterTransition</code>. We could use <code>CounterTransition</code>'s constructors directly, but the idiomatic approach that Aper encourages is to implement methods with the same signatures as our original modifiers but that return the <code>Transition</code> type:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">use aper::StateMachine;
+<pre><code class="language-rust noplaypen"><span class="boring">use aper::StateMachine;
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">
 </span><span class="boring">#[derive(Serialize, Deserialize, Debug, Clone)]
@@ -251,8 +251,10 @@ impl Counter {
     }
 }
 <span class="boring">fn main() {}
-</span></code></pre></pre>
-<p>Notice how these no longer require a mutable reference to <code>self</code>, since they do not actually make any changes, they just return an object <em>representing</em> the change.</p>
+</span></code></pre>
+<p>Notice how these no longer require a mutable reference to <code>self</code>, since they do not actually make any changes, they just return an object <em>representing</em> the change. In fact, in this case they don't
+even <em>read</em> from <code>self</code>, but that would be allowed and comes in
+handy when we deal with more complex update logic.</p>
 <p>I started by showing you how to implement your own state machine because I wanted you to see that it isn't
 scary, but implementing state machines from scratch isn't the only way to use Aper. In the next few sections,
 I'll show you how to build state machines by composing together primitives provided by Aper.</p>
