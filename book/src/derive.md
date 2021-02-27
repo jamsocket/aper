@@ -1,9 +1,9 @@
 # Derive macro
 
-In the last section, we were introducte to the `Atom` state machine.
+In the last section, we were introduced to the `Atom` state machine.
 If networks were infinitely fast, `Atom` might be the only state 
 machine we ever needed: every time a user changed the state, we'd 
-just end the new entire state to every other user and be done with it.
+just send the new entire state to every other user and be done with it.
 
 In practice, the reason we can't do this is that without infinitely 
 fast networks, it's possible for different users to make conflicting 
@@ -103,7 +103,7 @@ which is a function from the type of that field (e.g. `Atom<bool>`) to
 a type of that field's transition (`ReplaceAtom<bool>`). They return a 
 transition that can be applied to the parent struct (`ToDoListItem`), 
 which combines the transition you constructed in the map with an 
-indication of which field it is to be applied to.
+indication of which field of the parent struct it is to be applied to.
 
 To better understand this approach, it might be good to understand 
 what we *can't* do. For one thing, we can't apply the field's 
@@ -116,8 +116,8 @@ fn main() {
 
     let mark_done = item.done().replace(true);
 
-    // This will fail to compile because `done()` exposes a read-only
-    // borrow of the Atom.
+    // This will fail to compile because `done()` exposes a non-mutable
+    // borrow of the Atom, but `apply()` requires a mutable borrow.
     item.done().apply(mark_done);
 }
 ```
@@ -131,8 +131,9 @@ fn main() {
 
     let mark_done = item.done().replace(true);
 
-    // This will fail to compile because `mark_done` is a `ReplaceAtom<bool>`
-    // but `item.apply()` expects a `ToDoListItemTransition`.
+    // This will fail to compile because `mark_done` is a
+    // `ReplaceAtom<bool>` but `item.apply()` expects a
+    // `ToDoListItemTransition`.
     item.apply(mark_done);
 }
 ```

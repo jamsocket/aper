@@ -27,7 +27,7 @@ use aper::data_structures::List;
 # }
 
 fn main() {
-	let mut to_do_list: List<ToDoListItem> = Default::default();
+	let mut to_do_list: List<ToDoListItem> = List::default();
 
 	// Initially, the list is empty. We need to add things to it.
 
@@ -35,7 +35,7 @@ fn main() {
 	// use to identify the record.
 	// The methods `append`, `prepend`, and `insert` of `List`
 	// return a `(id, transition)` pair, where the `id` can be used
-	// to refer to the element once it has been inserted.
+	// to refer to the element after it has been inserted.
 	let (dog_food_id, dog_food_transition) = to_do_list.append(
 			ToDoListItem::new("Get dog food".to_string())
 	);
@@ -59,6 +59,7 @@ fn main() {
 }
 ```
 
-If this method of calling `map_*` seems tedious, don't worry! Later 
-when we actually implement the UI, we will see a design patter that
-allows us to eliminate the need for `map_*` methods.
+If this method of calling `map_*` seems tedious or doesn't quite 
+“click”, don't worry. Later, when we actually implement the UI, we 
+will see a design patter that allows us to eliminate the need for 
+`map_*` methods.

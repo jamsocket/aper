@@ -20,6 +20,6 @@ approach.
 
 This points to an important aspect of Aper that is central to its 
 design philosophy. Aper's focus is on helping you to express the 
-**semantics of merging concurrent modifications to the same data 
-structure**. The underlying data structures Aper provides are just a 
+**semantics of merging concurrent modifications** to the same data 
+structure. The underlying data structures Aper provides are just a 
 means to that end.

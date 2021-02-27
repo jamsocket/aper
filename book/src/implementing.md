@@ -1,7 +1,8 @@
 # Implementing new state machines
 
-So far, we've created state machines by composing primitive, pre-built 
-state machines and using the derive macro. For more flexibility, you 
+So far, aside from the [opening example](building.md), we've created
+state machines by composing primitive, pre-built
+state machines and using the derive macro. For total flexibility, you 
 can also implement your own. This may be useful when you want to
 implement a shared data structure that can't be expressed efficiently 
 with Aper's built-in data structures, or when your program state
@@ -11,8 +12,8 @@ in which the games rules determine how state is updated.
 To demonstrate this, let's implement a state machine representing
 the game Tic Tac Toe.
 
-Tic Tac Toe has two players, X and O, which we can represent as
-an enum:
+Tic Tac Toe has two players, **X** and **O**, which we can represent
+as an enum:
 
 ```rust,noplaypen
 use serde::{Serialize, Deserialize};
@@ -21,11 +22,14 @@ use serde::{Serialize, Deserialize};
 enum Player { X, O }
 ```
 
-There are three possible states to a tic tac toe game: the game
-is underway and waiting on a particular player to play next;
-the game has ended with a winner; or the game has ended in
-a tie where the board is filled but no player has won. We will
-represent all three of these with the `GameStatus` struct:
+There are three possible states to a tic tac toe game:
+1. The game is underway and waiting on a particular player to play 
+   next.
+2. The game has ended with a winner.
+3. The game has ended in a tie, because the board is filled but no
+   player has won.
+   
+We will represent all three of these with the `GameStatus` struct:
 
 ```rust,noplaypen
 # use serde::{Serialize, Deserialize};
@@ -54,12 +58,12 @@ an `O`, or empty. We can thus represent each grid cell as an
 The board cells correspond to indices in the flattened grid as
 follows:
 
-```rust,noplaypen
-// 0 | 1 | 2
-// --+---+--
-// 3 | 4 | 5
-// --+---+--
-// 6 | 7 | 8
+```plain
+0 | 1 | 2
+--+---+--
+3 | 4 | 5
+--+---+--
+6 | 7 | 8
 ```
 
 Combining the `GameStatus` with the grid, we have a game state that
@@ -95,7 +99,7 @@ struct TicTacToe {
 
 Next, we need to implement some of the game logic. We need to be
 able to construct a new game, and also to be able to check if a
-player has won and also if the game has ended in a tie.
+player has won or if the game has ended in a tie.
 
 ```rust,noplaypen
 # use serde::{Serialize, Deserialize};
@@ -188,9 +192,13 @@ impl TicTacToe {
 ```
 
 The last step is to make `TicTacToe` a valid `StateMachine`.
-We'll start by creating `TicTacToeMove`, which represents the
-current player making a play for a given grid cell. The grid
-cell is provided by its flattened index.
+We'll start by creating the transition type, `TicTacToeMove`.
+Usually transition types are `enum`s, but they don't have to be.
+In the case of Tic Tac Toe, there's only one type of move a
+player can make: to make their mark in an available grid space.
+We represent this one-and-only play with a `TicTacToeMove` struct,
+referencing the cell in play by the same flattened numbering
+scheme we used to implement the grid as a flat list.
 
 ```rust,noplaypen
 # use serde::{Serialize, Deserialize};
@@ -312,7 +320,7 @@ impl StateMachine for TicTacToe {
         // Insert this play into the board.
         self.board[play_index] = Some(this_player);
         
-        // Check for a winner.
+        // Check if the game has ended.
         if let Some(winner) = self.winner() {
             self.status = GameStatus::Won(winner);
             return;
