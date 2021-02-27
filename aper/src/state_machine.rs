@@ -3,6 +3,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
 use std::marker::PhantomData;
+pub use aper_derive::StateMachine;
 
 /// This trait provides the methods that Aper needs to be able to interact with
 /// an object as a state machine.

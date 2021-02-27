@@ -8,7 +8,6 @@ Let's use the `ToDoListItem` from the last section to create a `ToDoList`
 use aper::data_structures::List;
 # use aper::StateMachine;
 # use aper::data_structures::Atom;
-# use aper_derive::StateMachine;
 # use serde::{Serialize, Deserialize};
 # use std::default::Default;
 # 

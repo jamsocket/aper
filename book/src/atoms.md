@@ -1,10 +1,13 @@
 # Constants and Atoms
 
-One way to build state machines is by composing together other state machines. Aper comes with some ready-made state machines to provide common components of state management.
+Another way to build state machines is by combining other state 
+machines. Aper ships with some built-in state machines which provide
+common patterns for managing state.
 
-The simplest state machine is a `Constant`. It's a state machine whose transition has no exposed constructor,
-and therefore which can never be modified once it's created. It takes an initial state, and then keeps that
-state for the rest of its life.
+The simplest state machine is a `Constant`. It's a state machine whose 
+transition has no exposed constructor, and therefore which can never 
+be modified once it's created. It takes an initial value, and then 
+stubbornly keeps that state for the rest of its life.
 
 ```rust,noplaypen
 use aper::data_structures::Constant;

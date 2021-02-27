@@ -1,6 +1,6 @@
 # Summary
 
-- [Introduction]('./introduction.md)
+- [Introduction](./introduction.md)
 - [Managing State](./managing_state.md)
     - [Building a state machine](building.md)
     - [Constants and Atoms](atoms.md)

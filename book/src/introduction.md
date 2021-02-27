@@ -1,9 +1,16 @@
 # Introduction
 
-Aper is a framework that lets you synchronize program state between users. In Aper, all state is represented as a **state machine**, which means that:
-1. It implements the `StateMachine` trait, which has one method: `apply`.
-2. **All** changes to state flow through the `apply` method, which takes a single argument
-   (the type of that argument is up to you).
+**Aper** is a Rust library for representing data that can be read and written to by multiple users in real time.
+
+Use-cases of Aper include managing the state of an application with real-time collaboration features, or synchronizing the game state of a multiplayer game.
+
+The core `aper` library implements the underlying data structures and algorithms, but is agnostic to the actual mechanism for transfering data on a network. The crates `aper-yew` and `aper-actix` provide a client and server aimed at synchronizing state across multiple `WebAssembly` clients using `WebSockets`.
+
+## How it works
+
+In Aper, all state must be represented as a **state machine**, which means that:
+1. It implements the `StateMachine` trait, which has one type argument (`Transition`) and one method: `apply(t: Transition)`.
+2. **All** changes to its internal state flow through this `apply` method.
 3. Updates to state are entirely deterministic. They may depend on the current state and any data
    that is contained in the transition value, and nothing else.
 
@@ -11,9 +18,9 @@ Aper is a framework that lets you synchronize program state between users. In Ap
 accessing the current time, non-determistic random number generators, or external data in `apply` is
 a violation of #3.
 
-## Keeping State in Sync
+### Keeping State in Sync
 
-In principal, the way that Aper keeps state in sync is pretty simple: when a client connects, they receive a full copy of the latest copy of the state. Thereafter, they receive a real-time stream of `Transition`s. Every client receives the same transitions in the same order, so their states are updated in lockstep. **This is why it's important that `apply` is deterministic.** If it were not, states could become divergent even if they received the same transition stream.
+In principle, the way that Aper keeps state in sync is pretty simple: when a client connects, they receive a full copy of the latest copy of the state. Thereafter, they receive a real-time stream of `Transition`s. Every client receives the same transitions in the same order, so their states are updated in lockstep. **This is why it's important that `apply` is deterministic.** If it were not, states could become divergent even if they received the same transition stream.
 
 Note that for this model to work, the client can't immediately apply a transition to its local state, because the client doesn't know whether another client is sending the server a transition at the same time. The client has two options:
 

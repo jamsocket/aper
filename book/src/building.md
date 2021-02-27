@@ -24,14 +24,14 @@ impl Counter {
 # fn main() {}
 ```
 
-By inspecting the code, you can see that `Counter` satisfies condition #3 of a state machine
+By inspecting the code, you can see that `Counter` satisfies [condition #3](introduction.md) of a state machine
 in Aper: its updates are deterministic. It does *not*, however, satisfy conditions #1 and
 #2: it does not implement `StateMachine`, and methods other than `apply` mutate the state.
 
 (By the way, a good way to check if #2 is satisfied is to look for which methods take `&mut self`.
-In an Aper state machine, only `apply` should need a mutable reference to `self`.)
+In an Aper state machine, **only** `apply` should need a mutable reference to `self`.)
 
-We can make this into a state machine like this:
+We can turn `Counter` into a state machine like this:
 
 ```rust,noplaypen
 use aper::StateMachine;
@@ -99,7 +99,9 @@ impl Counter {
 # fn main() {}
 ```
 
-Notice how these no longer require a mutable reference to `self`, since they do not actually make any changes, they just return an object *representing* the change.
+Notice how these no longer require a mutable reference to `self`, since they do not actually make any changes, they just return an object *representing* the change. In fact, in this case they don't
+even *read* from `self`, but that would be allowed and comes in
+handy when we deal with more complex update logic.
 
 I started by showing you how to implement your own state machine because I wanted you to see that it isn't
 scary, but implementing state machines from scratch isn't the only way to use Aper. In the next few sections,
