@@ -9,7 +9,7 @@ use aper::data_structures::Atom;
 
 struct ToDoListItem {
     done: bool,
-    label: String
+    label: String,
 }
 
 type ToDoListAtom = Atom<ToDoListItem>;
@@ -17,7 +17,7 @@ type ToDoListAtom = Atom<ToDoListItem>;
 
 Suppose you and I both modified this item at the same time. You marked it as done, and I fixed a typo in the label. Your edit hits the server first, so the server's state is briefly updated with the item marked as “done”. But my transition was sent at the same time as yours, and because an Atom captures the entire value, it includes the old value of `done`! My edit undoes yours.
 
-Instead, we should push `Atom`s deeper down into the data structure. Aper facilitates this with a `derive` macro:
+To avoid this, we can push `Atom`s deeper down into the data structure. Aper facilitates this with a `derive` macro:
 
 ```rust
 use aper::StateMachine;

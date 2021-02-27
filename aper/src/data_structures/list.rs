@@ -30,12 +30,22 @@ pub struct ListItem<'a, T: StateMachine> {
 
 /// Represents a list of items, similar to a `Vec`, but designed to be robust
 /// to concurrent modifications from multiple users.
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 #[serde(bound = "")]
 pub struct List<T: StateMachine> {
     items: BTreeMap<ZenoIndex, Uuid>,
     items_inv: BTreeMap<Uuid, ZenoIndex>,
     pool: HashMap<Uuid, T>,
+}
+
+impl<T: StateMachine> Default for List<T> {
+    fn default() -> Self {
+        List {
+            items: Default::default(),
+            items_inv: Default::default(),
+            pool: Default::default()
+        }
+    }
 }
 
 impl<T: StateMachine> StateMachine for List<T> {
@@ -73,6 +83,8 @@ impl<T: StateMachine> StateMachine for List<T> {
     }
 }
 
+type OperationWithId<T> = (Uuid, ListOperation<T>);
+
 impl<T: StateMachine> List<T> {
     fn do_insert(&mut self, location: ZenoIndex, id: Uuid, value: T) {
         self.items.insert(location.clone(), id);
@@ -100,23 +112,23 @@ impl<T: StateMachine> List<T> {
 
     /// Construct a [ListOperation] representing appending the given object to this
     /// list.
-    pub fn append(&self, value: T) -> ListOperation<T> {
+    pub fn append(&self, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
-        ListOperation::Append(id, value)
+        (id, ListOperation::Append(id, value))
     }
 
     /// Construct a [ListOperation] representing prepending the given object to this
     /// list.
-    pub fn prepend(&self, value: T) -> ListOperation<T> {
+    pub fn prepend(&self, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
-        ListOperation::Prepend(id, value)
+        (id, ListOperation::Prepend(id, value))
     }
 
     /// Construct a [ListOperation] representing inserting the given object at the
     /// given location in this list.
-    pub fn insert(&self, location: ZenoIndex, value: T) -> ListOperation<T> {
+    pub fn insert(&self, location: ZenoIndex, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
-        ListOperation::Insert(location, id, value)
+        (id, ListOperation::Insert(location, id, value))
     }
 
     /// Construct a [ListOperation] representing deleting the object given (by id)
@@ -129,6 +141,16 @@ impl<T: StateMachine> List<T> {
     /// list to the given location in the list.
     pub fn move_item(&self, id: Uuid, new_location: ZenoIndex) -> ListOperation<T> {
         ListOperation::Move(id, new_location)
+    }
+
+    pub fn map_item(&self, id: Uuid, fun: impl FnOnce(&T) ->
+        <T as StateMachine>::Transition) -> <Self as StateMachine>::Transition {
+        if let Some(it) = self.pool.get(&id) {
+            ListOperation::Apply(id, fun(it))
+        } else {
+            // Handle conflict.
+            panic!("Conflict should be better handled.")
+        }
     }
 
     /// Returns an iterator over [ListItem] views into this list.
@@ -152,15 +174,15 @@ mod tests {
 
         // Test Append.
 
-        list.apply(list.append(Atom::new(5)));
+        list.apply(list.append(Atom::new(5)).1);
 
-        list.apply(list.append(Atom::new(3)));
+        list.apply(list.append(Atom::new(3)).1);
 
-        list.apply(list.append(Atom::new(143)));
+        list.apply(list.append(Atom::new(143)).1);
 
         // Test Prepend.
 
-        list.apply(list.prepend(Atom::new(99)));
+        list.apply(list.prepend(Atom::new(99)).1);
 
         {
             let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -174,17 +196,17 @@ mod tests {
             list.apply(list.insert(
                 ZenoIndex::new_between(&locations[2], &locations[3]),
                 Atom::new(44),
-            ));
+            ).1);
 
             list.apply(list.insert(
                 ZenoIndex::new_between(&locations[0], &locations[1]),
                 Atom::new(23),
-            ));
+            ).1);
 
             list.apply(list.insert(
                 ZenoIndex::new_between(&locations[1], &locations[2]),
                 Atom::new(84),
-            ));
+            ).1);
 
             {
                 let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
