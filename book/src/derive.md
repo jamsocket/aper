@@ -4,7 +4,7 @@ If networks were infinitely fast, `Atom` could be the only state machine we need
 
 In practice, the reason we can't do this is that without infinitely fast networks, it's possible for different users to make conflicting changes. For example, let's say we represented a to-do list item with an Atom:
 
-```rust
+```rust,noplaypen
 use aper::data_structures::Atom;
 
 struct ToDoListItem {
@@ -19,7 +19,7 @@ Suppose you and I both modified this item at the same time. You marked it as don
 
 To avoid this, we can push `Atom`s deeper down into the data structure. Aper facilitates this with a `derive` macro:
 
-```rust
+```rust,noplaypen
 use aper::StateMachine;
 use aper::data_structures::Atom;
 use aper_derive::StateMachine;
@@ -43,7 +43,7 @@ impl ToDoListItem {
 
 Now, we can represent these same transitions in a way that they don't conflict.
 
-```rust
+```rust,noplaypen
 # use aper::StateMachine;
 # use aper::data_structures::Atom;
 # use aper_derive::StateMachine;

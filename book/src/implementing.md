@@ -4,7 +4,7 @@ So far, we've created state machines by composing primitive, pre-built state mac
 
 I teased with an example of this with the `Counter`. As a slightly more complex example, let's implement Tic Tac Toe.
 
-```rust
+```rust,noplaypen
 use aper::StateMachine;
 use serde::{Serialize, Deserialize};
 

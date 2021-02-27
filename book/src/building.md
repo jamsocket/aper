@@ -4,7 +4,7 @@ To solidify the concept of state machines, let's start with a simple
 example. Here's a simple data structure representing a counter. It stores
 an integer and gives us methods to modify it.
 
-```rust
+```rust,noplaypen
 struct Counter {value: i64}
 
 impl Counter {
@@ -33,7 +33,7 @@ In an Aper state machine, only `apply` should need a mutable reference to `self`
 
 We can make this into a state machine like this:
 
-```rust
+```rust,noplaypen
 use aper::StateMachine;
 use serde::{Serialize, Deserialize};
 
@@ -69,7 +69,7 @@ impl StateMachine for Counter {
 
 Now, any attempt to modify the state of the counter must flow through `apply` as a `CounterTransition`. We could use `CounterTransition`'s constructors directly, but the idiomatic approach that Aper encourages is to implement methods with the same signatures as our original modifiers but that return the `Transition` type:
 
-```rust
+```rust,noplaypen
 # use aper::StateMachine;
 # use serde::{Serialize, Deserialize};
 #

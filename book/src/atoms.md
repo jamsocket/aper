@@ -6,7 +6,7 @@ The simplest state machine is a `Constant`. It's a state machine whose transitio
 and therefore which can never be modified once it's created. It takes an initial state, and then keeps that
 state for the rest of its life.
 
-```rust
+```rust,noplaypen
 use aper::data_structures::Constant;
 
 fn main() {
@@ -25,7 +25,7 @@ An `Atom` is similar to a `Constant`, except that it has a transition called `Re
 
 It represents a value that can only be changed by replacing it entirely.
 
-```rust
+```rust,noplaypen
 use aper::data_structures::Atom;
 use aper::StateMachine;
 
