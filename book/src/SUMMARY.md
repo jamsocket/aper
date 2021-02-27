@@ -7,4 +7,4 @@
     - [Derive macro](derive.md)
     - [Lists](lists.md)
     - [Designing with state machines](designing.md)
-    - [Implementing new state machines](implementing.md)
+    - [Implementing a new state machine](implementing.md)

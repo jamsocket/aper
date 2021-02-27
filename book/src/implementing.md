@@ -1,4 +1,4 @@
-# Implementing new state machines
+# Implementing a new state machine
 
 So far, aside from the [opening example](building.md), we've created
 state machines by composing primitive, pre-built
