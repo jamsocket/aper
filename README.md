@@ -6,7 +6,7 @@
 
 Aper is a framework for real-time sharing of application state
 over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
-Its use-cases include real-time browser-based collaboration tools and
+Its use cases include browser-based collaboration tools and
 multiplayer in-browser games.
 
 Specifically, Aper provides scaffolding to represent your program as a state
