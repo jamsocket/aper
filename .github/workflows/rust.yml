@@ -15,18 +15,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    #- name: Build
-    #  run: cargo build --verbose
-    #- name: Run tests
-    #  run: cargo test --verbose
-    #- name: Install Nightly
-    #  run: rustup toolchain install nightly
-    #- name: Build docs
-    #  run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --workspace --no-deps
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Install Nightly
+      run: rustup toolchain install nightly
+    - name: Build docs
+      run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --workspace --no-deps
     - name: Install mdbook
       run: cargo install mdbook
     - name: Build book
       run: mdbook build book
+    - name: Move docs
+      run: mv target/doc book/book/doc
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@4.0.0
       with:
