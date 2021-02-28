@@ -347,7 +347,8 @@ We represent this one-and-only play with a <code>TicTacToeMove</code> struct,
 referencing the cell in play by the same flattened numbering
 scheme we used to implement the grid as a flat list.</p>
 <pre><code class="language-rust noplaypen"><span class="boring">use serde::{Serialize, Deserialize};
-</span>#[derive(Serialize, Deserialize, Clone, Debug)]
+</span>use aper::Transition;
+#[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 struct TicTacToeMove(usize);
 </code></pre>
 <p>Finally, we can implement <code>StateMachine</code> for <code>TicTacToe</code>, using
@@ -438,10 +439,10 @@ struct TicTacToeMove(usize);
 </span><span class="boring">        self.board.iter().all(|d| d.is_some())
 </span><span class="boring">    }
 </span><span class="boring">}
-</span><span class="boring">#[derive(Serialize, Deserialize, Clone, Debug)]
+</span><span class="boring">#[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 </span><span class="boring">struct TicTacToeMove(usize);
 </span><span class="boring">
-</span>use aper::StateMachine;
+</span>use aper::{StateMachine, Transition};
 
 impl StateMachine for TicTacToe {
     type Transition = TicTacToeMove;

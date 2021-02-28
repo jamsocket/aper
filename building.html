@@ -194,13 +194,13 @@ methods other than <code>apply</code> mutate the state.</p>
 which methods take <code>&amp;mut self</code>. In an Aper state machine, <strong>only</strong> 
 <code>apply</code> should need a mutable reference to <code>self</code>.)</p>
 <p>We can turn <code>Counter</code> into a state machine like this:</p>
-<pre><code class="language-rust noplaypen">use aper::StateMachine;
+<pre><code class="language-rust noplaypen">use aper::{StateMachine, Transition};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Counter {value: i64}
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CounterTransition {
    Add(i64),
    Subtract(i64),
@@ -231,13 +231,13 @@ impl StateMachine for Counter {
 constructors directly, but the idiomatic approach that Aper encourages 
 is to implement methods with the same signatures as our original 
 modifiers but that return the <code>Transition</code> type:</p>
-<pre><code class="language-rust noplaypen"><span class="boring">use aper::StateMachine;
+<pre><code class="language-rust noplaypen"><span class="boring">use aper::{StateMachine, Transition};
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">
 </span><span class="boring">#[derive(Serialize, Deserialize, Debug, Clone)]
 </span><span class="boring">struct Counter {value: i64}
 </span><span class="boring">
-</span><span class="boring">#[derive(Serialize, Deserialize, Debug, Clone)]
+</span><span class="boring">#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
 </span><span class="boring">enum CounterTransition {
 </span><span class="boring">   Add(i64),
 </span><span class="boring">   Subtract(i64),

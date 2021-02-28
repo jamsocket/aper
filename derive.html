@@ -196,7 +196,7 @@ structure. Aper facilitates this with a <code>derive</code> macro:</p>
 use aper::data_structures::Atom;
 use serde::{Serialize, Deserialize};
 
-#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+#[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ToDoListItem {
     done: Atom&lt;bool&gt;,
     label: Atom&lt;String&gt;,
@@ -217,7 +217,7 @@ conflict.</p>
 </span><span class="boring">use aper::data_structures::Atom;
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">
-</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 </span><span class="boring">struct ToDoListItem {
 </span><span class="boring">    done: Atom&lt;bool&gt;,
 </span><span class="boring">    label: Atom&lt;String&gt;,

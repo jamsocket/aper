@@ -237,13 +237,13 @@ methods other than <code>apply</code> mutate the state.</p>
 which methods take <code>&amp;mut self</code>. In an Aper state machine, <strong>only</strong> 
 <code>apply</code> should need a mutable reference to <code>self</code>.)</p>
 <p>We can turn <code>Counter</code> into a state machine like this:</p>
-<pre><code class="language-rust noplaypen">use aper::StateMachine;
+<pre><code class="language-rust noplaypen">use aper::{StateMachine, Transition};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Counter {value: i64}
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CounterTransition {
    Add(i64),
    Subtract(i64),
@@ -274,13 +274,13 @@ impl StateMachine for Counter {
 constructors directly, but the idiomatic approach that Aper encourages 
 is to implement methods with the same signatures as our original 
 modifiers but that return the <code>Transition</code> type:</p>
-<pre><code class="language-rust noplaypen"><span class="boring">use aper::StateMachine;
+<pre><code class="language-rust noplaypen"><span class="boring">use aper::{StateMachine, Transition};
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">
 </span><span class="boring">#[derive(Serialize, Deserialize, Debug, Clone)]
 </span><span class="boring">struct Counter {value: i64}
 </span><span class="boring">
-</span><span class="boring">#[derive(Serialize, Deserialize, Debug, Clone)]
+</span><span class="boring">#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
 </span><span class="boring">enum CounterTransition {
 </span><span class="boring">   Add(i64),
 </span><span class="boring">   Subtract(i64),
@@ -386,7 +386,7 @@ structure. Aper facilitates this with a <code>derive</code> macro:</p>
 use aper::data_structures::Atom;
 use serde::{Serialize, Deserialize};
 
-#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+#[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ToDoListItem {
     done: Atom&lt;bool&gt;,
     label: Atom&lt;String&gt;,
@@ -407,7 +407,7 @@ conflict.</p>
 </span><span class="boring">use aper::data_structures::Atom;
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">
-</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 </span><span class="boring">struct ToDoListItem {
 </span><span class="boring">    done: Atom&lt;bool&gt;,
 </span><span class="boring">    label: Atom&lt;String&gt;,
@@ -483,7 +483,7 @@ contains it:</p>
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">use std::default::Default;
 </span><span class="boring">
-</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 </span><span class="boring">struct ToDoListItem {
 </span><span class="boring">    done: Atom&lt;bool&gt;,
 </span><span class="boring">    label: Atom&lt;String&gt;,
@@ -741,7 +741,8 @@ We represent this one-and-only play with a <code>TicTacToeMove</code> struct,
 referencing the cell in play by the same flattened numbering
 scheme we used to implement the grid as a flat list.</p>
 <pre><code class="language-rust noplaypen"><span class="boring">use serde::{Serialize, Deserialize};
-</span>#[derive(Serialize, Deserialize, Clone, Debug)]
+</span>use aper::Transition;
+#[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 struct TicTacToeMove(usize);
 </code></pre>
 <p>Finally, we can implement <code>StateMachine</code> for <code>TicTacToe</code>, using
@@ -832,10 +833,10 @@ struct TicTacToeMove(usize);
 </span><span class="boring">        self.board.iter().all(|d| d.is_some())
 </span><span class="boring">    }
 </span><span class="boring">}
-</span><span class="boring">#[derive(Serialize, Deserialize, Clone, Debug)]
+</span><span class="boring">#[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 </span><span class="boring">struct TicTacToeMove(usize);
 </span><span class="boring">
-</span>use aper::StateMachine;
+</span>use aper::{StateMachine, Transition};
 
 impl StateMachine for TicTacToe {
     type Transition = TicTacToeMove;

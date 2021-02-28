@@ -172,7 +172,7 @@
 </span><span class="boring">use serde::{Serialize, Deserialize};
 </span><span class="boring">use std::default::Default;
 </span><span class="boring">
-</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+</span><span class="boring">#[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 </span><span class="boring">struct ToDoListItem {
 </span><span class="boring">    done: Atom&lt;bool&gt;,
 </span><span class="boring">    label: Atom&lt;String&gt;,
