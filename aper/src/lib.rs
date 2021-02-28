@@ -135,15 +135,16 @@ pub type Timestamp = DateTime<Utc>;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct TransitionEvent<T>
 where
-    T: PartialEq,
+    T: Transition,
 {
     #[serde(with = "ts_milliseconds")]
     pub timestamp: Timestamp,
     pub player: Option<PlayerID>,
+    #[serde(bound = "")]
     pub transition: T,
 }
 
-impl<T: PartialEq> TransitionEvent<T> {
+impl<T: Transition> TransitionEvent<T> {
     pub fn new(
         player: Option<PlayerID>,
         timestamp: Timestamp,

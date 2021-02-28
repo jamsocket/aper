@@ -1,4 +1,4 @@
-use crate::{StateMachine, SuspendedEvent, TransitionEvent};
+use crate::{StateMachine, SuspendedEvent, TransitionEvent, Transition};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
@@ -9,15 +9,7 @@ pub trait StateProgram:
 {
     /// The [StateMachine::Transition] type associates another type with this state machine
     /// as its transitions.
-    type Transition: Sized
-        + Unpin
-        + 'static
-        + Send
-        + Clone
-        + DeserializeOwned
-        + Serialize
-        + Debug
-        + PartialEq;
+    type Transition: Transition;
 
     /// Update the state machine according to the given [TransitionEvent]. This method *must* be
     /// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]

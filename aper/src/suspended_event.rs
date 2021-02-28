@@ -23,7 +23,7 @@ pub struct SuspendedEvent<Transition: PartialEq + Clone> {
     pub transition: Transition,
 }
 
-impl<Transition: PartialEq + Clone> SuspendedEvent<Transition> {
+impl<Transition: crate::Transition> SuspendedEvent<Transition> {
     pub fn new(time: DateTime<Utc>, transition: Transition) -> SuspendedEvent<Transition> {
         SuspendedEvent { time, transition }
     }
@@ -36,7 +36,7 @@ impl<Transition: PartialEq + Clone> SuspendedEvent<Transition> {
         fun: impl FnOnce(Transition) -> NewTransition,
     ) -> SuspendedEvent<NewTransition>
     where
-        NewTransition: PartialEq + Clone,
+        NewTransition: crate::Transition,
     {
         SuspendedEvent::new(self.time, fun(self.transition))
     }
