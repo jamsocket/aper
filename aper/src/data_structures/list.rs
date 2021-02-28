@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::data_structures::ZenoIndex;
-use crate::StateMachine;
+use crate::{StateMachine, Transition};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(bound = "")]
-pub enum ListOperation<T: StateMachine> {
+pub enum ListOperation<T: StateMachine + PartialEq> {
     Insert(ZenoIndex, Uuid, T),
     Append(Uuid, T),
     Prepend(Uuid, T),
@@ -18,11 +18,13 @@ pub enum ListOperation<T: StateMachine> {
     Apply(Uuid, <T as StateMachine>::Transition),
 }
 
+impl<T: StateMachine + PartialEq> Transition for ListOperation<T> {}
+
 /// Represents a view of an entry in a list during iteration. Each
 /// item contains a borrow of its `value`; its `location` as a [ZenoIndex],
 /// and a unique identifier which is opaque but must be passed for
 /// [List::delete] and [List::move_item] calls.
-pub struct ListItem<'a, T: StateMachine> {
+pub struct ListItem<'a, T: StateMachine + PartialEq> {
     pub value: &'a T,
     pub location: ZenoIndex,
     pub id: Uuid,
@@ -32,13 +34,13 @@ pub struct ListItem<'a, T: StateMachine> {
 /// to concurrent modifications from multiple users.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 #[serde(bound = "")]
-pub struct List<T: StateMachine> {
+pub struct List<T: StateMachine + PartialEq> {
     items: BTreeMap<ZenoIndex, Uuid>,
     items_inv: BTreeMap<Uuid, ZenoIndex>,
     pool: HashMap<Uuid, T>,
 }
 
-impl<T: StateMachine> Default for List<T> {
+impl<T: StateMachine + PartialEq> Default for List<T> {
     fn default() -> Self {
         List {
             items: Default::default(),
@@ -48,7 +50,7 @@ impl<T: StateMachine> Default for List<T> {
     }
 }
 
-impl<T: StateMachine> StateMachine for List<T> {
+impl<T: StateMachine + PartialEq> StateMachine for List<T> {
     type Transition = ListOperation<T>;
 
     fn apply(&mut self, transition_event: Self::Transition) {
@@ -85,7 +87,7 @@ impl<T: StateMachine> StateMachine for List<T> {
 
 type OperationWithId<T> = (Uuid, ListOperation<T>);
 
-impl<T: StateMachine> List<T> {
+impl<T: StateMachine + PartialEq> List<T> {
     fn do_insert(&mut self, location: ZenoIndex, id: Uuid, value: T) {
         self.items.insert(location.clone(), id);
         self.items_inv.insert(id, location);

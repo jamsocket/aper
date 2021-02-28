@@ -1,4 +1,4 @@
-use crate::StateMachine;
+use crate::{StateMachine, Transition};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -52,6 +52,11 @@ impl<
 /// Represents a transition used to change the value of an [Atom].
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ReplaceAtom<T: Clone + PartialEq + Debug + Unpin>(T);
+
+impl<T: 'static + Clone + PartialEq + Debug + Unpin + Serialize + DeserializeOwned + Send>
+    Transition for ReplaceAtom<T>
+{
+}
 
 #[cfg(test)]
 mod tests {

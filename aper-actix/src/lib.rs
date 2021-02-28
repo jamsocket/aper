@@ -2,7 +2,7 @@ mod channel_actor;
 mod messages;
 mod player_actor;
 mod server_actor;
-mod suspended_event;
+mod suspended_event_manager;
 
 pub use channel_actor::ChannelActor;
 pub use messages::{ChannelMessage, WrappedStateUpdateMessage};

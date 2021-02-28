@@ -1,18 +1,18 @@
 use crate::channel_actor::ChannelActor;
 use crate::messages::ChannelMessage;
 use actix::{AsyncContext, Context, SpawnHandle};
-use aper::{StateMachine, SuspendedEvent};
+use aper::{StateProgram, SuspendedEvent};
 use chrono::Utc;
 use core::option::Option;
 use core::option::Option::Some;
 
 /// A struct that owns zero or one suspended event, and implements the replacement
 /// logic, including cancelling an event's future when it is replaced.
-pub struct SuspendedEventManager<State: StateMachine> {
+pub struct SuspendedEventManager<State: StateProgram> {
     suspended_event: Option<(SuspendedEvent<State::Transition>, SpawnHandle)>,
 }
 
-impl<State: StateMachine> SuspendedEventManager<State> {
+impl<State: StateProgram> SuspendedEventManager<State> {
     pub fn new() -> Self {
         SuspendedEventManager {
             suspended_event: None,
@@ -42,7 +42,7 @@ impl<State: StateMachine> SuspendedEventManager<State> {
                 .to_std()
             {
                 let handle = ctx.notify_later(
-                    ChannelMessage::Tick(suspended_event.transition.clone()),
+                    ChannelMessage::Tick(suspended_event.as_transition_event()),
                     duration,
                 );
                 self.suspended_event = Some((suspended_event, handle))

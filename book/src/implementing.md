@@ -202,7 +202,8 @@ scheme we used to implement the grid as a flat list.
 
 ```rust,noplaypen
 # use serde::{Serialize, Deserialize};
-#[derive(Serialize, Deserialize, Clone, Debug)]
+use aper::Transition;
+#[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 struct TicTacToeMove(usize);
 ```
 
@@ -296,10 +297,10 @@ Finally, we can implement `StateMachine` for `TicTacToe`, using
 #         self.board.iter().all(|d| d.is_some())
 #     }
 # }
-# #[derive(Serialize, Deserialize, Clone, Debug)]
+# #[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 # struct TicTacToeMove(usize);
 #
-use aper::StateMachine;
+use aper::{StateMachine, Transition};
 
 impl StateMachine for TicTacToe {
     type Transition = TicTacToeMove;

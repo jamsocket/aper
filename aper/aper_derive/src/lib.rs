@@ -3,13 +3,34 @@ extern crate proc_macro;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn;
-use syn::{ItemStruct, Type};
+use syn::{Item, ItemStruct, Type};
+
+#[proc_macro_derive(Transition)]
+pub fn transition_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ast: Item = syn::parse(input.into()).expect("Should decorate a struct.");
+
+    impl_transition_derive(&ast).into()
+}
 
 #[proc_macro_derive(StateMachine)]
 pub fn state_machine_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast: ItemStruct = syn::parse(input.into()).expect("Should decorate a struct.");
 
     impl_state_machine_derive(&ast).into()
+}
+
+fn impl_transition_derive(ast: &Item) -> TokenStream {
+    let name = match ast {
+        Item::Enum(it) => &it.ident,
+        Item::Struct(it) => &it.ident,
+        _ => panic!("Can only derive Transition for an enum or struct."),
+    };
+
+    let gen = quote! {
+        impl aper::Transition for #name {}
+    };
+
+    gen.into()
 }
 
 struct Field<'a> {
@@ -92,7 +113,7 @@ fn generate_transform(enum_name: &Ident, fields: &Vec<Field>) -> TokenStream {
         .collect();
 
     let gen = quote! {
-        #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+        #[derive(aper::Transition, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
         enum #enum_name {
             #variants
         }

@@ -49,12 +49,12 @@
 //! list.
 //!
 //! ```rust
-//! # use aper::{StateMachine};
+//! # use aper::{StateMachine, Transition};
 //! # use serde::{Serialize, Deserialize};
 //! #[derive(Serialize, Deserialize, Clone, Debug)]
 //! struct Counter(i64);
 //!
-//! #[derive(Serialize, Deserialize, Clone, Debug)]
+//! #[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 //! enum CounterTransition {
 //!     Reset,
 //!     Increment(i64),
@@ -111,11 +111,13 @@ use std::fmt::{Display, Formatter};
 
 use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
-pub use state_machine::{StateMachine, StateMachineFactory};
+pub use state_machine::{StateMachine, Transition};
+pub use state_program::{StateProgram, StateProgramFactory};
 pub use suspended_event::SuspendedEvent;
 
 pub mod data_structures;
 mod state_machine;
+mod state_program;
 mod suspended_event;
 
 /// An opaque identifier for a single connected user.
@@ -128,9 +130,36 @@ impl Display for PlayerID {
     }
 }
 
+pub type Timestamp = DateTime<Utc>;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct TransitionEvent<T>
+where
+    T: PartialEq,
+{
+    #[serde(with = "ts_milliseconds")]
+    pub timestamp: Timestamp,
+    pub player: Option<PlayerID>,
+    pub transition: T,
+}
+
+impl<T: PartialEq> TransitionEvent<T> {
+    pub fn new(
+        player: Option<PlayerID>,
+        timestamp: Timestamp,
+        transition: T,
+    ) -> TransitionEvent<T> {
+        TransitionEvent {
+            player,
+            timestamp,
+            transition,
+        }
+    }
+}
+
 /// A message from the server to a client that tells it to update its state.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum StateUpdateMessage<State: StateMachine> {
+pub enum StateUpdateMessage<State: StateProgram> {
     /// Instructs the client to completely discard its existing state and replace it
     /// with the provided one. This is currently only used to set the initial state
     /// when a client first connects.
@@ -143,5 +172,5 @@ pub enum StateUpdateMessage<State: StateMachine> {
     /// Instructs the client to apply the given [TransitionEvent] to its copy of
     /// the state to synchronize it with the server. Currently, all state updates
     /// after the initial state is sent are sent through [StateUpdateMessage::TransitionState].
-    TransitionState(#[serde(bound = "")] State::Transition),
+    TransitionState(#[serde(bound = "")] TransitionEvent<State::Transition>),
 }

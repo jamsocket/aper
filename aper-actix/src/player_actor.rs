@@ -3,18 +3,18 @@ use actix_web_actors::ws;
 
 use crate::channel_actor::ChannelActor;
 use crate::messages::{ChannelMessage, WrappedStateUpdateMessage};
-use aper::StateMachine;
+use aper::{StateProgram, TransitionEvent};
 use std::time::{Duration, Instant};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
-pub struct PlayerActor<State: StateMachine> {
+pub struct PlayerActor<State: StateProgram> {
     pub channel: Addr<ChannelActor<State>>,
     pub last_seen: Instant,
     pub token: String,
 }
 
-impl<State: StateMachine> PlayerActor<State> {
+impl<State: StateProgram> PlayerActor<State> {
     pub fn new(channel: Addr<ChannelActor<State>>, token: String) -> PlayerActor<State> {
         PlayerActor {
             channel,
@@ -34,7 +34,7 @@ impl<State: StateMachine> PlayerActor<State> {
     }
 }
 
-impl<State: StateMachine> Actor for PlayerActor<State> {
+impl<State: StateProgram> Actor for PlayerActor<State> {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
@@ -45,7 +45,7 @@ impl<State: StateMachine> Actor for PlayerActor<State> {
     }
 }
 
-impl<State: StateMachine> Handler<WrappedStateUpdateMessage<State>> for PlayerActor<State> {
+impl<State: StateProgram> Handler<WrappedStateUpdateMessage<State>> for PlayerActor<State> {
     type Result = ();
 
     fn handle(
@@ -61,19 +61,20 @@ impl<State: StateMachine> Handler<WrappedStateUpdateMessage<State>> for PlayerAc
     }
 }
 
-impl<State: StateMachine> StreamHandler<Result<ws::Message, ws::ProtocolError>>
+impl<State: StateProgram> StreamHandler<Result<ws::Message, ws::ProtocolError>>
     for PlayerActor<State>
 {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Text(text)) => {
-                let event: State::Transition = serde_json::from_str(&text).unwrap();
+                let event: TransitionEvent<State::Transition> =
+                    serde_json::from_str(&text).unwrap();
 
                 self.channel
                     .do_send(ChannelMessage::Event(ctx.address(), event));
             }
             Ok(ws::Message::Binary(bin)) => {
-                let event: State::Transition = bincode::deserialize(&bin).unwrap();
+                let event: TransitionEvent<State::Transition> = bincode::deserialize(&bin).unwrap();
 
                 self.channel
                     .do_send(ChannelMessage::Event(ctx.address(), event));

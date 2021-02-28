@@ -2,15 +2,15 @@ use chrono::Utc;
 use std::collections::{HashMap, HashSet};
 
 use actix::{Actor, Addr, Context, Handler};
-use aper::{PlayerID, StateMachine, StateUpdateMessage, TransitionEvent};
+use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
 
 use crate::messages::{ChannelMessage, WrappedStateUpdateMessage};
 use crate::player_actor::PlayerActor;
-use crate::suspended_event::SuspendedEventManager;
+use crate::suspended_event_manager::SuspendedEventManager;
 
 /// Actor representing a channel, responsible for receiving messages from players and
 /// broadcasting them to all connected players.
-pub struct ChannelActor<State: StateMachine> {
+pub struct ChannelActor<State: StateProgram> {
     /// The channel's owned representation of the state.
     state: State,
 
@@ -30,7 +30,7 @@ pub struct ChannelActor<State: StateMachine> {
 }
 
 #[allow(clippy::new_without_default)]
-impl<State: StateMachine + Clone> ChannelActor<State> {
+impl<State: StateProgram + Clone> ChannelActor<State> {
     pub fn new(state: State) -> ChannelActor<State> {
         ChannelActor {
             state,
@@ -58,11 +58,11 @@ impl<State: StateMachine + Clone> ChannelActor<State> {
     }
 }
 
-impl<State: StateMachine> Actor for ChannelActor<State> {
+impl<State: StateProgram> Actor for ChannelActor<State> {
     type Context = Context<Self>;
 }
 
-impl<State: StateMachine + Clone> Handler<ChannelMessage<State>> for ChannelActor<State> {
+impl<State: StateProgram + Clone> Handler<ChannelMessage<State>> for ChannelActor<State> {
     type Result = ();
 
     fn handle(&mut self, msg: ChannelMessage<State>, ctx: &mut Context<Self>) -> Self::Result {
@@ -85,8 +85,7 @@ impl<State: StateMachine + Clone> Handler<ChannelMessage<State>> for ChannelActo
                 self.listeners.insert(addr.clone());
                 self.addr_to_id.insert(addr, id);
             }
-            ChannelMessage::Tick(event) => {
-                let transition_event = TransitionEvent::new_tick_event(event);
+            ChannelMessage::Tick(transition_event) => {
                 self.process_event(transition_event, ctx);
             }
             ChannelMessage::Event(addr, event) => {
@@ -94,8 +93,7 @@ impl<State: StateMachine + Clone> Handler<ChannelMessage<State>> for ChannelActo
                     .addr_to_id
                     .get(&addr)
                     .expect("Received a GameEvent from address before a Connect.");
-                let transition_event = TransitionEvent::new(*id, event);
-                self.process_event(transition_event, ctx);
+                self.process_event(event, ctx);
             }
         }
     }

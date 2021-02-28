@@ -1,3 +1,4 @@
+use crate::TransitionEvent;
 use chrono::{DateTime, Utc};
 
 /// Represents a transition that a [crate::StateMachine] would like to receive in the
@@ -7,8 +8,8 @@ use chrono::{DateTime, Utc};
 ///
 /// Storing and maintaining the suspended events is the responsibility of the code that owns the
 /// [crate::StateMachine] object.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct SuspendedEvent<Transition> {
+#[derive(Clone, PartialEq, Debug)]
+pub struct SuspendedEvent<Transition: PartialEq + Clone> {
     /// When the event should be triggered. Note that this is not necessarily equal to the timestamp
     /// field on the [crate::TransitionEvent] that is created when this event is triggered, since
     /// there may be a small delay between the time an event is requested at and the time it is
@@ -22,7 +23,7 @@ pub struct SuspendedEvent<Transition> {
     pub transition: Transition,
 }
 
-impl<Transition> SuspendedEvent<Transition> {
+impl<Transition: PartialEq + Clone> SuspendedEvent<Transition> {
     pub fn new(time: DateTime<Utc>, transition: Transition) -> SuspendedEvent<Transition> {
         SuspendedEvent { time, transition }
     }
@@ -33,7 +34,18 @@ impl<Transition> SuspendedEvent<Transition> {
     pub fn map_transition<NewTransition>(
         self,
         fun: impl FnOnce(Transition) -> NewTransition,
-    ) -> SuspendedEvent<NewTransition> {
+    ) -> SuspendedEvent<NewTransition>
+    where
+        NewTransition: PartialEq + Clone,
+    {
         SuspendedEvent::new(self.time, fun(self.transition))
+    }
+
+    pub fn as_transition_event(&self) -> TransitionEvent<Transition> {
+        TransitionEvent {
+            transition: self.transition.clone(),
+            timestamp: self.time,
+            player: None,
+        }
     }
 }

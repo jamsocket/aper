@@ -37,13 +37,13 @@ which methods take `&mut self`. In an Aper state machine, **only**
 We can turn `Counter` into a state machine like this:
 
 ```rust,noplaypen
-use aper::StateMachine;
+use aper::{StateMachine, Transition};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Counter {value: i64}
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
 enum CounterTransition {
    Add(i64),
    Subtract(i64),
@@ -77,13 +77,13 @@ is to implement methods with the same signatures as our original
 modifiers but that return the `Transition` type:
 
 ```rust,noplaypen
-# use aper::StateMachine;
+# use aper::{StateMachine, Transition};
 # use serde::{Serialize, Deserialize};
 #
 # #[derive(Serialize, Deserialize, Debug, Clone)]
 # struct Counter {value: i64}
 #
-# #[derive(Serialize, Deserialize, Debug, Clone)]
+# #[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
 # enum CounterTransition {
 #    Add(i64),
 #    Subtract(i64),

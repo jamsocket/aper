@@ -39,7 +39,7 @@ use aper::StateMachine;
 use aper::data_structures::Atom;
 use serde::{Serialize, Deserialize};
 
-#[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+#[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ToDoListItem {
     done: Atom<bool>,
     label: Atom<String>,
@@ -63,7 +63,7 @@ conflict.
 # use aper::data_structures::Atom;
 # use serde::{Serialize, Deserialize};
 # 
-# #[derive(StateMachine, Serialize, Deserialize, Debug, Clone)]
+# #[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 # struct ToDoListItem {
 #     done: Atom<bool>,
 #     label: Atom<String>,
