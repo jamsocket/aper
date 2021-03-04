@@ -89,7 +89,7 @@ fn main() {
 <br clear="both" />
 
 <div class="code-caption">
-    <p>Implement your own <strong>update logic</strong>.</p>
+    <p>Implement arbitrary <strong>update logic</strong>.</p>
     <p>Define your own units of state that integrate seamlessly with Aper's built-in data structures.</p>
 </div>
 
