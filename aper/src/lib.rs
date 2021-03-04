@@ -166,7 +166,7 @@ pub enum StateUpdateMessage<State: StateProgram> {
     /// when a client first connects.
     ReplaceState(
         #[serde(bound = "")] State,
-        #[serde(with = "ts_milliseconds")] DateTime<Utc>,
+        #[serde(with = "ts_milliseconds")] Timestamp,
         PlayerID,
     ),
 

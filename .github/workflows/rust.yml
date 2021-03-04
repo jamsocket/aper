@@ -21,17 +21,23 @@ jobs:
       run: cargo test --verbose
     - name: Install Nightly
       run: rustup toolchain install nightly
+    - name: Install Cobalt
+      run: curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git cobalt-org/cobalt.rs --crate cobalt
+    - name: Build website
+      working-directory: website
+      run: cobalt build
     - name: Build docs
       run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc -p aper -p aper-dev -p aper-actix --no-deps
     - name: Install mdbook
       run: cargo install mdbook
     - name: Build book
       run: mdbook build book
-    - name: Move docs
-      run: mv target/doc book/book/doc
+    - name: Combine site files
+      run: mv website/_site site
+      run: mv book/book site/guide
+      run: mv target/doc site/doc
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@4.0.0
       with:
         branch: gh-pages
-        #folder: target/doc
-        folder: book/book
+        folder: site

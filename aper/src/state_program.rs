@@ -8,7 +8,7 @@ pub trait StateProgram:
     Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug
 {
     /// The [StateMachine::Transition] type associates another type with this state machine
-    /// as its transitions.
+    /// as its transition.
     type Transition: Transition;
 
     /// Update the state machine according to the given [TransitionEvent]. This method *must* be

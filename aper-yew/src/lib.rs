@@ -17,8 +17,7 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{PlayerID, StateMachine, StateUpdateMessage};
-use chrono::{DateTime, Utc};
+use aper::{PlayerID, StateMachine, StateUpdateMessage, Timestamp};
 use std::fmt::Debug;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
@@ -28,6 +27,7 @@ use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRend
 mod state_manager;
 mod update_interval;
 mod wire_wrapped;
+mod view;
 
 use state_manager::StateManager;
 pub use update_interval::UpdateInterval;
@@ -164,7 +164,7 @@ pub struct ViewContext<State: StateMachine> {
 
     /// An estimate of the time on the server's clock, accounting for the time
     /// since the last message from the server.
-    pub time: DateTime<Utc>,
+    pub time: Timestamp,
 }
 
 impl<View: StateView> Component for StateMachineComponent<View> {
