@@ -33,9 +33,10 @@ jobs:
     - name: Build book
       run: mdbook build book
     - name: Combine site files
-      run: mv website/_site site
-      run: mv book/book site/guide
-      run: mv target/doc site/doc
+      run: |
+        mv website/_site site
+        mv book/book site/guide
+        mv target/doc site/doc
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@4.0.0
       with:
