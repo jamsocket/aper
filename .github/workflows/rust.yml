@@ -27,7 +27,7 @@ jobs:
       working-directory: website
       run: cobalt build
     - name: Build docs
-      run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc -p aper -p aper-dev -p aper-actix --no-deps
+      run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc -p aper -p aper-yew -p aper-actix --no-deps
     - name: Install mdbook
       run: cargo install mdbook
     - name: Build book
