@@ -1,7 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aper/src/state_program.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>state_program.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aper/src/state_program.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>state_program.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../aper/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1"> 1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../aper/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1"> 1</span>
 <span id="2"> 2</span>
 <span id="3"> 3</span>
 <span id="4"> 4</span>
@@ -57,46 +57,15 @@
 <span id="54">54</span>
 <span id="55">55</span>
 <span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
-<span id="64">64</span>
-<span id="65">65</span>
-<span id="66">66</span>
-<span id="67">67</span>
-<span id="68">68</span>
-<span id="69">69</span>
-<span id="70">70</span>
-<span id="71">71</span>
-<span id="72">72</span>
-<span id="73">73</span>
-<span id="74">74</span>
-<span id="75">75</span>
-<span id="76">76</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">StateMachine</span>, <span class="ident">SuspendedEvent</span>, <span class="ident">TransitionEvent</span>, <span class="ident">Transition</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">StateMachine</span>, <span class="ident">TransitionEvent</span>, <span class="ident">Transition</span>};
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">de</span>::<span class="ident">DeserializeOwned</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Serialize</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgram</span>:
-    <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">DeserializeOwned</span> <span class="op">+</span> <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">Debug</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span><span class="op">&gt;</span>: <span class="ident">StateMachine</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">=</span><span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>
 {
-    <span class="doccomment">/// The [StateMachine::Transition] type associates another type with this state machine</span>
-    <span class="doccomment">/// as its transition.</span>
-    <span class="kw">type</span> <span class="ident">Transition</span>: <span class="ident">Transition</span>;
-
-    <span class="doccomment">/// Update the state machine according to the given [TransitionEvent]. This method *must* be</span>
-    <span class="doccomment">/// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]</span>
-    <span class="doccomment">/// must result in the same state, even at a different time and on a different machine. This</span>
-    <span class="doccomment">/// is the requirement that allows Aper to keep the state in sync across multiple machines.</span>
-    <span class="kw">fn</span> <span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">transition</span>: <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span>);
-
     <span class="doccomment">/// A state machine may &quot;suspend&quot; an event which occurs at a specific time in the future.</span>
     <span class="doccomment">/// This is useful for ensuring that the state is updated at a future time regardless of</span>
     <span class="doccomment">/// a user-initiated state change before then. State machines that only change state as a</span>
@@ -116,19 +85,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Since they are not associated with a particular player, suspended events trigger</span>
     <span class="doccomment">/// `process_event` with a `None` as the player in the [TransitionEvent].</span>
-    <span class="kw">fn</span> <span class="ident">suspended_event</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="prelude-val">None</span>
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> <span class="ident">StateProgram</span> <span class="kw">for</span> <span class="ident">T</span> {
-    <span class="kw">type</span> <span class="ident">Transition</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">StateMachine</span><span class="op">&gt;</span>::<span class="ident">Transition</span>;
-
-    <span class="kw">fn</span> <span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">transition</span>: <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span>) {
-        <span class="ident">StateMachine</span>::<span class="ident">apply</span>(<span class="self">self</span>, <span class="ident">transition</span>.<span class="ident">transition</span>);
-    }
-
-    <span class="kw">fn</span> <span class="ident">suspended_event</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SuspendedEvent</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">suspended_event</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="prelude-val">None</span>
     }
 }
@@ -136,24 +93,26 @@
 <span class="doccomment">/// A trait indicating that a struct can be used to create a [StateMachine] for a given type.</span>
 <span class="doccomment">/// If your [StateMachine] does not need to be initialized with any external data or state,</span>
 <span class="doccomment">/// implement [std::default::Default] on it to avoid the need for a factory.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgramFactory</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&gt;</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> {
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgramFactory</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> {
     <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">State</span>;
 }
 
 <span class="doccomment">/// [StateMachineFactory] implementation that uses the `default` method of the relevant</span>
 <span class="doccomment">/// [StateMachine] type.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-<span class="kw">struct</span> <span class="ident">DefaultStateProgramFactory</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateProgram</span> <span class="op">+</span> <span class="ident">Default</span><span class="op">&gt;</span> {
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
+<span class="kw">struct</span> <span class="ident">DefaultStateProgramFactory</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Default</span><span class="op">&gt;</span> {
+    <span class="ident">_phantom_state</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
+    <span class="ident">_phantom_transition</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">StateProgram</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">StateProgramFactory</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>
-    <span class="kw">for</span> <span class="ident">DefaultStateProgramFactory</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>
+<span class="comment">/*
+impl&lt;State: &#39;static + StateProgram + Default + Unpin + Send&gt; StateProgramFactory&lt;State&gt;
+    for DefaultStateProgramFactory&lt;State&gt;
 {
-    <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">State</span> {
-        <span class="ident">Default</span>::<span class="ident">default</span>()
+    fn create(&amp;mut self) -&gt; State {
+        Default::default()
     }
 }
-</pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="aper"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+*/</span></pre></div>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="aper" data-search-js="../../search-index.js"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>
