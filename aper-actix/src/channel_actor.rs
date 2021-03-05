@@ -87,7 +87,7 @@ impl<T: Transition, State: StateProgram<T> + Clone> Handler<ChannelMessage<T, St
                 self.process_event(transition_event, ctx);
             }
             ChannelMessage::Event(addr, event) => {
-                let id = self
+                let _id = self
                     .addr_to_id
                     .get(&addr)
                     .expect("Received a GameEvent from address before a Connect.");

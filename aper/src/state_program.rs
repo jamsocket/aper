@@ -1,7 +1,4 @@
 use crate::{StateMachine, Transition, TransitionEvent};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use std::fmt::Debug;
 use std::marker::PhantomData;
 
 pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent<T>> {

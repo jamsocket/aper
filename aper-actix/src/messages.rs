@@ -1,5 +1,5 @@
 use actix::{Addr, Message};
-use aper::{StateProgram, StateUpdateMessage, Timestamp, Transition, TransitionEvent};
+use aper::{StateProgram, StateUpdateMessage, Transition, TransitionEvent};
 
 use crate::player_actor::PlayerActor;
 
