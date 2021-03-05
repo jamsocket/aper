@@ -1,4 +1,4 @@
-use aper::{StateProgram, Timestamp, TransitionEvent, Transition};
+use aper::{StateProgram, Timestamp, Transition, TransitionEvent};
 use chrono::Utc;
 use std::fmt::Debug;
 use std::marker::PhantomData;

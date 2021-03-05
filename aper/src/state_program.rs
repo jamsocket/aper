@@ -1,11 +1,10 @@
-use crate::{StateMachine, TransitionEvent, Transition};
+use crate::{StateMachine, Transition, TransitionEvent};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-pub trait StateProgram<T: Transition>: StateMachine<Transition=TransitionEvent<T>>
-{
+pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent<T>> {
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
     /// a user-initiated state change before then. State machines that only change state as a
@@ -33,7 +32,9 @@ pub trait StateProgram<T: Transition>: StateMachine<Transition=TransitionEvent<T
 /// A trait indicating that a struct can be used to create a [StateMachine] for a given type.
 /// If your [StateMachine] does not need to be initialized with any external data or state,
 /// implement [std::default::Default] on it to avoid the need for a factory.
-pub trait StateProgramFactory<T: Transition, State: StateProgram<T>>: Sized + Unpin + 'static + Send {
+pub trait StateProgramFactory<T: Transition, State: StateProgram<T>>:
+    Sized + Unpin + 'static + Send
+{
     fn create(&mut self) -> State;
 }
 

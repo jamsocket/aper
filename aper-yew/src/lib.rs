@@ -17,7 +17,7 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{PlayerID, StateMachine, StateUpdateMessage, Timestamp, Transition, StateProgram};
+use aper::{PlayerID, StateMachine, StateProgram, StateUpdateMessage, Timestamp, Transition};
 use std::fmt::Debug;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
@@ -26,8 +26,8 @@ use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRend
 
 mod state_manager;
 mod update_interval;
-mod wire_wrapped;
 mod view;
+mod wire_wrapped;
 
 use state_manager::StateManager;
 pub use update_interval::UpdateInterval;
@@ -114,8 +114,11 @@ pub enum Msg<T: Transition, State: StateProgram<T>> {
 
 /// Yew Component which owns a copy of the state as well as a connection to the server,
 /// and keeps its local copy of the state in sync with the server.
-pub struct StateMachineComponent<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>>
-{
+pub struct StateMachineComponent<
+    T: Transition,
+    Program: StateProgram<T>,
+    View: StateView<State = Program>,
+> {
     link: ComponentLink<Self>,
     props: Props<View>,
 
@@ -130,7 +133,9 @@ pub struct StateMachineComponent<T: Transition, Program: StateProgram<T>, View: 
     binary: bool,
 }
 
-impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> StateMachineComponent<T, Program, View> {
+impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>>
+    StateMachineComponent<T, Program, View>
+{
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
         self.status = Status::WaitingToConnect;
@@ -168,9 +173,9 @@ pub struct ViewContext<State: StateMachine> {
     pub time: Timestamp,
 }
 
-impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> Component for StateMachineComponent<T, Program, View>
+impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> Component
+    for StateMachineComponent<T, Program, View>
 {
-
     type Message = Msg<T, Program>;
     type Properties = Props<View>;
 

@@ -69,8 +69,7 @@ impl<T: Transition, State: StateProgram<T>> StreamHandler<Result<ws::Message, ws
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Text(text)) => {
-                let event: TransitionEvent<T> =
-                    serde_json::from_str(&text).unwrap();
+                let event: TransitionEvent<T> = serde_json::from_str(&text).unwrap();
 
                 self.channel
                     .do_send(ChannelMessage::Event(ctx.address(), event));

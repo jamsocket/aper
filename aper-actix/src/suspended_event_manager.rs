@@ -44,10 +44,8 @@ impl<T: Transition, State: StateProgram<T>> SuspendedEventManager<T, State> {
                 .signed_duration_since(Utc::now())
                 .to_std()
             {
-                let handle = ctx.notify_later(
-                    ChannelMessage::Tick(suspended_event.clone()),
-                    duration,
-                );
+                let handle =
+                    ctx.notify_later(ChannelMessage::Tick(suspended_event.clone()), duration);
                 self.suspended_event = Some((suspended_event, handle))
             } else {
                 println!("Negative duration encountered.")
