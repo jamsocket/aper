@@ -56,8 +56,6 @@
 <span id="53">53</span>
 <span id="54">54</span>
 <span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">channel_actor</span>::<span class="ident">ChannelActor</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">messages</span>::<span class="ident">ChannelMessage</span>;
@@ -105,10 +103,8 @@
                 .<span class="ident">signed_duration_since</span>(<span class="ident">Utc</span>::<span class="ident">now</span>())
                 .<span class="ident">to_std</span>()
             {
-                <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">notify_later</span>(
-                    <span class="ident">ChannelMessage</span>::<span class="ident">Tick</span>(<span class="ident">suspended_event</span>.<span class="ident">clone</span>()),
-                    <span class="ident">duration</span>,
-                );
+                <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span>
+                    <span class="ident">ctx</span>.<span class="ident">notify_later</span>(<span class="ident">ChannelMessage</span>::<span class="ident">Tick</span>(<span class="ident">suspended_event</span>.<span class="ident">clone</span>()), <span class="ident">duration</span>);
                 <span class="self">self</span>.<span class="ident">suspended_event</span> <span class="op">=</span> <span class="prelude-val">Some</span>((<span class="ident">suspended_event</span>, <span class="ident">handle</span>))
             } <span class="kw">else</span> {
                 <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;Negative duration encountered.&quot;</span>)

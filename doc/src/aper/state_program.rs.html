@@ -55,17 +55,11 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">StateMachine</span>, <span class="ident">TransitionEvent</span>, <span class="ident">Transition</span>};
-<span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">de</span>::<span class="ident">DeserializeOwned</span>;
-<span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Serialize</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">StateMachine</span>, <span class="ident">Transition</span>, <span class="ident">TransitionEvent</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span><span class="op">&gt;</span>: <span class="ident">StateMachine</span><span class="op">&lt;</span><span class="ident">Transition</span><span class="op">=</span><span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>
-{
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span><span class="op">&gt;</span>: <span class="ident">StateMachine</span><span class="op">&lt;</span><span class="ident">Transition</span> <span class="op">=</span> <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="doccomment">/// A state machine may &quot;suspend&quot; an event which occurs at a specific time in the future.</span>
     <span class="doccomment">/// This is useful for ensuring that the state is updated at a future time regardless of</span>
     <span class="doccomment">/// a user-initiated state change before then. State machines that only change state as a</span>
@@ -93,7 +87,9 @@
 <span class="doccomment">/// A trait indicating that a struct can be used to create a [StateMachine] for a given type.</span>
 <span class="doccomment">/// If your [StateMachine] does not need to be initialized with any external data or state,</span>
 <span class="doccomment">/// implement [std::default::Default] on it to avoid the need for a factory.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgramFactory</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> {
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgramFactory</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>:
+    <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span>
+{
     <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">State</span>;
 }
 
@@ -113,6 +109,7 @@ impl&lt;State: &#39;static + StateProgram + Default + Unpin + Send&gt; StateProg
         Default::default()
     }
 }
-*/</span></pre></div>
+*/</span>
+</pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="aper" data-search-js="../../search-index.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>
