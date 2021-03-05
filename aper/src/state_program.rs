@@ -1,22 +1,11 @@
-use crate::{StateMachine, SuspendedEvent, TransitionEvent, Transition};
+use crate::{StateMachine, TransitionEvent, Transition};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-pub trait StateProgram:
-    Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug
+pub trait StateProgram<T: Transition>: StateMachine<Transition=TransitionEvent<T>>
 {
-    /// The [StateMachine::Transition] type associates another type with this state machine
-    /// as its transition.
-    type Transition: Transition;
-
-    /// Update the state machine according to the given [TransitionEvent]. This method *must* be
-    /// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]
-    /// must result in the same state, even at a different time and on a different machine. This
-    /// is the requirement that allows Aper to keep the state in sync across multiple machines.
-    fn apply(&mut self, transition: TransitionEvent<Self::Transition>);
-
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
     /// a user-initiated state change before then. State machines that only change state as a
@@ -36,19 +25,7 @@ pub trait StateProgram:
     ///
     /// Since they are not associated with a particular player, suspended events trigger
     /// `process_event` with a `None` as the player in the [TransitionEvent].
-    fn suspended_event(&self) -> Option<SuspendedEvent<Self::Transition>> {
-        None
-    }
-}
-
-impl<T: StateMachine> StateProgram for T {
-    type Transition = <T as StateMachine>::Transition;
-
-    fn apply(&mut self, transition: TransitionEvent<Self::Transition>) {
-        StateMachine::apply(self, transition.transition);
-    }
-
-    fn suspended_event(&self) -> Option<SuspendedEvent<Self::Transition>> {
+    fn suspended_event(&self) -> Option<TransitionEvent<T>> {
         None
     }
 }
@@ -56,17 +33,19 @@ impl<T: StateMachine> StateProgram for T {
 /// A trait indicating that a struct can be used to create a [StateMachine] for a given type.
 /// If your [StateMachine] does not need to be initialized with any external data or state,
 /// implement [std::default::Default] on it to avoid the need for a factory.
-pub trait StateProgramFactory<State: StateProgram>: Sized + Unpin + 'static + Send {
+pub trait StateProgramFactory<T: Transition, State: StateProgram<T>>: Sized + Unpin + 'static + Send {
     fn create(&mut self) -> State;
 }
 
 /// [StateMachineFactory] implementation that uses the `default` method of the relevant
 /// [StateMachine] type.
 #[derive(Default)]
-struct DefaultStateProgramFactory<State: StateProgram + Default> {
-    _phantom: PhantomData<State>,
+struct DefaultStateProgramFactory<T: Transition, State: StateProgram<T> + Default> {
+    _phantom_state: PhantomData<State>,
+    _phantom_transition: PhantomData<T>,
 }
 
+/*
 impl<State: 'static + StateProgram + Default + Unpin + Send> StateProgramFactory<State>
     for DefaultStateProgramFactory<State>
 {
@@ -74,3 +53,4 @@ impl<State: 'static + StateProgram + Default + Unpin + Send> StateProgramFactory
         Default::default()
     }
 }
+*/

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::channel_actor::ChannelActor;
 use actix::{Actor, Addr, Context, Handler, Message};
-use aper::{StateMachine, StateProgramFactory};
+use aper::{StateMachine, StateProgram, StateProgramFactory, Transition};
 use rand::distributions::Uniform;
 use rand::{thread_rng, Rng};
 use std::marker::PhantomData;
@@ -14,20 +14,22 @@ pub struct CreateChannelMessage;
 
 /// Actix message to request the address of a channel by name. Returns the
 /// address of a [ChannelActor] if the channel exists.
-pub struct GetChannelMessage<State: StateMachine> {
+pub struct GetChannelMessage<T: Transition, State: StateMachine> {
     pub channel: String,
     _phantom: PhantomData<State>,
+    _pht: PhantomData<T>,
 }
 
-impl<State: StateMachine> Message for GetChannelMessage<State> {
-    type Result = Option<Addr<ChannelActor<State>>>;
+impl<T: Transition, State: StateProgram<T>> Message for GetChannelMessage<T, State> {
+    type Result = Option<Addr<ChannelActor<T, State>>>;
 }
 
-impl<State: StateMachine> GetChannelMessage<State> {
-    pub fn new(channel: String) -> GetChannelMessage<State> {
+impl<T: Transition, State: StateMachine> GetChannelMessage<T, State> {
+    pub fn new(channel: String) -> GetChannelMessage<T, State> {
         GetChannelMessage {
             channel,
             _phantom: Default::default(),
+            _pht: Default::default(),
         }
     }
 }
@@ -36,12 +38,18 @@ impl<State: StateMachine> GetChannelMessage<State> {
 /// players initially negotiate with the [ServerActor] to get the right address
 /// of the desired channel (and possibly create a new one) before they are connected
 /// to it.
-pub struct ServerActor<State: StateMachine, Factory: StateProgramFactory<State>> {
-    channels: HashMap<String, Addr<ChannelActor<State>>>,
+pub struct ServerActor<
+    T: Transition,
+    State: StateProgram<T>,
+    Factory: StateProgramFactory<T, State>,
+> {
+    channels: HashMap<String, Addr<ChannelActor<T, State>>>,
     factory: Factory,
 }
 
-impl<State: StateMachine, Factory: StateProgramFactory<State>> ServerActor<State, Factory> {
+impl<T: Transition, State: StateProgram<T>, Factory: StateProgramFactory<T, State>>
+    ServerActor<T, State, Factory>
+{
     pub fn new(factory: Factory) -> Self {
         ServerActor {
             channels: Default::default(),
@@ -60,7 +68,9 @@ fn random_alphanumeric_string() -> String {
         .collect()
 }
 
-impl<State: StateMachine, Factory: StateProgramFactory<State>> ServerActor<State, Factory> {
+impl<T: Transition, State: StateProgram<T>, Factory: StateProgramFactory<T, State>>
+    ServerActor<T, State, Factory>
+{
     fn create_new_channel(&mut self) -> String {
         for _ in 1..100 {
             // TODO: this loop is ugly but ensures that we pick a room that doesn't exist.
@@ -77,24 +87,28 @@ impl<State: StateMachine, Factory: StateProgramFactory<State>> ServerActor<State
     }
 }
 
-impl<State: StateMachine, Factory: StateProgramFactory<State>> Actor
-    for ServerActor<State, Factory>
+impl<T: Transition, State: StateProgram<T>, Factory: StateProgramFactory<T, State>> Actor
+    for ServerActor<T, State, Factory>
 {
     type Context = Context<Self>;
 }
 
-impl<State: StateMachine, Factory: StateProgramFactory<State>> Handler<GetChannelMessage<State>>
-    for ServerActor<State, Factory>
+impl<T: Transition, State: StateProgram<T>, Factory: StateProgramFactory<T, State>>
+    Handler<GetChannelMessage<T, State>> for ServerActor<T, State, Factory>
 {
-    type Result = Option<Addr<ChannelActor<State>>>;
+    type Result = Option<Addr<ChannelActor<T, State>>>;
 
-    fn handle(&mut self, msg: GetChannelMessage<State>, _ctx: &mut Context<Self>) -> Self::Result {
+    fn handle(
+        &mut self,
+        msg: GetChannelMessage<T, State>,
+        _ctx: &mut Context<Self>,
+    ) -> Self::Result {
         Some(self.channels.get(&msg.channel)?.clone())
     }
 }
 
-impl<State: StateMachine, Factory: StateProgramFactory<State>> Handler<CreateChannelMessage>
-    for ServerActor<State, Factory>
+impl<T: Transition, State: StateProgram<T>, Factory: StateProgramFactory<T, State>>
+    Handler<CreateChannelMessage> for ServerActor<T, State, Factory>
 {
     type Result = String;
 

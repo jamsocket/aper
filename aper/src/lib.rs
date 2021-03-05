@@ -113,12 +113,12 @@ use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
 pub use state_machine::{StateMachine, Transition};
 pub use state_program::{StateProgram, StateProgramFactory};
-pub use suspended_event::SuspendedEvent;
+use std::convert::Infallible;
+use std::marker::PhantomData;
 
 pub mod data_structures;
 mod state_machine;
 mod state_program;
-mod suspended_event;
 
 /// An opaque identifier for a single connected user.
 #[derive(Clone, Hash, Debug, PartialEq, Ord, PartialOrd, Eq, Serialize, Deserialize, Copy)]
@@ -135,7 +135,7 @@ pub type Timestamp = DateTime<Utc>;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct TransitionEvent<T>
 where
-    T: Transition,
+    T: Transition + Clone,
 {
     #[serde(with = "ts_milliseconds")]
     pub timestamp: Timestamp,
@@ -158,9 +158,11 @@ impl<T: Transition> TransitionEvent<T> {
     }
 }
 
+impl<T: Transition> Transition for TransitionEvent<T> {}
+
 /// A message from the server to a client that tells it to update its state.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum StateUpdateMessage<State: StateProgram> {
+pub enum StateUpdateMessage<T: Transition, State: StateProgram<T>> {
     /// Instructs the client to completely discard its existing state and replace it
     /// with the provided one. This is currently only used to set the initial state
     /// when a client first connects.
@@ -173,5 +175,5 @@ pub enum StateUpdateMessage<State: StateProgram> {
     /// Instructs the client to apply the given [TransitionEvent] to its copy of
     /// the state to synchronize it with the server. Currently, all state updates
     /// after the initial state is sent are sent through [StateUpdateMessage::TransitionState].
-    TransitionState(#[serde(bound = "")] TransitionEvent<State::Transition>),
+    TransitionState(#[serde(bound = "")] TransitionEvent<T>),
 }

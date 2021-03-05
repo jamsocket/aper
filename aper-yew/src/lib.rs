@@ -17,7 +17,7 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{PlayerID, StateMachine, StateUpdateMessage, Timestamp};
+use aper::{PlayerID, StateMachine, StateUpdateMessage, Timestamp, Transition, StateProgram};
 use std::fmt::Debug;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
@@ -75,7 +75,7 @@ pub trait StateView: Sized + 'static + Debug + Clone {
 /// The component does not have a copy of the state until it has connected and received
 /// an initial copy of the server's current state.
 #[derive(Debug)]
-pub enum Status<State: StateMachine> {
+pub enum Status<T: Transition, State: StateProgram<T>> {
     /// The component is in the process of connecting to the server but has not yet
     /// had its connection accepted.
     WaitingToConnect,
@@ -84,7 +84,7 @@ pub enum Status<State: StateMachine> {
     WaitingForInitialState,
     /// The component has connected to the server and is assumed to contain an up-to-date
     /// copy of the state.
-    Connected(StateManager<State>, PlayerID),
+    Connected(StateManager<T, State>, PlayerID),
     /// There was some error during the `WaitingToConnect` or `WaitingForInitialState`
     /// phase. The component's `onerror()` callback should have triggered, so the owner
     /// of this component may use this callback to take over rendering from this component
@@ -95,14 +95,14 @@ pub enum Status<State: StateMachine> {
 /// Represents a message this component could receive, either from the server or from
 /// an event triggered by the user.
 #[derive(Debug)]
-pub enum Msg<State: StateMachine> {
+pub enum Msg<T: Transition, State: StateProgram<T>> {
     /// A [StateMachine::Transition] object was initiated by the view, usually because of a
     /// user interaction.
     GameStateTransition(Option<State::Transition>),
     /// A [StateUpdateMessage] was received from the server.
-    ServerMessage(WireWrapped<StateUpdateMessage<State>>),
+    ServerMessage(WireWrapped<StateUpdateMessage<T, State>>),
     /// The status of the connection with the remote server has changed.
-    UpdateStatus(Box<Status<State>>),
+    UpdateStatus(Box<Status<T, State>>),
     /// Trigger a redraw of this View. Redraws are automatically triggered after a
     /// [Msg::ServerMessage] is received, so this is used to trigger a redraw that
     /// is _not_ tied to a state change. The only difference between these redraws will
@@ -114,7 +114,8 @@ pub enum Msg<State: StateMachine> {
 
 /// Yew Component which owns a copy of the state as well as a connection to the server,
 /// and keeps its local copy of the state in sync with the server.
-pub struct StateMachineComponent<View: StateView> {
+pub struct StateMachineComponent<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>>
+{
     link: ComponentLink<Self>,
     props: Props<View>,
 
@@ -122,14 +123,14 @@ pub struct StateMachineComponent<View: StateView> {
     wss_task: Option<WebSocketTask>,
 
     /// Status of connection with the server.
-    status: Status<View::State>,
+    status: Status<T, Program>,
 
     /// Whether or not to use binary (bincode) to communicate with the server.
     /// This is set to whichever the server chose to send as its first message.
     binary: bool,
 }
 
-impl<View: StateView> StateMachineComponent<View> {
+impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> StateMachineComponent<T, Program, View> {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
         self.status = Status::WaitingToConnect;
@@ -167,8 +168,10 @@ pub struct ViewContext<State: StateMachine> {
     pub time: Timestamp,
 }
 
-impl<View: StateView> Component for StateMachineComponent<View> {
-    type Message = Msg<View::State>;
+impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> Component for StateMachineComponent<T, Program, View>
+{
+
+    type Message = Msg<T, Program>;
     type Properties = Props<View>;
 
     /// On creation, we initialize the connection, which starts the process of

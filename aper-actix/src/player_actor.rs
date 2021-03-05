@@ -3,19 +3,19 @@ use actix_web_actors::ws;
 
 use crate::channel_actor::ChannelActor;
 use crate::messages::{ChannelMessage, WrappedStateUpdateMessage};
-use aper::{StateProgram, TransitionEvent};
+use aper::{StateProgram, Transition, TransitionEvent};
 use std::time::{Duration, Instant};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
-pub struct PlayerActor<State: StateProgram> {
-    pub channel: Addr<ChannelActor<State>>,
+pub struct PlayerActor<T: Transition, State: StateProgram<T>> {
+    pub channel: Addr<ChannelActor<T, State>>,
     pub last_seen: Instant,
     pub token: String,
 }
 
-impl<State: StateProgram> PlayerActor<State> {
-    pub fn new(channel: Addr<ChannelActor<State>>, token: String) -> PlayerActor<State> {
+impl<T: Transition, State: StateProgram<T>> PlayerActor<T, State> {
+    pub fn new(channel: Addr<ChannelActor<T, State>>, token: String) -> PlayerActor<T, State> {
         PlayerActor {
             channel,
             last_seen: Instant::now(),
@@ -34,7 +34,7 @@ impl<State: StateProgram> PlayerActor<State> {
     }
 }
 
-impl<State: StateProgram> Actor for PlayerActor<State> {
+impl<T: Transition, State: StateProgram<T>> Actor for PlayerActor<T, State> {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
@@ -45,12 +45,14 @@ impl<State: StateProgram> Actor for PlayerActor<State> {
     }
 }
 
-impl<State: StateProgram> Handler<WrappedStateUpdateMessage<State>> for PlayerActor<State> {
+impl<T: Transition, State: StateProgram<T>> Handler<WrappedStateUpdateMessage<T, State>>
+    for PlayerActor<T, State>
+{
     type Result = ();
 
     fn handle(
         &mut self,
-        msg: WrappedStateUpdateMessage<State>,
+        msg: WrappedStateUpdateMessage<T, State>,
         ctx: &mut Self::Context,
     ) -> Self::Result {
         if cfg!(debug_assertions) {
@@ -61,20 +63,20 @@ impl<State: StateProgram> Handler<WrappedStateUpdateMessage<State>> for PlayerAc
     }
 }
 
-impl<State: StateProgram> StreamHandler<Result<ws::Message, ws::ProtocolError>>
-    for PlayerActor<State>
+impl<T: Transition, State: StateProgram<T>> StreamHandler<Result<ws::Message, ws::ProtocolError>>
+    for PlayerActor<T, State>
 {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Text(text)) => {
-                let event: TransitionEvent<State::Transition> =
+                let event: TransitionEvent<T> =
                     serde_json::from_str(&text).unwrap();
 
                 self.channel
                     .do_send(ChannelMessage::Event(ctx.address(), event));
             }
             Ok(ws::Message::Binary(bin)) => {
-                let event: TransitionEvent<State::Transition> = bincode::deserialize(&bin).unwrap();
+                let event: TransitionEvent<T> = bincode::deserialize(&bin).unwrap();
 
                 self.channel
                     .do_send(ChannelMessage::Event(ctx.address(), event));
