@@ -1,5 +1,16 @@
-use yew::Html;
+use yew::{Html, Callback};
+use aper::{PlayerID, Timestamp};
 
-trait View<T> {
-    fn view(value: &T) -> Html;
+pub struct ViewContext<T> {
+    pub callback: Callback<Option<T>>,
+    pub redraw: Callback<()>,
+    pub player: PlayerID,
+    pub time: Timestamp,
+}
+
+pub trait View: Clone {
+    type State;
+    type Callback;
+
+    fn view(&self, value: &Self::State, context: &ViewContext<Self::Callback>) -> Html;
 }

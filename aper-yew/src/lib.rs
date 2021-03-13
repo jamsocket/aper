@@ -17,7 +17,7 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{PlayerID, StateMachine, StateProgram, StateUpdateMessage, Timestamp, Transition};
+use aper::{PlayerID, StateProgram, StateUpdateMessage, Transition, TransitionEvent};
 use std::fmt::Debug;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
@@ -32,10 +32,11 @@ mod wire_wrapped;
 use state_manager::StateManager;
 pub use update_interval::UpdateInterval;
 use wire_wrapped::WireWrapped;
+pub use crate::view::{View, ViewContext};
 
 /// Properties for [StateMachineComponent].
 #[derive(Properties, Clone)]
-pub struct Props<View: StateView> {
+pub struct Props<V: View> {
     /// The websocket URL (beginning ws:// or wss://) of the server to connect to.
     pub websocket_url: String,
 
@@ -45,30 +46,7 @@ pub struct Props<View: StateView> {
     /// An object implementing [StateView]. From the moment that [StateMachineComponent]
     /// has connected to the server and received the initial state, rendering of the
     /// [StateMachineComponent] is delegated to the `view()` method of this object.
-    pub view: View,
-}
-
-/// A trait implemented by objects which can render a [StateMachine] into [yew::Html].
-/// In some cases it will be useful to implement this on empty structs, such that the
-/// view is dependent entirely on the value of the [StateMachine] and [PlayerID].
-/// In cases where this is implemented on non-empty structs, the data in the struct
-/// can be used for rendering.
-pub trait StateView: Sized + 'static + Debug + Clone {
-    /// Defines the struct used to represent the state that this [StateView] renders.
-    type State: StateMachine + Debug;
-
-    /// Render the given state into a [yew::Html] result.
-    ///
-    /// # Arguments
-    ///
-    /// * `state`    - The state to render.
-    /// * `callback` - A callback which, when called, propagates a transition to the state
-    ///                machine. The transition is an `Option`, if it is `None` this call is
-    ///                a no-op.
-    /// * `player`   - Upon connecting to the websocket server, each client is assigned a
-    ///                [PlayerID]. It is passed to the view, so that the view can depend on the
-    ///                player who is viewing it.
-    fn view(&self, state: &Self::State, view_context: &ViewContext<Self::State>) -> Html;
+    pub view: V,
 }
 
 /// The connection status of the component, and stores the state once it is available.
@@ -98,7 +76,7 @@ pub enum Status<T: Transition, State: StateProgram<T>> {
 pub enum Msg<T: Transition, State: StateProgram<T>> {
     /// A [StateMachine::Transition] object was initiated by the view, usually because of a
     /// user interaction.
-    GameStateTransition(Option<State::Transition>),
+    StateTransition(Option<T>),
     /// A [StateUpdateMessage] was received from the server.
     ServerMessage(WireWrapped<StateUpdateMessage<T, State>>),
     /// The status of the connection with the remote server has changed.
@@ -114,13 +92,13 @@ pub enum Msg<T: Transition, State: StateProgram<T>> {
 
 /// Yew Component which owns a copy of the state as well as a connection to the server,
 /// and keeps its local copy of the state in sync with the server.
-pub struct StateMachineComponent<
+pub struct StateProgramComponent<
     T: Transition,
     Program: StateProgram<T>,
-    View: StateView<State = Program>,
+    V: 'static + View<State = Program, Callback=T>
 > {
     link: ComponentLink<Self>,
-    props: Props<View>,
+    props: Props<V>,
 
     /// Websocket connection to the server.
     wss_task: Option<WebSocketTask>,
@@ -133,8 +111,8 @@ pub struct StateMachineComponent<
     binary: bool,
 }
 
-impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>>
-    StateMachineComponent<T, Program, View>
+impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback=T>>
+    StateProgramComponent<T, Program, V>
 {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
@@ -157,27 +135,11 @@ impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>>
     }
 }
 
-/// Data besides the state which is available to a [StateView].
-pub struct ViewContext<State: StateMachine> {
-    /// A callback for `Transition` events.
-    pub callback: Callback<Option<<State as StateMachine>::Transition>>,
-
-    /// A callback to force a redraw.
-    pub redraw: Callback<()>,
-
-    /// The ID of the player whose view this is.
-    pub player_id: PlayerID,
-
-    /// An estimate of the time on the server's clock, accounting for the time
-    /// since the last message from the server.
-    pub time: Timestamp,
-}
-
-impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> Component
-    for StateMachineComponent<T, Program, View>
+impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback=T>> Component
+    for StateProgramComponent<T, Program, V>
 {
     type Message = Msg<T, Program>;
-    type Properties = Props<View>;
+    type Properties = Props<V>;
 
     /// On creation, we initialize the connection, which starts the process of
     /// obtaining a copy of the server's current state.
@@ -197,12 +159,23 @@ impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> 
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::GameStateTransition(event) => {
-                if let Some(event) = event {
-                    if self.binary {
-                        self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
-                    } else {
-                        self.wss_task.as_mut().unwrap().send(Json(&event));
+            Msg::StateTransition(transition) => {
+                if let Some(transition) = transition {
+                    match &mut self.status {
+                        Status::Connected(state_manager, player_id) => {
+                            let event = TransitionEvent::new(
+                                Some(*player_id),
+                                state_manager.get_estimated_server_time(),
+                                transition
+                            );
+
+                            if self.binary {
+                                self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
+                            } else {
+                                self.wss_task.as_mut().unwrap().send(Json(&event));
+                            }
+                        }
+                        _ => panic!("Shouldn't receive StateTransition before connected.")
                     }
                 }
                 false
@@ -262,10 +235,10 @@ impl<T: Transition, Program: StateProgram<T>, View: StateView<State = Program>> 
             Status::WaitingForInitialState => html! {{"Waiting for initial state."}},
             Status::Connected(state_manager, player_id) => {
                 let view_context = ViewContext {
-                    callback: self.link.callback(Msg::GameStateTransition),
+                    callback: self.link.callback(Msg::StateTransition),
                     redraw: self.link.callback(|()| Msg::Redraw),
-                    player_id: *player_id,
                     time: state_manager.get_estimated_server_time(),
+                    player: *player_id,
                 };
                 self.props
                     .view
