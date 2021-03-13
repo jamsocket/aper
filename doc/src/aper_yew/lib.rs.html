@@ -251,33 +251,6 @@
 <span id="248">248</span>
 <span id="249">249</span>
 <span id="250">250</span>
-<span id="251">251</span>
-<span id="252">252</span>
-<span id="253">253</span>
-<span id="254">254</span>
-<span id="255">255</span>
-<span id="256">256</span>
-<span id="257">257</span>
-<span id="258">258</span>
-<span id="259">259</span>
-<span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
-<span id="266">266</span>
-<span id="267">267</span>
-<span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper-Yew</span>
 <span class="doccomment">//!</span>
@@ -298,7 +271,7 @@
 <span class="doccomment">//! contain stateful components by embedding them in the resulting [yew::Html]</span>
 <span class="doccomment">//! just as they would in a regular Yew component.</span>
 
-<span class="kw">use</span> <span class="ident">aper</span>::{<span class="ident">PlayerID</span>, <span class="ident">StateMachine</span>, <span class="ident">StateProgram</span>, <span class="ident">StateUpdateMessage</span>, <span class="ident">Timestamp</span>, <span class="ident">Transition</span>};
+<span class="kw">use</span> <span class="ident">aper</span>::{<span class="ident">PlayerID</span>, <span class="ident">StateProgram</span>, <span class="ident">StateUpdateMessage</span>, <span class="ident">Transition</span>, <span class="ident">TransitionEvent</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">format</span>::{<span class="ident">Bincode</span>, <span class="ident">Json</span>};
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">websocket</span>::{<span class="ident">WebSocketStatus</span>, <span class="ident">WebSocketTask</span>};
@@ -313,10 +286,11 @@
 <span class="kw">use</span> <span class="ident">state_manager</span>::<span class="ident">StateManager</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">update_interval</span>::<span class="ident">UpdateInterval</span>;
 <span class="kw">use</span> <span class="ident">wire_wrapped</span>::<span class="ident">WireWrapped</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">view</span>::{<span class="ident">View</span>, <span class="ident">ViewContext</span>};
 
 <span class="doccomment">/// Properties for [StateMachineComponent].</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Properties</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">View</span>: <span class="ident">StateView</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">V</span>: <span class="ident">View</span><span class="op">&gt;</span> {
     <span class="doccomment">/// The websocket URL (beginning ws:// or wss://) of the server to connect to.</span>
     <span class="kw">pub</span> <span class="ident">websocket_url</span>: <span class="ident">String</span>,
 
@@ -326,30 +300,7 @@
     <span class="doccomment">/// An object implementing [StateView]. From the moment that [StateMachineComponent]</span>
     <span class="doccomment">/// has connected to the server and received the initial state, rendering of the</span>
     <span class="doccomment">/// [StateMachineComponent] is delegated to the `view()` method of this object.</span>
-    <span class="kw">pub</span> <span class="ident">view</span>: <span class="ident">View</span>,
-}
-
-<span class="doccomment">/// A trait implemented by objects which can render a [StateMachine] into [yew::Html].</span>
-<span class="doccomment">/// In some cases it will be useful to implement this on empty structs, such that the</span>
-<span class="doccomment">/// view is dependent entirely on the value of the [StateMachine] and [PlayerID].</span>
-<span class="doccomment">/// In cases where this is implemented on non-empty structs, the data in the struct</span>
-<span class="doccomment">/// can be used for rendering.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateView</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Clone</span> {
-    <span class="doccomment">/// Defines the struct used to represent the state that this [StateView] renders.</span>
-    <span class="kw">type</span> <span class="ident">State</span>: <span class="ident">StateMachine</span> <span class="op">+</span> <span class="ident">Debug</span>;
-
-    <span class="doccomment">/// Render the given state into a [yew::Html] result.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Arguments</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * `state`    - The state to render.</span>
-    <span class="doccomment">/// * `callback` - A callback which, when called, propagates a transition to the state</span>
-    <span class="doccomment">///                machine. The transition is an `Option`, if it is `None` this call is</span>
-    <span class="doccomment">///                a no-op.</span>
-    <span class="doccomment">/// * `player`   - Upon connecting to the websocket server, each client is assigned a</span>
-    <span class="doccomment">///                [PlayerID]. It is passed to the view, so that the view can depend on the</span>
-    <span class="doccomment">///                player who is viewing it.</span>
-    <span class="kw">fn</span> <span class="ident">view</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>::<span class="ident">State</span>, <span class="ident">view_context</span>: <span class="kw-2">&amp;</span><span class="ident">ViewContext</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">State</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Html</span>;
+    <span class="kw">pub</span> <span class="ident">view</span>: <span class="ident">V</span>,
 }
 
 <span class="doccomment">/// The connection status of the component, and stores the state once it is available.</span>
@@ -379,7 +330,7 @@
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Msg</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="doccomment">/// A [StateMachine::Transition] object was initiated by the view, usually because of a</span>
     <span class="doccomment">/// user interaction.</span>
-    <span class="ident">GameStateTransition</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">State</span>::<span class="ident">Transition</span><span class="op">&gt;</span>),
+    <span class="ident">StateTransition</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>),
     <span class="doccomment">/// A [StateUpdateMessage] was received from the server.</span>
     <span class="ident">ServerMessage</span>(<span class="ident">WireWrapped</span><span class="op">&lt;</span><span class="ident">StateUpdateMessage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>),
     <span class="doccomment">/// The status of the connection with the remote server has changed.</span>
@@ -395,13 +346,13 @@
 
 <span class="doccomment">/// Yew Component which owns a copy of the state as well as a connection to the server,</span>
 <span class="doccomment">/// and keeps its local copy of the state in sync with the server.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StateMachineComponent</span><span class="op">&lt;</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StateProgramComponent</span><span class="op">&lt;</span>
     <span class="ident">T</span>: <span class="ident">Transition</span>,
     <span class="ident">Program</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-    <span class="ident">View</span>: <span class="ident">StateView</span><span class="op">&lt;</span><span class="ident">State</span> <span class="op">=</span> <span class="ident">Program</span><span class="op">&gt;</span>,
+    <span class="ident">V</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">View</span><span class="op">&lt;</span><span class="ident">State</span> <span class="op">=</span> <span class="ident">Program</span>, <span class="ident">Callback</span><span class="op">=</span><span class="ident">T</span><span class="op">&gt;</span>
 <span class="op">&gt;</span> {
     <span class="ident">link</span>: <span class="ident">ComponentLink</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>,
-    <span class="ident">props</span>: <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">View</span><span class="op">&gt;</span>,
+    <span class="ident">props</span>: <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Websocket connection to the server.</span>
     <span class="ident">wss_task</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">WebSocketTask</span><span class="op">&gt;</span>,
@@ -414,8 +365,8 @@
     <span class="ident">binary</span>: <span class="ident">bool</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">Program</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">View</span>: <span class="ident">StateView</span><span class="op">&lt;</span><span class="ident">State</span> <span class="op">=</span> <span class="ident">Program</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="ident">StateMachineComponent</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Program</span>, <span class="ident">View</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">Program</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">V</span>: <span class="ident">View</span><span class="op">&lt;</span><span class="ident">State</span> <span class="op">=</span> <span class="ident">Program</span>, <span class="ident">Callback</span><span class="op">=</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>
+    <span class="ident">StateProgramComponent</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Program</span>, <span class="ident">V</span><span class="op">&gt;</span>
 {
     <span class="doccomment">/// Initiate a connection to the remote server.</span>
     <span class="kw">fn</span> <span class="ident">do_connect</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
@@ -438,27 +389,11 @@
     }
 }
 
-<span class="doccomment">/// Data besides the state which is available to a [StateView].</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ViewContext</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// A callback for `Transition` events.</span>
-    <span class="kw">pub</span> <span class="ident">callback</span>: <span class="ident">Callback</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">State</span> <span class="kw">as</span> <span class="ident">StateMachine</span><span class="op">&gt;</span>::<span class="ident">Transition</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-
-    <span class="doccomment">/// A callback to force a redraw.</span>
-    <span class="kw">pub</span> <span class="ident">redraw</span>: <span class="ident">Callback</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
-
-    <span class="doccomment">/// The ID of the player whose view this is.</span>
-    <span class="kw">pub</span> <span class="ident">player_id</span>: <span class="ident">PlayerID</span>,
-
-    <span class="doccomment">/// An estimate of the time on the server&#39;s clock, accounting for the time</span>
-    <span class="doccomment">/// since the last message from the server.</span>
-    <span class="kw">pub</span> <span class="ident">time</span>: <span class="ident">Timestamp</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">Program</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">View</span>: <span class="ident">StateView</span><span class="op">&lt;</span><span class="ident">State</span> <span class="op">=</span> <span class="ident">Program</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">Component</span>
-    <span class="kw">for</span> <span class="ident">StateMachineComponent</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Program</span>, <span class="ident">View</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">Program</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">V</span>: <span class="ident">View</span><span class="op">&lt;</span><span class="ident">State</span> <span class="op">=</span> <span class="ident">Program</span>, <span class="ident">Callback</span><span class="op">=</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">Component</span>
+    <span class="kw">for</span> <span class="ident">StateProgramComponent</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Program</span>, <span class="ident">V</span><span class="op">&gt;</span>
 {
     <span class="kw">type</span> <span class="ident">Message</span> <span class="op">=</span> <span class="ident">Msg</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Program</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Properties</span> <span class="op">=</span> <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">View</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="ident">Properties</span> <span class="op">=</span> <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// On creation, we initialize the connection, which starts the process of</span>
     <span class="doccomment">/// obtaining a copy of the server&#39;s current state.</span>
@@ -478,12 +413,23 @@
 
     <span class="kw">fn</span> <span class="ident">update</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="self">Self</span>::<span class="ident">Message</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ShouldRender</span> {
         <span class="kw">match</span> <span class="ident">msg</span> {
-            <span class="ident">Msg</span>::<span class="ident">GameStateTransition</span>(<span class="ident">event</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">event</span>) <span class="op">=</span> <span class="ident">event</span> {
-                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">binary</span> {
-                        <span class="self">self</span>.<span class="ident">wss_task</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">send_binary</span>(<span class="ident">Bincode</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>));
-                    } <span class="kw">else</span> {
-                        <span class="self">self</span>.<span class="ident">wss_task</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">send</span>(<span class="ident">Json</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>));
+            <span class="ident">Msg</span>::<span class="ident">StateTransition</span>(<span class="ident">transition</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">transition</span>) <span class="op">=</span> <span class="ident">transition</span> {
+                    <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">status</span> {
+                        <span class="ident">Status</span>::<span class="ident">Connected</span>(<span class="ident">state_manager</span>, <span class="ident">player_id</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">TransitionEvent</span>::<span class="ident">new</span>(
+                                <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">player_id</span>),
+                                <span class="ident">state_manager</span>.<span class="ident">get_estimated_server_time</span>(),
+                                <span class="ident">transition</span>
+                            );
+
+                            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">binary</span> {
+                                <span class="self">self</span>.<span class="ident">wss_task</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">send_binary</span>(<span class="ident">Bincode</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>));
+                            } <span class="kw">else</span> {
+                                <span class="self">self</span>.<span class="ident">wss_task</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">send</span>(<span class="ident">Json</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>));
+                            }
+                        }
+                        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Shouldn&#39;t receive StateTransition before connected.&quot;</span>)
                     }
                 }
                 <span class="bool-val">false</span>
@@ -543,10 +489,10 @@
             <span class="ident">Status</span>::<span class="ident">WaitingForInitialState</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">html</span><span class="macro">!</span> {{<span class="string">&quot;Waiting for initial state.&quot;</span>}},
             <span class="ident">Status</span>::<span class="ident">Connected</span>(<span class="ident">state_manager</span>, <span class="ident">player_id</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">view_context</span> <span class="op">=</span> <span class="ident">ViewContext</span> {
-                    <span class="ident">callback</span>: <span class="self">self</span>.<span class="ident">link</span>.<span class="ident">callback</span>(<span class="ident">Msg</span>::<span class="ident">GameStateTransition</span>),
+                    <span class="ident">callback</span>: <span class="self">self</span>.<span class="ident">link</span>.<span class="ident">callback</span>(<span class="ident">Msg</span>::<span class="ident">StateTransition</span>),
                     <span class="ident">redraw</span>: <span class="self">self</span>.<span class="ident">link</span>.<span class="ident">callback</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">Msg</span>::<span class="ident">Redraw</span>),
-                    <span class="ident">player_id</span>: <span class="kw-2">*</span><span class="ident">player_id</span>,
                     <span class="ident">time</span>: <span class="ident">state_manager</span>.<span class="ident">get_estimated_server_time</span>(),
+                    <span class="ident">player</span>: <span class="kw-2">*</span><span class="ident">player_id</span>,
                 };
                 <span class="self">self</span>.<span class="ident">props</span>
                     .<span class="ident">view</span>
