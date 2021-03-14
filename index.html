@@ -38,7 +38,7 @@ docs</a>
     <p>Serialize them to synchronize state across a network, or to create an audit log.</p>
 </div>
 <pre style="background-color:#eff1f5;">
-<span style="color:#b48ead;">use </span><span style="color:#4f5b66;">aper::{List, Atom};
+<span style="color:#b48ead;">use </span><span style="color:#4f5b66;">aper::{StateMachine, data_structures::{List, Atom}};
 </span><span style="color:#a7adba;">// `List` represents an ordered list.
 </span><span style="color:#a7adba;">// `Atom` wraps a value to make it immutable
 </span><span style="color:#a7adba;">// except by replacement.
@@ -46,7 +46,7 @@ docs</a>
 </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span style="color:#4f5b66;">() {
 </span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let mut</span><span style="color:#4f5b66;"> my_list: List&lt;Atom&lt;String&gt;&gt; = List::new();
 </span><span style="color:#4f5b66;">    
-</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(_id, transition) = my_list.</span><span style="color:#96b5b4;">push</span><span style="color:#4f5b66;">(Atom::new(
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(_id, transition) = my_list.</span><span style="color:#96b5b4;">append</span><span style="color:#4f5b66;">(Atom::new(
 </span><span style="color:#4f5b66;">        &quot;</span><span style="color:#a3be8c;">Hello Aper</span><span style="color:#4f5b66;">&quot;.</span><span style="color:#96b5b4;">to_string</span><span style="color:#4f5b66;">()));
 </span><span style="color:#4f5b66;">
 </span><span style="color:#4f5b66;">    </span><span style="color:#a7adba;">// `transition` represents the action of adding
@@ -63,22 +63,22 @@ docs</a>
     <p>Mutations encode intent, so concurrent mutations are cleanly applied where possible.</p>
 </div>
 <pre style="background-color:#eff1f5;">
-<span style="color:#b48ead;">use </span><span style="color:#4f5b66;">aper::{List, Atom};
+<span style="color:#b48ead;">use </span><span style="color:#4f5b66;">aper::{StateMachine, data_structures::{List, Atom}};
 </span><span style="color:#4f5b66;">
 </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span style="color:#4f5b66;">() {
 </span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let mut</span><span style="color:#4f5b66;"> my_list: List&lt;Atom&lt;</span><span style="color:#b48ead;">u32</span><span style="color:#4f5b66;">&gt;&gt; = List::new();
 </span><span style="color:#4f5b66;">    
-</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(id1, transition1) = my_list.</span><span style="color:#96b5b4;">push</span><span style="color:#4f5b66;">(Atom::new(</span><span style="color:#d08770;">1</span><span style="color:#4f5b66;">));
-</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(id2, transition2) = my_list.</span><span style="color:#96b5b4;">push</span><span style="color:#4f5b66;">(Atom::new(</span><span style="color:#d08770;">2</span><span style="color:#4f5b66;">));
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(id1, transition1) = my_list.</span><span style="color:#96b5b4;">append</span><span style="color:#4f5b66;">(Atom::new(</span><span style="color:#d08770;">1</span><span style="color:#4f5b66;">));
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(id2, transition2) = my_list.</span><span style="color:#96b5b4;">append</span><span style="color:#4f5b66;">(Atom::new(</span><span style="color:#d08770;">2</span><span style="color:#4f5b66;">));
 </span><span style="color:#4f5b66;">
 </span><span style="color:#4f5b66;">    my_list.</span><span style="color:#96b5b4;">apply</span><span style="color:#4f5b66;">(transition2); </span><span style="color:#a7adba;">// my_list = [2]
 </span><span style="color:#4f5b66;">    my_list.</span><span style="color:#96b5b4;">apply</span><span style="color:#4f5b66;">(transition1); </span><span style="color:#a7adba;">// my_list = [2, 1]
 </span><span style="color:#4f5b66;">
 </span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(_id3, transition3) = my_list
-</span><span style="color:#4f5b66;">        .</span><span style="color:#96b5b4;">insert_between</span><span style="color:#4f5b66;">(id2, id1, Atom::new(</span><span style="color:#d08770;">3</span><span style="color:#4f5b66;">));
+</span><span style="color:#4f5b66;">        .</span><span style="color:#96b5b4;">insert_between</span><span style="color:#4f5b66;">(&amp;id2, &amp;id1, Atom::new(</span><span style="color:#d08770;">3</span><span style="color:#4f5b66;">));
 </span><span style="color:#4f5b66;">
 </span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">let </span><span style="color:#4f5b66;">(_id4, transition4) = my_list
-</span><span style="color:#4f5b66;">        .</span><span style="color:#96b5b4;">insert_between</span><span style="color:#4f5b66;">(id2, id1, Atom::new(</span><span style="color:#d08770;">4</span><span style="color:#4f5b66;">));
+</span><span style="color:#4f5b66;">        .</span><span style="color:#96b5b4;">insert_between</span><span style="color:#4f5b66;">(&amp;id2, &amp;id1, Atom::new(</span><span style="color:#d08770;">4</span><span style="color:#4f5b66;">));
 </span><span style="color:#4f5b66;">
 </span><span style="color:#4f5b66;">    my_list.</span><span style="color:#96b5b4;">apply</span><span style="color:#4f5b66;">(transition4); </span><span style="color:#a7adba;">// my_list = [2, 4, 1]
 </span><span style="color:#4f5b66;">    my_list.</span><span style="color:#96b5b4;">apply</span><span style="color:#4f5b66;">(transition3); </span><span style="color:#a7adba;">// my_list = [2, 4, 3, 1]
