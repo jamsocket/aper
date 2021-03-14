@@ -1,4 +1,4 @@
-# Aper
+# [Aper](https://aper.dev)
 
 [![crates.io](https://img.shields.io/crates/v/aper.svg)](https://crates.io/crates/aper)
 [![docs.rs](https://img.shields.io/badge/docs-release-brightgreen)](https://docs.rs/aper/)
