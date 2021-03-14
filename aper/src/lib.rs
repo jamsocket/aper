@@ -82,8 +82,11 @@
 //! # #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 //! # struct Counter;
 //! #
+//! # #[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
+//! # struct CounterTransition;
+//! #
 //! # impl StateMachine for Counter {
-//! #     type Transition = ();
+//! #     type Transition = CounterTransition;
 //! #
 //! #     fn apply(&mut self, event: CounterTransition) { unimplemented!() }
 //! # }
