@@ -65,7 +65,11 @@ impl<T: Transition, State: StateProgram<T> + Clone> Handler<ChannelMessage<T, St
     fn handle(&mut self, msg: ChannelMessage<T, State>, ctx: &mut Context<Self>) -> Self::Result {
         match msg {
             ChannelMessage::Connect(addr, token) => {
-                let id = if let Some(id) = token.as_ref().map(|d| self.token_to_player_id.get(d)).flatten() {
+                let id = if let Some(id) = token
+                    .as_ref()
+                    .map(|d| self.token_to_player_id.get(d))
+                    .flatten()
+                {
                     *id
                 } else {
                     let id = PlayerID(self.addr_to_id.len());

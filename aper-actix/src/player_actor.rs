@@ -19,7 +19,7 @@ impl<T: Transition, State: StateProgram<T>> PlayerActor<T, State> {
         PlayerActor {
             channel,
             last_seen: Instant::now(),
-            token: None
+            token: None,
         }
     }
 

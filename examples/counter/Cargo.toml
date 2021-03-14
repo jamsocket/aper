@@ -12,3 +12,6 @@ client = {path="./client"}
 aper = {path="../../aper"}
 aper-actix = {path="../../aper-actix"}
 actix-web-actors = "3.0.0"
+
+[build-dependencies]
+aper-build = {path="../../aper-build"}

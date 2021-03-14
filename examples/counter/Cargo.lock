@@ -375,6 +375,7 @@ name = "aper-actix"
 version = "0.1.0"
 dependencies = [
  "actix",
+ "actix-files",
  "actix-web",
  "actix-web-actors",
  "aper",
@@ -383,6 +384,10 @@ dependencies = [
  "rand 0.8.3",
  "serde_json",
 ]
+
+[[package]]
+name = "aper-build"
+version = "0.1.0"
 
 [[package]]
 name = "aper-yew"
@@ -644,6 +649,7 @@ dependencies = [
  "actix-web-actors",
  "aper",
  "aper-actix",
+ "aper-build",
  "client",
 ]
 
