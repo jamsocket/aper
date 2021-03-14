@@ -3,17 +3,17 @@
 //! This crate provides a Yew component that connects to an Aper server.
 //! The component takes as arguments a websocket URL, which it connects to
 //! in order to send and receive state updates. The component also takes
-//! an object implementing the [StateView] trait, which provides a function
+//! an object implementing the [View] trait, which provides a function
 //! from the current state object to the [yew::Html] that should be rendered.
 //!
-//! Note that the [StateView] you provide is _not_ a standard Yew component.
+//! Note that the [View] you provide is _not_ a standard Yew component.
 //! That's because Yew components typically own either a copy of their data or
 //! a read-only reference to it. Since the state is already owned by the
-//! [StateMachineComponent] that calls the view, this model allows us to pass the
+//! [StateProgramComponent] that calls the view, this model allows us to pass the
 //! state by reference whenever we need to render and thus avoid creating additional
 //! copies of the data.
 //!
-//! This doesn't mean [StateView]s can't have their own state, though! StateViews can
+//! This doesn't mean [View]s can't have their own state, though! Views can
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
@@ -29,12 +29,12 @@ mod update_interval;
 mod view;
 mod wire_wrapped;
 
+pub use crate::view::{View, ViewContext};
 use state_manager::StateManager;
 pub use update_interval::UpdateInterval;
 use wire_wrapped::WireWrapped;
-pub use crate::view::{View, ViewContext};
 
-/// Properties for [StateMachineComponent].
+/// Properties for [StateProgramComponent].
 #[derive(Properties, Clone)]
 pub struct Props<V: View> {
     /// The websocket URL (beginning ws:// or wss://) of the server to connect to.
@@ -44,9 +44,9 @@ pub struct Props<V: View> {
     #[prop_or_default]
     pub onerror: Callback<()>,
 
-    /// An object implementing [StateView]. From the moment that [StateMachineComponent]
+    /// An object implementing [View]. From the moment that [StateProgramComponent]
     /// has connected to the server and received the initial state, rendering of the
-    /// [StateMachineComponent] is delegated to the `view()` method of this object.
+    /// [StateProgramComponent] is delegated to the `view()` method of this object.
     pub view: V,
 }
 
@@ -75,7 +75,7 @@ pub enum Status<T: Transition, State: StateProgram<T>> {
 /// an event triggered by the user.
 #[derive(Debug)]
 pub enum Msg<T: Transition, State: StateProgram<T>> {
-    /// A [StateMachine::Transition] object was initiated by the view, usually because of a
+    /// A [Transition] object was initiated by the view, usually because of a
     /// user interaction.
     StateTransition(Option<T>),
     /// A [StateUpdateMessage] was received from the server.
@@ -96,7 +96,7 @@ pub enum Msg<T: Transition, State: StateProgram<T>> {
 pub struct StateProgramComponent<
     T: Transition,
     Program: StateProgram<T>,
-    V: 'static + View<State = Program, Callback=T>
+    V: 'static + View<State = Program, Callback = T>,
 > {
     link: ComponentLink<Self>,
     props: Props<V>,
@@ -112,7 +112,7 @@ pub struct StateProgramComponent<
     binary: bool,
 }
 
-impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback=T>>
+impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback = T>>
     StateProgramComponent<T, Program, V>
 {
     /// Initiate a connection to the remote server.
@@ -136,7 +136,7 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback=
     }
 }
 
-impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback=T>> Component
+impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback = T>> Component
     for StateProgramComponent<T, Program, V>
 {
     type Message = Msg<T, Program>;
@@ -167,7 +167,7 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback=
                             let event = TransitionEvent::new(
                                 Some(*player_id),
                                 state_manager.get_estimated_server_time(),
-                                transition
+                                transition,
                             );
 
                             if self.binary {
@@ -176,7 +176,7 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback=
                                 self.wss_task.as_mut().unwrap().send(Json(&event));
                             }
                         }
-                        _ => panic!("Shouldn't receive StateTransition before connected.")
+                        _ => panic!("Shouldn't receive StateTransition before connected."),
                     }
                 }
                 false

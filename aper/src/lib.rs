@@ -20,38 +20,22 @@
 //!
 //! ## What is a state machine?
 //!
-//! For the purposes of Aper, a state machine is simply a `struct` that
+//! For the purposes of Aper, a state machine is simply a `struct` or `enum` that
 //! implements [StateMachine] and has the following properties:
 //! - It defines a [StateMachine::Transition] type, through which every
 //!   possible change to the state can be described. It is usually useful,
 //!   though not required, that this be an `enum` type.
 //! - All state updates are deterministic: if you clone a [StateMachine] and a
-//!   [TransitionEvent] (which represents a [StateMachine::Transition] wrapped in some
-//!   metadata), the result of applying that transition **must always** result
-//!   in the same underlying state.
+//!   [Transition], the result of applying the cloned transition to the cloned
+//!   state must be identical to applying the original transition to the original
+//!   state.
 //!
-//! This is similar to the state representation in frameworks like
-//! [Redux](https://redux.js.org) and [Yew](https://yew.rs).
-//!
-//! ## How it works
-//!
-//! When a client connects to the server, it receives a complete serialized
-//! copy of the current state. After that, it sends [StateMachine::Transition]s to the server
-//! and receives only [TransitionEvent]s. By applying these [TransitionEvent]s to
-//! its local copy, each client keeps its local copy of the state synchronized
-//! with the server.
-//!
-//! It is important that the server guarantees that each client receives
-//! [TransitionEvent]s in the same order, since the way a transition is applied
-//! may depend on previous state. For example, if a transition pushes a value
-//! to the end of a list, two clients receiving the transitions in a different
-//! order would have internal states which represented different orders of the
-//! list.
+//! Here's an example [StateMachine] implementing a counter:
 //!
 //! ```rust
 //! # use aper::{StateMachine, Transition};
 //! # use serde::{Serialize, Deserialize};
-//! #[derive(Serialize, Deserialize, Clone, Debug)]
+//! #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 //! struct Counter(i64);
 //!
 //! #[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -74,6 +58,57 @@
 //! }
 //! ```
 //!
+//! ## State Programs
+//!
+//! [StateMachine]s can take whatever transition types they want, but in order to interface with
+//! the Aper client/server infrastructure, a [StateMachine] must have a [TransitionEvent] transition
+//! type. This wraps up a regular [Transition] with metadata that the client produces (namely, the
+//! ID of the player who initiated the event and the timestamp of the event).
+//!
+//! In order to tell the Rust typesystem that a [StateMachine] is compatible, it must also implement
+//! the [StateProgram] trait. This also gives you a way to implement *suspended events*.
+//!
+//! Typically, a program in Aper will have only one trait that implements [StateProgram], but may
+//! have multiple traits that implement [StateMachine] used in the underlying representation of
+//! [StateProgram].
+//!
+//! If you just want to serve a [StateMachine] data structure and don't need transition metadata,
+//! you can construct a [StateMachineContainerProgram] which simply strips the metadata and passes
+//! the raw transition into the state machine, i.e.:
+//!
+//! ```rust
+//! # use aper::{StateMachine, Transition};
+//! # use serde::{Serialize, Deserialize};
+//! # #[derive(Serialize, Deserialize, Clone, Debug, Default)]
+//! # struct Counter;
+//! #
+//! # impl StateMachine for Counter {
+//! #     type Transition = ();
+//! #
+//! #     fn apply(&mut self, event: CounterTransition) { unimplemented!() }
+//! # }
+//! #
+//! # pub fn main() {
+//! use aper::StateMachineContainerProgram;
+//! let state_program = StateMachineContainerProgram(Counter::default());
+//! # }
+//! ```
+//!
+//! ## How it works
+//!
+//! When a client first connects to the server, the server sends back a complete serialized
+//! copy of the current state. After that, it sends and receives only [TransitionEvent]s to/from
+//! the server. By applying these [TransitionEvent]s to
+//! its local copy, each client keeps its local copy of the state synchronized
+//! with the server.
+//!
+//! It is important that the server guarantees that each client receives
+//! [TransitionEvent]s in the same order, since the way a transition is applied
+//! may depend on previous state. For example, if a transition pushes a value
+//! to the end of a list, two clients receiving the transitions in a different
+//! order would have internal states which represented different orders of the
+//! list.
+//!
 //! ## Why not CRDT?
 //!
 //! [Conflict-free replicated data types](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type)
@@ -81,7 +116,7 @@
 //! In order to avoid the need for a central “source of truth”, CRDTs require
 //! that update operations (i.e. state transitions) be [commutative](https://en.wikipedia.org/wiki/Commutative_property).
 //! This allows them to represent a bunch of common data structures, but doesn't
-//! allow you to represent complex update logic.
+//! allow you to represent arbitrarily complex update logic.
 //!
 //! By relying on a central authority, a state-machine approach allows you to
 //! implement data structures with arbitrary update logic, such as atomic moves
@@ -96,9 +131,6 @@
 //!   is a transition.
 //! - An **event** (or *transition event*) is a specific invocation of a transition by a user
 //!   at a time. For example, “player A drew a circle at (4, 6) at 10:04 PM” is an event.
-//!   State machines *may* use the "who" and "when" data to determine how a transition is applied.
-//!   Events may also not have a player associated with them (as in suspended events), but always
-//!   have a time.
 //! - A **channel** is the combination of a state object and the players currently connected to
 //!   it. You can think of this as analogous to a room or channel in a chat app, except
 //!   that the state is an arbitrary state machine instead of a sequential list of messages.
@@ -112,9 +144,7 @@ use std::fmt::{Display, Formatter};
 use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
 pub use state_machine::{StateMachine, Transition};
-pub use state_program::{StateProgram, StateMachineContainerProgram, StateProgramFactory};
-
-
+pub use state_program::{StateMachineContainerProgram, StateProgram, StateProgramFactory};
 
 pub mod data_structures;
 mod state_machine;
@@ -173,7 +203,7 @@ pub enum StateUpdateMessage<T: Transition, State: StateProgram<T>> {
     ),
 
     /// Instructs the client to apply the given [TransitionEvent] to its copy of
-    /// the state to synchronize it with the server. Currently, all state updates
+    /// the state to synchronize it with the server. All state updates
     /// after the initial state is sent are sent through [StateUpdateMessage::TransitionState].
     TransitionState(#[serde(bound = "")] TransitionEvent<T>),
 }

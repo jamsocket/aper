@@ -3,6 +3,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
 
+/// This trait indicates that a type can be used as the transition of a [StateMachine].
 pub trait Transition:
     Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug + PartialEq
 {
@@ -21,8 +22,8 @@ pub trait StateMachine:
     /// as its transitions.
     type Transition: Transition;
 
-    /// Update the state machine according to the given [TransitionEvent]. This method *must* be
-    /// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]
+    /// Update the state machine according to the given [Transition]. This method *must* be
+    /// deterministic: calling it on a clone of the state with a clone of the [Transition]
     /// must result in the same state, even at a different time and on a different machine. This
     /// is the requirement that allows Aper to keep the state in sync across multiple machines.
     fn apply(&mut self, transition: Self::Transition);

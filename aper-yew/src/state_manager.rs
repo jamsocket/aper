@@ -3,6 +3,8 @@ use chrono::Utc;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
+/// A container for the local copy of the state. Maintains an estimate of the
+/// time on the server.
 #[derive(Debug)]
 pub struct StateManager<T: Transition, State: StateProgram<T>> {
     state: Box<State>,

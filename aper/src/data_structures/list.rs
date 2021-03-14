@@ -85,7 +85,7 @@ impl<T: StateMachine + PartialEq> StateMachine for List<T> {
     }
 }
 
-type OperationWithId<T> = (Uuid, ListOperation<T>);
+pub type OperationWithId<T> = (Uuid, ListOperation<T>);
 
 impl<T: StateMachine + PartialEq> List<T> {
     fn do_insert(&mut self, location: ZenoIndex, id: Uuid, value: T) {
@@ -112,21 +112,21 @@ impl<T: StateMachine + PartialEq> List<T> {
         self.pool.remove(&id);
     }
 
-    /// Construct a [ListOperation] representing appending the given object to this
+    /// Construct an [OperationWithId] representing appending the given object to this
     /// list.
     pub fn append(&self, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
         (id, ListOperation::Append(id, value))
     }
 
-    /// Construct a [ListOperation] representing prepending the given object to this
+    /// Construct a [OperationWithId] representing prepending the given object to this
     /// list.
     pub fn prepend(&self, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
         (id, ListOperation::Prepend(id, value))
     }
 
-    /// Construct a [ListOperation] representing inserting the given object at the
+    /// Construct a [OperationWithId] representing inserting the given object at the
     /// given location in this list.
     pub fn insert(&self, location: ZenoIndex, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();

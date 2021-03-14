@@ -13,7 +13,7 @@ pub struct Props {
 }
 
 /// A Yew component that calls the given callback at a regular interval.
-/// It is a useful way to automatically refresh a [crate::StateView], since the
+/// It is a useful way to automatically refresh a [crate::View], since the
 /// state view itself cannot own an [IntervalTask].
 pub struct UpdateInterval {
     props: Props,

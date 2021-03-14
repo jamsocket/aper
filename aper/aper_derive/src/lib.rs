@@ -2,19 +2,18 @@ extern crate proc_macro;
 
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn;
 use syn::{Item, ItemStruct, Type};
 
 #[proc_macro_derive(Transition)]
 pub fn transition_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast: Item = syn::parse(input.into()).expect("Should decorate a struct.");
+    let ast: Item = syn::parse(input).expect("Should decorate a struct.");
 
     impl_transition_derive(&ast).into()
 }
 
 #[proc_macro_derive(StateMachine)]
 pub fn state_machine_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast: ItemStruct = syn::parse(input.into()).expect("Should decorate a struct.");
+    let ast: ItemStruct = syn::parse(input).expect("Should decorate a struct.");
 
     impl_state_machine_derive(&ast).into()
 }
@@ -26,11 +25,9 @@ fn impl_transition_derive(ast: &Item) -> TokenStream {
         _ => panic!("Can only derive Transition for an enum or struct."),
     };
 
-    let gen = quote! {
+    quote! {
         impl aper::Transition for #name {}
-    };
-
-    gen.into()
+    }
 }
 
 struct Field<'a> {
@@ -71,7 +68,7 @@ impl<'a> Field<'a> {
             transition_ty,
         } = self;
 
-        let gen = quote! {
+        quote! {
             pub fn #name(&self) -> &#ty {
                 &self.#name
             }
@@ -79,18 +76,16 @@ impl<'a> Field<'a> {
             pub fn #map_fn_name(&self, fun: impl FnOnce(&#ty) -> #transition_ty) -> #enum_name {
                 #enum_name::#apply_variant(fun(&self.#name))
             }
-        };
-        gen.into()
+        }
     }
 
     fn generate_enum_variant(&self) -> TokenStream {
         let Field {
             apply_variant, ty, ..
         } = self;
-        let gen: TokenStream = quote! {
+        quote! {
             #apply_variant(<#ty as StateMachine>::Transition),
-        };
-        gen.into()
+        }
     }
 
     fn generate_transition_case(&self, enum_name: &Ident) -> TokenStream {
@@ -99,27 +94,24 @@ impl<'a> Field<'a> {
             apply_variant,
             ..
         } = self;
-        let gen: TokenStream = quote! {
+        quote! {
             #enum_name::#apply_variant(val) => self.#name.apply(val),
-        };
-        gen.into()
+        }
     }
 }
 
-fn generate_transform(enum_name: &Ident, fields: &Vec<Field>) -> TokenStream {
+fn generate_transform(enum_name: &Ident, fields: &[Field]) -> TokenStream {
     let variants: TokenStream = fields
         .iter()
         .flat_map(Field::generate_enum_variant)
         .collect();
 
-    let gen = quote! {
+    quote! {
         #[derive(aper::Transition, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
         enum #enum_name {
             #variants
         }
-    };
-
-    gen.into()
+    }
 }
 
 fn impl_state_machine_derive(ast: &ItemStruct) -> TokenStream {
@@ -143,7 +135,7 @@ fn impl_state_machine_derive(ast: &ItemStruct) -> TokenStream {
 
     let transform_enum = generate_transform(&enum_name, &fields);
 
-    let gen = quote! {
+    quote! {
         impl aper::StateMachine for #name {
             type Transition = #enum_name;
 
@@ -159,6 +151,5 @@ fn impl_state_machine_derive(ast: &ItemStruct) -> TokenStream {
         }
 
         #transform_enum
-    };
-    gen.into()
+    }
 }

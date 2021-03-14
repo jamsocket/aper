@@ -13,7 +13,7 @@ pub struct Constant<T: Clone + PartialEq + Debug + Unpin> {
 impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug>
     Constant<T>
 {
-    /// Create a new [Atom] with a given initial value.
+    /// Create a new [Constant] with a given initial value.
     pub fn new(initial: T) -> Self {
         Constant { value: initial }
     }
@@ -34,7 +34,7 @@ impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialE
     }
 }
 
-/// Represents a transition used to change the value of an [Atom].
+/// A type representing
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct InvalidTransition;
 

@@ -174,6 +174,7 @@ impl ZenoIndex {
             // Find the first index at which left and right values differ.
             let ld = left.digit(i);
             let rd = right.digit(i);
+            #[allow(clippy::comparison_chain)]
             if ld < rd {
                 return match FractionByte::new_between(ld, rd) {
                     Some(FractionByte::Magic) => ZenoIndex(left.0[0..(i - 1)].into()),
@@ -239,6 +240,7 @@ impl Ord for ZenoIndex {
         for i in 0..=self.0.len() {
             let sd = self.digit(i);
             let od = other.digit(i);
+            #[allow(clippy::comparison_chain)]
             if sd < od {
                 return Ordering::Less;
             } else if sd > od {

@@ -1,6 +1,9 @@
 use crate::{StateMachine, Transition, TransitionEvent};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
+/// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
+/// its transition. Only state machines with this trait can be used directly with
+/// the aper client/server infrastructure.
 pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent<T>> {
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
@@ -26,15 +29,15 @@ pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent
     }
 }
 
-/// A trait indicating that a struct can be used to create a [StateMachine] for a given type.
-/// If your [StateMachine] does not need to be initialized with any external data or state,
-/// implement [std::default::Default] on it to avoid the need for a factory.
+/// A trait indicating that a struct can be used to create a [StateProgram] for a given type.
 pub trait StateProgramFactory<T: Transition, State: StateProgram<T>>:
     Sized + Unpin + 'static + Send
 {
     fn create(&mut self) -> State;
 }
 
+/// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
+/// are stripped of their metadata and passed down to the underlying state machine.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(bound = "")]
 pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM);
@@ -47,27 +50,4 @@ impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> {
     }
 }
 
-impl<SM: StateMachine> StateProgram<SM::Transition> for StateMachineContainerProgram<SM> {
-
-}
-
-/*
-/// [StateMachineFactory] implementation that uses the `default` method of the relevant
-/// [StateMachine] type.
-#[derive(Default)]
-struct DefaultStateProgramFactory<T: Transition, State: StateProgram<T> + Default> {
-    _phantom_state: PhantomData<State>,
-    _phantom_transition: PhantomData<T>,
-}
-
- */
-
-/*
-impl<State: 'static + StateProgram + Default + Unpin + Send> StateProgramFactory<State>
-    for DefaultStateProgramFactory<State>
-{
-    fn create(&mut self) -> State {
-        Default::default()
-    }
-}
-*/
+impl<SM: StateMachine> StateProgram<SM::Transition> for StateMachineContainerProgram<SM> {}

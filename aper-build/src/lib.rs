@@ -1,6 +1,8 @@
 use std::fs::rename;
 use std::process::Command;
 
+/// Build the crate found at "client" into a .wasm file.
+/// TODO: more configuration, maybe a builder.
 pub fn build_client_wasm() {
     // TODO: support crates with different names.
 
@@ -10,8 +12,6 @@ pub fn build_client_wasm() {
     let out_dir = format!("static-{}", &crate_name);
     let temp_file = "_tmp.wasm";
     let wasm_file = format!("{}/{}_bg.wasm", &out_dir, &crate_name);
-
-    //println!("cargo:rerun-if-changed={}", crate_name);
 
     // Build client as WASM.
     Command::new("cargo")
@@ -25,7 +25,7 @@ pub fn build_client_wasm() {
             target,
         ])
         .status()
-        .expect("Failed to compile client as wasm32.");
+        .unwrap_or_else(|_| panic!("Failed to compile client as wasm32."));
 
     // Wasm-Bindgen
     Command::new("wasm-bindgen")
@@ -45,8 +45,6 @@ pub fn build_client_wasm() {
         .status()
         .expect("Failed to run wasm-opt.");
 
-    rename(&temp_file, &wasm_file).expect(&format!(
-        "Failed to replace {} with {}",
-        &wasm_file, &temp_file
-    ));
+    rename(&temp_file, &wasm_file)
+        .unwrap_or_else(|_| panic!("Failed to replace {} with {}", &wasm_file, &temp_file));
 }

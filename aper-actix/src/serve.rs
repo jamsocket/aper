@@ -6,6 +6,8 @@ use actix_web_actors::ws;
 use aper::{StateProgram, Transition};
 use std::marker::PhantomData;
 
+/// Handle a websocket request by creating a new [PlayerActor] to represent
+/// it.
 async fn ws_handler<T: Transition, State: StateProgram<T>>(
     req: HttpRequest,
     stream: web::Payload,
@@ -18,6 +20,7 @@ async fn ws_handler<T: Transition, State: StateProgram<T>>(
     )
 }
 
+/// Represents a static directory to serve files from using `actix_files`.
 #[derive(Clone)]
 struct StaticDirectory {
     mount_path: String,
@@ -33,6 +36,7 @@ impl StaticDirectory {
     }
 }
 
+/// Builder for creating a server from a [StateProgram].
 pub struct ServerBuilder<T: Transition, State: StateProgram<T>> {
     files_directories: Vec<StaticDirectory>,
     state: State,
@@ -40,6 +44,7 @@ pub struct ServerBuilder<T: Transition, State: StateProgram<T>> {
 }
 
 impl<T: Transition, State: StateProgram<T>> ServerBuilder<T, State> {
+    /// Create a new builder with the given initial state.
     pub fn new(state: State) -> ServerBuilder<T, State> {
         ServerBuilder {
             state,
