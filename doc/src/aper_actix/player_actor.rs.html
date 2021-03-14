@@ -107,15 +107,15 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PlayerActor</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="ident">channel</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">ChannelActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">last_seen</span>: <span class="ident">Instant</span>,
-    <span class="kw">pub</span> <span class="ident">token</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">token</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">PlayerActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">channel</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">ChannelActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">token</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PlayerActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">channel</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">ChannelActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PlayerActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span> {
         <span class="ident">PlayerActor</span> {
             <span class="ident">channel</span>,
             <span class="ident">last_seen</span>: <span class="ident">Instant</span>::<span class="ident">now</span>(),
-            <span class="ident">token</span>,
+            <span class="ident">token</span>: <span class="prelude-val">None</span>,
         }
     }
 

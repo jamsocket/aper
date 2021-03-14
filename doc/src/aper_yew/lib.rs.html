@@ -251,6 +251,7 @@
 <span id="248">248</span>
 <span id="249">249</span>
 <span id="250">250</span>
+<span id="251">251</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper-Yew</span>
 <span class="doccomment">//!</span>
@@ -295,6 +296,7 @@
     <span class="kw">pub</span> <span class="ident">websocket_url</span>: <span class="ident">String</span>,
 
     <span class="doccomment">/// A no-argument callback that is invoked if there is a connection-related error.</span>
+    <span class="attribute">#[<span class="ident">prop_or_default</span>]</span>
     <span class="kw">pub</span> <span class="ident">onerror</span>: <span class="ident">Callback</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
 
     <span class="doccomment">/// An object implementing [StateView]. From the moment that [StateMachineComponent]</span>

@@ -47,7 +47,7 @@
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;()&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ChannelMessage</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="doccomment">/// A new player has joined this channel.</span>
-    <span class="ident">Connect</span>(<span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">PlayerActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">String</span>),
+    <span class="ident">Connect</span>(<span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">PlayerActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>),
 
     <span class="doccomment">/// A transition has been received from a player. Includes the address of the sending</span>
     <span class="doccomment">/// [PlayerActor].</span>
