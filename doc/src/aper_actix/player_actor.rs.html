@@ -93,6 +93,7 @@
 <span id="90">90</span>
 <span id="91">91</span>
 <span id="92">92</span>
+<span id="93">93</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">ActorContext</span>, <span class="ident">Addr</span>, <span class="ident">AsyncContext</span>, <span class="ident">Handler</span>, <span class="ident">StreamHandler</span>};
 <span class="kw">use</span> <span class="ident">actix_web_actors</span>::<span class="ident">ws</span>;
@@ -104,6 +105,7 @@
 
 <span class="kw">const</span> <span class="ident">HEARTBEAT_INTERVAL</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration</span>::<span class="ident">from_secs</span>(<span class="number">5</span>);
 
+<span class="doccomment">/// Actor which owns the connection to the client WebSocket connection.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PlayerActor</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="ident">channel</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">ChannelActor</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">last_seen</span>: <span class="ident">Instant</span>,

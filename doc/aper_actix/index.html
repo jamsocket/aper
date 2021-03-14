@@ -7,7 +7,8 @@ broadcasting them to all connected players.</p>
 </td></tr><tr class="module-item"><td><a class="struct" href="struct.CreateChannelMessage.html" title="aper_actix::CreateChannelMessage struct">CreateChannelMessage</a></td><td class="docblock-short"><p>Tells the server to create a new channel and return its unique name.</p>
 </td></tr><tr class="module-item"><td><a class="struct" href="struct.GetChannelMessage.html" title="aper_actix::GetChannelMessage struct">GetChannelMessage</a></td><td class="docblock-short"><p>Actix message to request the address of a channel by name. Returns the
 address of a <a href="../aper_actix/struct.ChannelActor.html" title="ChannelActor">ChannelActor</a> if the channel exists.</p>
-</td></tr><tr class="module-item"><td><a class="struct" href="struct.PlayerActor.html" title="aper_actix::PlayerActor struct">PlayerActor</a></td><td class="docblock-short"></td></tr><tr class="module-item"><td><a class="struct" href="struct.ServerActor.html" title="aper_actix::ServerActor struct">ServerActor</a></td><td class="docblock-short"><p>Responds to messages from the player which are not directed to a specific channel.
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.PlayerActor.html" title="aper_actix::PlayerActor struct">PlayerActor</a></td><td class="docblock-short"><p>Actor which owns the connection to the client WebSocket connection.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.ServerActor.html" title="aper_actix::ServerActor struct">ServerActor</a></td><td class="docblock-short"><p>Responds to messages from the player which are not directed to a specific channel.
 players initially negotiate with the <a href="../aper_actix/struct.ServerActor.html" title="ServerActor">ServerActor</a> to get the right address
 of the desired channel (and possibly create a new one) before they are connected
 to it.</p>
