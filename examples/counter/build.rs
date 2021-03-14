@@ -1,4 +1,3 @@
-
 fn main() {
-    aper_build::build_client_wasm()
+    aper_build::build_client_wasm();
 }

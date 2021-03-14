@@ -14,5 +14,5 @@ categories = ["data-structures", "web-programming::websocket", "wasm"]
 [dependencies]
 chrono = { version = "0.4.19", features = ["serde"] }
 serde = { version = "1.0.123", features = ["derive"] }
-uuid = { version = "0.8.2", features = ["serde", "v4"] }
+uuid = { version = "0.8.2", features = ["serde", "v4", "wasm-bindgen"] }
 aper_derive = {path="./aper_derive"}

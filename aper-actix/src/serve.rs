@@ -43,7 +43,10 @@ impl<T: Transition, State: StateProgram<T>> ServerBuilder<T, State> {
     pub fn new(state: State) -> ServerBuilder<T, State> {
         ServerBuilder {
             state,
-            files_directories: vec![StaticDirectory::new("client/", "./static-client")],
+            files_directories: vec![
+                StaticDirectory::new("client/", "./static-client"),
+                StaticDirectory::new("/", "./static"),
+            ],
             _phantom: PhantomData::default(),
         }
     }
