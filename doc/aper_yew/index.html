@@ -5,30 +5,33 @@
 <p>This crate provides a Yew component that connects to an Aper server.
 The component takes as arguments a websocket URL, which it connects to
 in order to send and receive state updates. The component also takes
-an object implementing the [StateView] trait, which provides a function
+an object implementing the <a href="../aper_yew/trait.View.html" title="View">View</a> trait, which provides a function
 from the current state object to the [yew::Html] that should be rendered.</p>
-<p>Note that the [StateView] you provide is <em>not</em> a standard Yew component.
+<p>Note that the <a href="../aper_yew/trait.View.html" title="View">View</a> you provide is <em>not</em> a standard Yew component.
 That’s because Yew components typically own either a copy of their data or
 a read-only reference to it. Since the state is already owned by the
-[StateMachineComponent] that calls the view, this model allows us to pass the
+<a href="../aper_yew/struct.StateProgramComponent.html" title="StateProgramComponent">StateProgramComponent</a> that calls the view, this model allows us to pass the
 state by reference whenever we need to render and thus avoid creating additional
 copies of the data.</p>
-<p>This doesn’t mean [StateView]s can’t have their own state, though! StateViews can
+<p>This doesn’t mean <a href="../aper_yew/trait.View.html" title="View">View</a>s can’t have their own state, though! Views can
 contain stateful components by embedding them in the resulting [yew::Html]
 just as they would in a regular Yew component.</p>
 </div><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
-<table><tr class="module-item"><td><a class="struct" href="struct.Props.html" title="aper_yew::Props struct">Props</a></td><td class="docblock-short"><p>Properties for [StateMachineComponent].</p>
+<table><tr class="module-item"><td><a class="struct" href="struct.Props.html" title="aper_yew::Props struct">Props</a></td><td class="docblock-short"><p>Properties for <a href="../aper_yew/struct.StateProgramComponent.html" title="StateProgramComponent">StateProgramComponent</a>.</p>
 </td></tr><tr class="module-item"><td><a class="struct" href="struct.StateProgramComponent.html" title="aper_yew::StateProgramComponent struct">StateProgramComponent</a></td><td class="docblock-short"><p>Yew Component which owns a copy of the state as well as a connection to the server,
 and keeps its local copy of the state in sync with the server.</p>
 </td></tr><tr class="module-item"><td><a class="struct" href="struct.UpdateInterval.html" title="aper_yew::UpdateInterval struct">UpdateInterval</a></td><td class="docblock-short"><p>A Yew component that calls the given callback at a regular interval.
-It is a useful way to automatically refresh a [crate::StateView], since the
+It is a useful way to automatically refresh a <a href="../aper_yew/trait.View.html" title="crate::View">crate::View</a>, since the
 state view itself cannot own an [IntervalTask].</p>
-</td></tr><tr class="module-item"><td><a class="struct" href="struct.ViewContext.html" title="aper_yew::ViewContext struct">ViewContext</a></td><td class="docblock-short"></td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.ViewContext.html" title="aper_yew::ViewContext struct">ViewContext</a></td><td class="docblock-short"><p>Context passed to a <a href="../aper_yew/trait.View.html" title="View">View</a>.</p>
+</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
 <table><tr class="module-item"><td><a class="enum" href="enum.Msg.html" title="aper_yew::Msg enum">Msg</a></td><td class="docblock-short"><p>Represents a message this component could receive, either from the server or from
 an event triggered by the user.</p>
 </td></tr><tr class="module-item"><td><a class="enum" href="enum.Status.html" title="aper_yew::Status enum">Status</a></td><td class="docblock-short"><p>The connection status of the component, and stores the state once it is available.
 The component does not have a copy of the state until it has connected and received
 an initial copy of the server’s current state.</p>
 </td></tr></table><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
-<table><tr class="module-item"><td><a class="trait" href="trait.View.html" title="aper_yew::View trait">View</a></td><td class="docblock-short"></td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="aper_yew" data-search-js="../search-index.js"></div>
+<table><tr class="module-item"><td><a class="trait" href="trait.View.html" title="aper_yew::View trait">View</a></td><td class="docblock-short"><p>Applies to a struct that can turn a value of the associated <code>State</code> type into <code>yew::Html</code>.
+The resulting view can emit events of type <code>Option&lt;Callback&gt;</code>.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="aper_yew" data-search-js="../search-index.js"></div>
     <script src="../main.js"></script></body></html>

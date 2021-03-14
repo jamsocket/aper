@@ -30,12 +30,14 @@
 <span id="27">27</span>
 <span id="28">28</span>
 <span id="29">29</span>
+<span id="30">30</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">aper_derive</span>::{<span class="ident">StateMachine</span>, <span class="ident">Transition</span>};
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">de</span>::<span class="ident">DeserializeOwned</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Serialize</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
 
+<span class="doccomment">/// This trait indicates that a type can be used as the transition of a [StateMachine].</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Transition</span>:
     <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">DeserializeOwned</span> <span class="op">+</span> <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">PartialEq</span>
 {
@@ -54,8 +56,8 @@
     <span class="doccomment">/// as its transitions.</span>
     <span class="kw">type</span> <span class="ident">Transition</span>: <span class="ident">Transition</span>;
 
-    <span class="doccomment">/// Update the state machine according to the given [TransitionEvent]. This method *must* be</span>
-    <span class="doccomment">/// deterministic: calling it on a clone of the state with a clone of the [TransitionEvent]</span>
+    <span class="doccomment">/// Update the state machine according to the given [Transition]. This method *must* be</span>
+    <span class="doccomment">/// deterministic: calling it on a clone of the state with a clone of the [Transition]</span>
     <span class="doccomment">/// must result in the same state, even at a different time and on a different machine. This</span>
     <span class="doccomment">/// is the requirement that allows Aper to keep the state in sync across multiple machines.</span>
     <span class="kw">fn</span> <span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">transition</span>: <span class="self">Self</span>::<span class="ident">Transition</span>);

@@ -69,7 +69,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">DeserializeOwned</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Debug</span><span class="op">&gt;</span>
     <span class="ident">Constant</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
 {
-    <span class="doccomment">/// Create a new [Atom] with a given initial value.</span>
+    <span class="doccomment">/// Create a new [Constant] with a given initial value.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">initial</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">Constant</span> { <span class="ident">value</span>: <span class="ident">initial</span> }
     }
@@ -90,7 +90,7 @@
     }
 }
 
-<span class="doccomment">/// Represents a transition used to change the value of an [Atom].</span>
+<span class="doccomment">/// A type representing</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InvalidTransition</span>;
 

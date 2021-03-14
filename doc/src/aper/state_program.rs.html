@@ -54,30 +54,13 @@
 <span id="51">51</span>
 <span id="52">52</span>
 <span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
-<span id="64">64</span>
-<span id="65">65</span>
-<span id="66">66</span>
-<span id="67">67</span>
-<span id="68">68</span>
-<span id="69">69</span>
-<span id="70">70</span>
-<span id="71">71</span>
-<span id="72">72</span>
-<span id="73">73</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">StateMachine</span>, <span class="ident">Transition</span>, <span class="ident">TransitionEvent</span>};
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>};
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
+<span class="doccomment">/// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as</span>
+<span class="doccomment">/// its transition. Only state machines with this trait can be used directly with</span>
+<span class="doccomment">/// the aper client/server infrastructure.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span><span class="op">&gt;</span>: <span class="ident">StateMachine</span><span class="op">&lt;</span><span class="ident">Transition</span> <span class="op">=</span> <span class="ident">TransitionEvent</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="doccomment">/// A state machine may &quot;suspend&quot; an event which occurs at a specific time in the future.</span>
     <span class="doccomment">/// This is useful for ensuring that the state is updated at a future time regardless of</span>
@@ -103,15 +86,15 @@
     }
 }
 
-<span class="doccomment">/// A trait indicating that a struct can be used to create a [StateMachine] for a given type.</span>
-<span class="doccomment">/// If your [StateMachine] does not need to be initialized with any external data or state,</span>
-<span class="doccomment">/// implement [std::default::Default] on it to avoid the need for a factory.</span>
+<span class="doccomment">/// A trait indicating that a struct can be used to create a [StateProgram] for a given type.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">StateProgramFactory</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Transition</span>, <span class="ident">State</span>: <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>:
     <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span>
 {
     <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">State</span>;
 }
 
+<span class="doccomment">/// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions</span>
+<span class="doccomment">/// are stripped of their metadata and passed down to the underlying state machine.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">bound</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StateMachineContainerProgram</span><span class="op">&lt;</span><span class="ident">SM</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span>(<span class="kw">pub</span> <span class="ident">SM</span>);
@@ -124,30 +107,7 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">SM</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">SM</span>::<span class="ident">Transition</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StateMachineContainerProgram</span><span class="op">&lt;</span><span class="ident">SM</span><span class="op">&gt;</span> {
-
-}
-
-<span class="comment">/*
-/// [StateMachineFactory] implementation that uses the `default` method of the relevant
-/// [StateMachine] type.
-#[derive(Default)]
-struct DefaultStateProgramFactory&lt;T: Transition, State: StateProgram&lt;T&gt; + Default&gt; {
-    _phantom_state: PhantomData&lt;State&gt;,
-    _phantom_transition: PhantomData&lt;T&gt;,
-}
-
- */</span>
-
-<span class="comment">/*
-impl&lt;State: &#39;static + StateProgram + Default + Unpin + Send&gt; StateProgramFactory&lt;State&gt;
-    for DefaultStateProgramFactory&lt;State&gt;
-{
-    fn create(&amp;mut self) -&gt; State {
-        Default::default()
-    }
-}
-*/</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">SM</span>: <span class="ident">StateMachine</span><span class="op">&gt;</span> <span class="ident">StateProgram</span><span class="op">&lt;</span><span class="ident">SM</span>::<span class="ident">Transition</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StateMachineContainerProgram</span><span class="op">&lt;</span><span class="ident">SM</span><span class="op">&gt;</span> {}
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="aper" data-search-js="../../search-index.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

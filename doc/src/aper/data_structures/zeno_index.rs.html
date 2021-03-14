@@ -351,6 +351,8 @@
 <span id="348">348</span>
 <span id="349">349</span>
 <span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>::<span class="ident">Ordering</span>;
@@ -528,6 +530,7 @@
             <span class="comment">// Find the first index at which left and right values differ.</span>
             <span class="kw">let</span> <span class="ident">ld</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
             <span class="kw">let</span> <span class="ident">rd</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
+            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">comparison_chain</span>)]</span>
             <span class="kw">if</span> <span class="ident">ld</span> <span class="op">&lt;</span> <span class="ident">rd</span> {
                 <span class="kw">return</span> <span class="kw">match</span> <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">ld</span>, <span class="ident">rd</span>) {
                     <span class="prelude-val">Some</span>(<span class="ident">FractionByte</span>::<span class="ident">Magic</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ZenoIndex</span>(<span class="ident">left</span>.<span class="number">0</span>[<span class="number">0</span>..(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)].<span class="ident">into</span>()),
@@ -593,6 +596,7 @@
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="op">=</span><span class="self">self</span>.<span class="number">0</span>.<span class="ident">len</span>() {
             <span class="kw">let</span> <span class="ident">sd</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
             <span class="kw">let</span> <span class="ident">od</span> <span class="op">=</span> <span class="ident">other</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
+            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">comparison_chain</span>)]</span>
             <span class="kw">if</span> <span class="ident">sd</span> <span class="op">&lt;</span> <span class="ident">od</span> {
                 <span class="kw">return</span> <span class="ident">Ordering</span>::<span class="ident">Less</span>;
             } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">sd</span> <span class="op">&gt;</span> <span class="ident">od</span> {
