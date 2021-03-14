@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
+/// Actor which owns the connection to the client WebSocket connection.
 pub struct PlayerActor<T: Transition, State: StateProgram<T>> {
     pub channel: Addr<ChannelActor<T, State>>,
     pub last_seen: Instant,
