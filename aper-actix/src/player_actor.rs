@@ -11,15 +11,15 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 pub struct PlayerActor<T: Transition, State: StateProgram<T>> {
     pub channel: Addr<ChannelActor<T, State>>,
     pub last_seen: Instant,
-    pub token: String,
+    pub token: Option<String>,
 }
 
 impl<T: Transition, State: StateProgram<T>> PlayerActor<T, State> {
-    pub fn new(channel: Addr<ChannelActor<T, State>>, token: String) -> PlayerActor<T, State> {
+    pub fn new(channel: Addr<ChannelActor<T, State>>) -> PlayerActor<T, State> {
         PlayerActor {
             channel,
             last_seen: Instant::now(),
-            token,
+            token: None
         }
     }
 

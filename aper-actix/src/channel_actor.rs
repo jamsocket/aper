@@ -29,8 +29,7 @@ pub struct ChannelActor<T: Transition, State: StateProgram<T>> {
     suspended_event: SuspendedEventManager<T, State>,
 }
 
-#[allow(clippy::new_without_default)]
-impl<T: Transition, State: StateProgram<T> + Clone> ChannelActor<T, State> {
+impl<T: Transition, State: StateProgram<T>> ChannelActor<T, State> {
     pub fn new(state: State) -> ChannelActor<T, State> {
         ChannelActor {
             state,
@@ -66,11 +65,13 @@ impl<T: Transition, State: StateProgram<T> + Clone> Handler<ChannelMessage<T, St
     fn handle(&mut self, msg: ChannelMessage<T, State>, ctx: &mut Context<Self>) -> Self::Result {
         match msg {
             ChannelMessage::Connect(addr, token) => {
-                let id = if let Some(id) = self.token_to_player_id.get(&token) {
+                let id = if let Some(id) = token.as_ref().map(|d| self.token_to_player_id.get(d)).flatten() {
                     *id
                 } else {
                     let id = PlayerID(self.addr_to_id.len());
-                    self.token_to_player_id.insert(token.clone(), id);
+                    if let Some(tok) = token.as_ref() {
+                        self.token_to_player_id.insert(tok.clone(), id);
+                    }
                     id
                 };
 

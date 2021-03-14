@@ -16,7 +16,7 @@ pub struct WrappedStateUpdateMessage<T: Transition, State: StateProgram<T>>(
 #[rtype(result = "()")]
 pub enum ChannelMessage<T: Transition, State: StateProgram<T>> {
     /// A new player has joined this channel.
-    Connect(Addr<PlayerActor<T, State>>, String),
+    Connect(Addr<PlayerActor<T, State>>, Option<String>),
 
     /// A transition has been received from a player. Includes the address of the sending
     /// [PlayerActor].

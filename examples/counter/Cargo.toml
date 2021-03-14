@@ -1,0 +1,14 @@
+[package]
+name = "counter"
+version = "0.1.0"
+authors = ["Paul Butler <paulgb@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix = "0.10.0"
+actix-files = "0.5.0"
+actix-web = "3.3.2"
+client = {path="./client"}
+aper = {path="../../aper"}
+aper-actix = {path="../../aper-actix"}
+actix-web-actors = "3.0.0"
