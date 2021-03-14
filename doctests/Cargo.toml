@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aper = {path="../../aper"}
-aper_derive = {path="../../aper/aper_derive"}
+aper = {path="../aper"}
+aper_derive = {path="../aper/aper_derive"}
 doc-comment = "0.3.3"
 serde = { version = "1.0.123", features = ["derive"] }

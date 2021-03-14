@@ -35,7 +35,7 @@ docs</a>
 </div>
 
 ```rust
-use aper::{List, Atom};
+use aper::{StateMachine, data_structures::{List, Atom}};
 // `List` represents an ordered list.
 // `Atom` wraps a value to make it immutable
 // except by replacement.
@@ -43,7 +43,7 @@ use aper::{List, Atom};
 fn main() {
     let mut my_list: List<Atom<String>> = List::new();
     
-    let (_id, transition) = my_list.push(Atom::new(
+    let (_id, transition) = my_list.append(Atom::new(
         "Hello Aper".to_string()));
 
     // `transition` represents the action of adding
@@ -64,22 +64,22 @@ fn main() {
 </div>
 
 ```rust
-use aper::{List, Atom};
+use aper::{StateMachine, data_structures::{List, Atom}};
 
 fn main() {
     let mut my_list: List<Atom<u32>> = List::new();
     
-    let (id1, transition1) = my_list.push(Atom::new(1));
-    let (id2, transition2) = my_list.push(Atom::new(2));
+    let (id1, transition1) = my_list.append(Atom::new(1));
+    let (id2, transition2) = my_list.append(Atom::new(2));
 
     my_list.apply(transition2); // my_list = [2]
     my_list.apply(transition1); // my_list = [2, 1]
 
     let (_id3, transition3) = my_list
-        .insert_between(id2, id1, Atom::new(3));
+        .insert_between(&id2, &id1, Atom::new(3));
 
     let (_id4, transition4) = my_list
-        .insert_between(id2, id1, Atom::new(4));
+        .insert_between(&id2, &id1, Atom::new(4));
 
     my_list.apply(transition4); // my_list = [2, 4, 1]
     my_list.apply(transition3); // my_list = [2, 4, 3, 1]
