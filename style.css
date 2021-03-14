@@ -53,11 +53,11 @@ pre {
 
     .code-caption {
         float: left;
+        width: 240px;
     }
 }
 
 .code-caption {
-    width: 240px;
     color: #888;
     line-height: 150%;
 }
