@@ -9,5 +9,6 @@ members = [
     "aper/aper_derive",
     "aper-actix",
     "aper-yew",
+    "aper-build",
     "book/tests",
 ]

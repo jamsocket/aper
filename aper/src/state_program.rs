@@ -1,5 +1,5 @@
 use crate::{StateMachine, Transition, TransitionEvent};
-use std::marker::PhantomData;
+use serde::{Serialize, Deserialize};
 
 pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent<T>> {
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
@@ -35,6 +35,23 @@ pub trait StateProgramFactory<T: Transition, State: StateProgram<T>>:
     fn create(&mut self) -> State;
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(bound = "")]
+pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM);
+
+impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> {
+    type Transition = TransitionEvent<SM::Transition>;
+
+    fn apply(&mut self, transition: Self::Transition) {
+        self.0.apply(transition.transition);
+    }
+}
+
+impl<SM: StateMachine> StateProgram<SM::Transition> for StateMachineContainerProgram<SM> {
+
+}
+
+/*
 /// [StateMachineFactory] implementation that uses the `default` method of the relevant
 /// [StateMachine] type.
 #[derive(Default)]
@@ -42,6 +59,8 @@ struct DefaultStateProgramFactory<T: Transition, State: StateProgram<T> + Defaul
     _phantom_state: PhantomData<State>,
     _phantom_transition: PhantomData<T>,
 }
+
+ */
 
 /*
 impl<State: 'static + StateProgram + Default + Unpin + Send> StateProgramFactory<State>
