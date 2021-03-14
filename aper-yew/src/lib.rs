@@ -41,6 +41,7 @@ pub struct Props<V: View> {
     pub websocket_url: String,
 
     /// A no-argument callback that is invoked if there is a connection-related error.
+    #[prop_or_default]
     pub onerror: Callback<()>,
 
     /// An object implementing [StateView]. From the moment that [StateMachineComponent]

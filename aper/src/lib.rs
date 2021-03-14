@@ -112,7 +112,7 @@ use std::fmt::{Display, Formatter};
 use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
 pub use state_machine::{StateMachine, Transition};
-pub use state_program::{StateProgram, StateProgramFactory};
+pub use state_program::{StateProgram, StateMachineContainerProgram, StateProgramFactory};
 
 
 
