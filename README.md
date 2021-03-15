@@ -5,6 +5,8 @@
 [![docs.rs](https://img.shields.io/badge/docs-latest-orange)](https://aper.dev/doc/aper/index.html)
 ![wokflow state](https://github.com/aper-dev/aper/workflows/build/badge.svg)
 
+<img src="website/ape.svg" alt="Cartoonized face of an ape." width="200px" />
+
 Aper is a framework for real-time sharing of application state
 over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
 Its use cases include browser-based collaboration tools and
