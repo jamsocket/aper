@@ -395,7 +395,9 @@ version = "0.1.0"
 dependencies = [
  "aper",
  "chrono",
+ "console_error_panic_hook",
  "serde",
+ "web-sys",
  "yew",
 ]
 

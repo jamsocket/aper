@@ -206,21 +206,25 @@ mod tests {
         my_list.apply(transition2); // my_list = [2]
         my_list.apply(transition1); // my_list = [2, 1]
 
-        let (_id3, transition3) = my_list
-            .insert_between(&id2, &id1, Atom::new(3));
+        let (_id3, transition3) = my_list.insert_between(&id2, &id1, Atom::new(3));
 
-        let (_id4, transition4) = my_list
-            .insert_between(&id2, &id1, Atom::new(4));
+        let (_id4, transition4) = my_list.insert_between(&id2, &id1, Atom::new(4));
 
         my_list.apply(transition4);
         assert_eq!(
             vec![2, 4, 1],
-            my_list.iter().map(|d| *d.value.value()).collect::<Vec<u32>>()
+            my_list
+                .iter()
+                .map(|d| *d.value.value())
+                .collect::<Vec<u32>>()
         );
         my_list.apply(transition3);
         assert_eq!(
             vec![2, 4, 3, 1],
-            my_list.iter().map(|d| *d.value.value()).collect::<Vec<u32>>()
+            my_list
+                .iter()
+                .map(|d| *d.value.value())
+                .collect::<Vec<u32>>()
         );
     }
 

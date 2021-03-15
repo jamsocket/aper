@@ -24,6 +24,7 @@ use yew::services::websocket::{WebSocketStatus, WebSocketTask};
 use yew::services::WebSocketService;
 use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
 
+mod client;
 mod state_manager;
 mod update_interval;
 mod view;
@@ -33,10 +34,11 @@ pub use crate::view::{View, ViewContext};
 use state_manager::StateManager;
 pub use update_interval::UpdateInterval;
 use wire_wrapped::WireWrapped;
+pub use client::ClientBuilder;
 
 /// Properties for [StateProgramComponent].
 #[derive(Properties, Clone)]
-pub struct Props<V: View> {
+pub struct StateProgramComponentProps<V: View> {
     /// The websocket URL (beginning ws:// or wss://) of the server to connect to.
     pub websocket_url: String,
 
@@ -99,7 +101,7 @@ pub struct StateProgramComponent<
     V: 'static + View<State = Program, Callback = T>,
 > {
     link: ComponentLink<Self>,
-    props: Props<V>,
+    props: StateProgramComponentProps<V>,
 
     /// Websocket connection to the server.
     wss_task: Option<WebSocketTask>,
@@ -140,7 +142,7 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback 
     for StateProgramComponent<T, Program, V>
 {
     type Message = Msg<T, Program>;
-    type Properties = Props<V>;
+    type Properties = StateProgramComponentProps<V>;
 
     /// On creation, we initialize the connection, which starts the process of
     /// obtaining a copy of the server's current state.
