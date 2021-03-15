@@ -31,7 +31,7 @@ docs</a>
 
 <div class="code-caption">
     <p>Every data mutation is a <strong>first-class value</strong>.</p>
-    <p>Serialize them to synchronize state across a network, or to create an audit log.</p>
+    <p>Serialize them to synchronize state across a network, or persist them to create an audit log.</p>
 </div>
 
 ```rust
