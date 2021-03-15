@@ -252,6 +252,8 @@
 <span id="249">249</span>
 <span id="250">250</span>
 <span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Aper-Yew</span>
 <span class="doccomment">//!</span>
@@ -279,6 +281,7 @@
 <span class="kw">use</span> <span class="ident">yew</span>::<span class="ident">services</span>::<span class="ident">WebSocketService</span>;
 <span class="kw">use</span> <span class="ident">yew</span>::{<span class="ident">html</span>, <span class="ident">Callback</span>, <span class="ident">Component</span>, <span class="ident">ComponentLink</span>, <span class="ident">Html</span>, <span class="ident">Properties</span>, <span class="ident">ShouldRender</span>};
 
+<span class="kw">mod</span> <span class="ident">client</span>;
 <span class="kw">mod</span> <span class="ident">state_manager</span>;
 <span class="kw">mod</span> <span class="ident">update_interval</span>;
 <span class="kw">mod</span> <span class="ident">view</span>;
@@ -288,10 +291,11 @@
 <span class="kw">use</span> <span class="ident">state_manager</span>::<span class="ident">StateManager</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">update_interval</span>::<span class="ident">UpdateInterval</span>;
 <span class="kw">use</span> <span class="ident">wire_wrapped</span>::<span class="ident">WireWrapped</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">client</span>::<span class="ident">ClientBuilder</span>;
 
 <span class="doccomment">/// Properties for [StateProgramComponent].</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Properties</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">V</span>: <span class="ident">View</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StateProgramComponentProps</span><span class="op">&lt;</span><span class="ident">V</span>: <span class="ident">View</span><span class="op">&gt;</span> {
     <span class="doccomment">/// The websocket URL (beginning ws:// or wss://) of the server to connect to.</span>
     <span class="kw">pub</span> <span class="ident">websocket_url</span>: <span class="ident">String</span>,
 
@@ -354,7 +358,7 @@
     <span class="ident">V</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">View</span><span class="op">&lt;</span><span class="ident">State</span> <span class="op">=</span> <span class="ident">Program</span>, <span class="ident">Callback</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
 <span class="op">&gt;</span> {
     <span class="ident">link</span>: <span class="ident">ComponentLink</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>,
-    <span class="ident">props</span>: <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>,
+    <span class="ident">props</span>: <span class="ident">StateProgramComponentProps</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Websocket connection to the server.</span>
     <span class="ident">wss_task</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">WebSocketTask</span><span class="op">&gt;</span>,
@@ -395,7 +399,7 @@
     <span class="kw">for</span> <span class="ident">StateProgramComponent</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Program</span>, <span class="ident">V</span><span class="op">&gt;</span>
 {
     <span class="kw">type</span> <span class="ident">Message</span> <span class="op">=</span> <span class="ident">Msg</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Program</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Properties</span> <span class="op">=</span> <span class="ident">Props</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="ident">Properties</span> <span class="op">=</span> <span class="ident">StateProgramComponentProps</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// On creation, we initialize the connection, which starts the process of</span>
     <span class="doccomment">/// obtaining a copy of the server&#39;s current state.</span>

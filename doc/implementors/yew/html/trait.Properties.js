@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["aper_yew"] = [{"text":"impl&lt;V:&nbsp;<a class=\"trait\" href=\"aper_yew/trait.View.html\" title=\"trait aper_yew::View\">View</a>&gt; Properties for <a class=\"struct\" href=\"aper_yew/struct.Props.html\" title=\"struct aper_yew::Props\">Props</a>&lt;V&gt;","synthetic":false,"types":["aper_yew::Props"]}];
+implementors["aper_yew"] = [{"text":"impl&lt;V:&nbsp;<a class=\"trait\" href=\"aper_yew/trait.View.html\" title=\"trait aper_yew::View\">View</a>&gt; Properties for <a class=\"struct\" href=\"aper_yew/struct.StateProgramComponentProps.html\" title=\"struct aper_yew::StateProgramComponentProps\">StateProgramComponentProps</a>&lt;V&gt;","synthetic":false,"types":["aper_yew::StateProgramComponentProps"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
