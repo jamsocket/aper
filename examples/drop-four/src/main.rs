@@ -1,7 +1,6 @@
-use aper::StateMachineContainerProgram;
 use aper_actix::ServerBuilder;
-use client::Counter;
+use client::DropFourGame;
 
 fn main() -> std::io::Result<()> {
-    ServerBuilder::new(StateMachineContainerProgram(Counter::default())).serve()
+    ServerBuilder::new(DropFourGame::default()).serve()
 }

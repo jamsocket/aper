@@ -124,6 +124,7 @@ version = "0.1.0"
 dependencies = [
  "aper",
  "aper-yew",
+ "chrono",
  "console_error_panic_hook",
  "serde",
  "wasm-bindgen",
