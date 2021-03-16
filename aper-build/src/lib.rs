@@ -13,6 +13,9 @@ pub fn build_client_wasm() {
     let temp_file = "_tmp.wasm";
     let wasm_file = format!("{}/{}_bg.wasm", &out_dir, &crate_name);
 
+    // Tell cargo to rerun the build script if any file under client/src changes.
+    println!("cargo:rerun-if-changed={}/src", &crate_name);
+
     // Build client as WASM.
     Command::new("cargo")
         .args(&[

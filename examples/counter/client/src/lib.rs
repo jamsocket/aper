@@ -23,6 +23,12 @@ impl View for CounterView {
                 <button onclick=context.callback.reform(|_| Some(CounterTransition::Add(1)))>
                     {"+1"}
                 </button>
+                <button onclick=context.callback.reform(|_| Some(CounterTransition::Subtract(1)))>
+                    {"-1"}
+                </button>
+                <button onclick=context.callback.reform(|_| Some(CounterTransition::Reset))>
+                    {"Reset"}
+                </button>
             </div>
         }
     }
