@@ -76,7 +76,10 @@ impl StateMachine for DropFourGame {
                 self.board = Default::default();
                 self.state = PlayState::NextTurn(p.other()); // Losing player goes first.
             }
-            _ => panic!("Received invalid state change."),
+            _ => {
+                // State transition received is incompatible with the current state.
+                // TODO: once Aper supports conflicts, this should raise a conflict.
+            },
         }
     }
 }

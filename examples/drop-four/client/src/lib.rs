@@ -75,11 +75,13 @@ impl View for GameView {
     type State = DropFourGame;
 
     fn view(&self, state: &Self::State, context: &ViewContext<Self::Callback>) -> Html {
+
         return html! {
             <div>
                 <h1>{"Hello, Aper!"}</h1>
                 {self.view_board(state.board(), context.callback.clone())}
                 <p>{self.view_state_text(state.state())}</p>
+                <button onclick=context.callback.reform(|_| Some(DropFourGameTransition::Reset))>{"New Game"}</button>
             </div>
         };
     }
