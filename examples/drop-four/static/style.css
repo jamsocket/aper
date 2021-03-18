@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro&display=swap');
+
+body {
+    font-family: Montserrat, sans-serif;
+}
+
+.main {
+    max-width: 650px;
+    margin: auto;
+    padding-top: 10px;
+}

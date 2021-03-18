@@ -8,8 +8,8 @@ const CELL_SIZE: u32 = 80;
 const CELL_INNER_SIZE: u32 = 70;
 const CELL_HOLE_SIZE: u32 = 60;
 
-const Teal: &str = "#4CA9AB";
-const Brown: &str = "#C4A07F";
+const TEAL: &str = "#4CA9AB";
+const BROWN: &str = "#C4A07F";
 
 const BOARD_FG: &str = "#D8E3D7";
 const BOARD_BG: &str = "#bbc4bb";
@@ -36,8 +36,8 @@ pub struct BoardProps {
 impl BoardComponent {
     fn view_disc(&self, player: Player, offset: i32) -> Html {
         let color = match player {
-            Player::Brown => Brown,
-            Player::Teal => Teal,
+            Player::Brown => BROWN,
+            Player::Teal => TEAL,
         };
 
         return html! {
@@ -133,7 +133,7 @@ impl Component for BoardComponent {
         let svg_height = height + PADDING_TOP + PADDING_BOTTOM;
 
         return html! {
-            <svg width=svg_width height=svg_height style="border: 1px solid black;">
+            <svg width=svg_width height=svg_height>
                 <mask id="board">
                     <rect width=width height=height fill="white" />
                     { for self.view_holes() }

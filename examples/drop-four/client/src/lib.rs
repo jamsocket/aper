@@ -34,8 +34,8 @@ impl View for GameView {
     fn view(&self, state: &Self::State, context: &ViewContext<Self::Callback>) -> Html {
 
         return html! {
-            <div>
-                <h1>{"Hello, Aper!"}</h1>
+            <div class="main">
+                <h1>{"Drop Four"}</h1>
                 <BoardComponent
                     state=state.clone()
                     callback=context.callback.reform(Some).clone() />
