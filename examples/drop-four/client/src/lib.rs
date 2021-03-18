@@ -10,6 +10,21 @@ mod state;
 #[derive(Clone)]
 struct GameView;
 
+
+const CELL_SIZE: u32 = 80;
+const CELL_INNER_SIZE: u32 = 70;
+const CELL_HOLE_SIZE: u32 = 60;
+
+const YELLOW: &str = "#4CA9AB";
+const RED: &str = "#C4A07F";
+
+const BOARD_FG: &str = "#D8E3D7";
+const BOARD_BG: &str = "#bbc4bb";
+
+const PADDING_SIDE: u32 = 40;
+const PADDING_TOP: u32 = 50;
+const PADDING_BOTTOM: u32 = 10;
+
 impl GameView {
     fn view_state_text(&self, state: PlayState) -> String {
         match state {
@@ -22,50 +37,48 @@ impl GameView {
         }
     }
 
-    fn view_drop_button(&self, col: usize, callback: Callback<Option<DropFourGameTransition>>) -> Html {
+    fn view_tile(&self, color: &str, offset: u32) -> Html {
         return html! {
-            <td>
-                <button onclick=callback.reform(move |_| Some(DropFourGameTransition::Drop(col)))>{"v"}</button>
-            </td>
-        }
-    }
-
-    fn view_header(&self, callback: Callback<Option<DropFourGameTransition>>) -> Html {
-        return html! {
-            <tr>
-                {for (0..BOARD_COLS).map(|i| self.view_drop_button(i, callback.clone()))}
-            </tr>
-        }
-    }
-
-    fn view_cell(&self, cell: Option<Player>) -> Html {
-        let inner_value = match cell {
-            None => "",
-            Some(Player::Yellow) => "Y",
-            Some(Player::Blue) => "B",
-        };
-
-        html! {
-            <td>
-                { inner_value }
-            </td>
-        }
-    }
-
-    fn view_row(&self, row: [Option<Player>; BOARD_COLS]) -> Html {
-        return html! {
-            <tr>
-                {for (0..BOARD_COLS).map(|i| self.view_cell(row[i]))}
-            </tr>
+            <g>
+                <circle r={CELL_INNER_SIZE/2} fill=&color cy=offset />
+                <circle r={CELL_INNER_SIZE/2} fill="black" opacity="0.2" mask="url(#circ)" />
+            </g>
         }
     }
 
     fn view_board(&self, board: &Board, callback: Callback<Option<DropFourGameTransition>>) -> Html {
+        let height = BOARD_ROWS as u32 * CELL_SIZE;
+        let width = BOARD_COLS as u32 * CELL_SIZE;
+
+        let svg_width = width + 2 * PADDING_SIDE;
+        let svg_height = height + PADDING_TOP + PADDING_BOTTOM;
+
+        let holes = (0..BOARD_COLS as u32).flat_map(
+            |c| (0..BOARD_ROWS as u32).map(move |r|
+                html! {<circle
+                    r={CELL_HOLE_SIZE/2}
+                    fill="black"
+                    cx={CELL_SIZE * c + CELL_SIZE/2}
+                    cy={CELL_SIZE * r + CELL_SIZE/2}
+                />}
+            )
+        );
+
         return html!{
-            <table>
-                {self.view_header(callback)}
-                {for (0..BOARD_ROWS).map(|i| self.view_row(board[i]))}
-            </table>
+            <svg width=svg_width height=svg_height style="border: 1px solid black;">
+                <mask id="board">
+                    <rect width=width height=height fill="white" />
+                    { for holes }
+                </mask>
+
+                <g transform=format!("translate({} {})", PADDING_SIDE, PADDING_TOP) >
+                    <g transform=format!("scale(0.98) translate(6 6)") >
+                        <rect width=width height=height fill=BOARD_BG mask="url(#board)" />
+                    </g>
+
+                    <rect width=width height=height fill=BOARD_FG mask="url(#board)" />
+                </g>
+            </svg>
         }
     }
 }
