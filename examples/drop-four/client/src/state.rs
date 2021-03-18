@@ -8,22 +8,22 @@ const NEEDED_IN_A_ROW: usize = 4;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub enum Player {
-    Blue,
-    Yellow,
+    Brown,
+    Teal,
 }
 
 impl Player {
     pub fn name(&self) -> &'static str {
         match self {
-            Player::Yellow => "Yellow",
-            Player::Blue => "Blue",
+            Player::Teal => "Teal",
+            Player::Brown => "Brown",
         }
     }
 
     pub fn other(&self) -> Player {
         match self {
-            Player::Blue => Player::Yellow,
-            Player::Yellow => Player::Blue,
+            Player::Brown => Player::Teal,
+            Player::Teal => Player::Brown,
         }
     }
 }
@@ -36,7 +36,7 @@ pub enum PlayState {
 
 impl Default for PlayState {
     fn default() -> PlayState {
-        PlayState::NextTurn(Player::Blue)
+        PlayState::NextTurn(Player::Brown)
     }
 }
 
@@ -146,7 +146,7 @@ impl DropFourGame {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::Player::{Blue, Yellow};
+    use crate::state::Player::{Brown, Teal};
     use aper::{PlayerID, Timestamp};
     use chrono::{TimeZone, Utc};
 
@@ -157,7 +157,7 @@ mod tests {
         let player1 = PlayerID(1);
         let player2 = PlayerID(2);
 
-        assert_eq!(PlayState::NextTurn(Player::Blue), game.state());
+        assert_eq!(PlayState::NextTurn(Player::Brown), game.state());
 
         game.apply(TransitionEvent::new(
             Some(player1),
@@ -165,8 +165,8 @@ mod tests {
             game.drop(4),
         ));
 
-        assert_eq!(PlayState::NextTurn(Player::Yellow), game.state());
-        assert_eq!(Some(Blue), game.board()[5][4]);
+        assert_eq!(PlayState::NextTurn(Player::Teal), game.state());
+        assert_eq!(Some(Brown), game.board()[5][4]);
 
         //     v
         // .......
@@ -182,8 +182,8 @@ mod tests {
             game.drop(4),
         ));
 
-        assert_eq!(PlayState::NextTurn(Player::Blue), game.state());
-        assert_eq!(Some(Yellow), game.board()[4][4]);
+        assert_eq!(PlayState::NextTurn(Player::Brown), game.state());
+        assert_eq!(Some(Teal), game.board()[4][4]);
 
         //     v
         // .......
@@ -199,8 +199,8 @@ mod tests {
             game.drop(3),
         ));
 
-        assert_eq!(PlayState::NextTurn(Player::Yellow), game.state());
-        assert_eq!(Some(Blue), game.board()[5][3]);
+        assert_eq!(PlayState::NextTurn(Player::Teal), game.state());
+        assert_eq!(Some(Brown), game.board()[5][3]);
 
         //    v
         // .......
@@ -216,8 +216,8 @@ mod tests {
             game.drop(5),
         ));
 
-        assert_eq!(PlayState::NextTurn(Player::Blue), game.state());
-        assert_eq!(Some(Yellow), game.board()[5][5]);
+        assert_eq!(PlayState::NextTurn(Player::Brown), game.state());
+        assert_eq!(Some(Teal), game.board()[5][5]);
 
         //      v
         // .......
@@ -233,8 +233,8 @@ mod tests {
             game.drop(2),
         ));
 
-        assert_eq!(PlayState::NextTurn(Player::Yellow), game.state());
-        assert_eq!(Some(Blue), game.board()[5][2]);
+        assert_eq!(PlayState::NextTurn(Player::Teal), game.state());
+        assert_eq!(Some(Brown), game.board()[5][2]);
 
         //   v
         // .......
@@ -250,8 +250,8 @@ mod tests {
             game.drop(2),
         ));
 
-        assert_eq!(PlayState::NextTurn(Player::Blue), game.state());
-        assert_eq!(Some(Yellow), game.board()[4][2]);
+        assert_eq!(PlayState::NextTurn(Player::Brown), game.state());
+        assert_eq!(Some(Teal), game.board()[4][2]);
 
         //   v
         // .......
@@ -267,8 +267,8 @@ mod tests {
             game.drop(1),
         ));
 
-        assert_eq!(PlayState::Winner(Player::Blue), game.state());
-        assert_eq!(Some(Blue), game.board()[5][1]);
+        assert_eq!(PlayState::Winner(Player::Brown), game.state());
+        assert_eq!(Some(Brown), game.board()[5][1]);
 
         //  v
         // .......

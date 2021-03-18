@@ -8,8 +8,8 @@ const CELL_SIZE: u32 = 80;
 const CELL_INNER_SIZE: u32 = 70;
 const CELL_HOLE_SIZE: u32 = 60;
 
-const YELLOW: &str = "#4CA9AB";
-const RED: &str = "#C4A07F";
+const Teal: &str = "#4CA9AB";
+const Brown: &str = "#C4A07F";
 
 const BOARD_FG: &str = "#D8E3D7";
 const BOARD_BG: &str = "#bbc4bb";
@@ -36,8 +36,8 @@ pub struct BoardProps {
 impl BoardComponent {
     fn view_disc(&self, player: Player, offset: i32) -> Html {
         let color = match player {
-            Player::Blue => RED,
-            Player::Yellow => YELLOW,
+            Player::Brown => Brown,
+            Player::Teal => Teal,
         };
 
         return html! {
