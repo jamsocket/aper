@@ -27,3 +27,6 @@ body {
     animation-timing-function: cubic-bezier(.7,0,1,.79);
 }
 
+.tentative {
+    transition: transform 0.2s;
+}

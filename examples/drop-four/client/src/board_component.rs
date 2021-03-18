@@ -67,10 +67,12 @@ impl BoardComponent {
         )
     }
 
-    fn view_hover_zones(&self) -> impl Iterator<Item=Html> {
+    fn view_hover_zones(&self) -> Html {
         let set_hover_col = self.link.callback(SetHoverCol);
+        // TODO: ugly.
+        let set_hover_col_clone = set_hover_col.clone();
         let drop_tile = self.props.callback.reform(|c| DropFourGameTransition::Drop(c));
-        (0..BOARD_COLS as u32).map(
+        let zones = (0..BOARD_COLS as u32).map(
             move |c| html! {
                 <rect
                     x={CELL_SIZE * c}
@@ -81,7 +83,13 @@ impl BoardComponent {
                     onclick=drop_tile.reform(move |_| c as usize)
                 />
             }
-        )
+        );
+
+        html! {
+            <g>
+                { for zones }
+            </g>
+        }
     }
 
     fn view_tentative_disc(&self) -> Html {
@@ -89,9 +97,10 @@ impl BoardComponent {
             if let PlayState::NextTurn(c) = self.props.state.state() {
                 let tx = CELL_SIZE * disc_col + CELL_SIZE / 2;
                 let ty = CELL_SIZE / 2;
+                let style = format!("transform: translate({}px, {}px)", tx, ty);
 
                 return html! {
-                    <g transform=format!("translate({} {})", tx, ty) >
+                    <g style=style class="tentative" >
                         { self.view_disc(c, -(CELL_INNER_SIZE as i32) / 2) }
                     </g>
                 }
@@ -169,7 +178,7 @@ impl Component for BoardComponent {
 
                     <rect width=width height=height fill=BOARD_FG mask="url(#board)" />
 
-                    { for self.view_hover_zones() }
+                    { self.view_hover_zones() }
                 </g>
             </svg>
         };
