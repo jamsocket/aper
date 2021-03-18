@@ -46,7 +46,7 @@ pub enum DropFourGameTransition {
     Reset,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct DropFourGame {
     board: Board,
     state: PlayState,
