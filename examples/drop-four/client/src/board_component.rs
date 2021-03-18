@@ -101,23 +101,38 @@ impl BoardComponent {
         html! {}
     }
 
-    fn view_played_discs(&self) -> Vec<Html> {
+    fn view_played_discs(&self) -> Html {
         let board = self.props.state.board();
 
-        board.iter().enumerate().map(|(row, cols)|
-            cols.iter().enumerate().map(move |(col, val)|
-                val.map(|p| {
-                    let tx = CELL_SIZE * col as u32 + CELL_SIZE / 2;
+        let col_groups = (0..BOARD_COLS).map(|col| {
+            let discs = (0..BOARD_ROWS).rev().flat_map(|row| {
+                board[row][col].map(|p| {
                     let ty = CELL_SIZE * row as u32 + CELL_SIZE / 2;
+                    let style = format!("transform: translate(0, {}px)", ty);
 
                     html! {
-                        <g transform=format!("translate({} {})", tx, ty) >
+                        <g style=style class="disc">
                             { self.view_disc(p, 0) }
                         </g>
                     }
                 })
-            ).flatten()
-        ).flatten().collect()
+            });
+
+            let tx = CELL_SIZE * col as u32 + CELL_SIZE / 2;
+            let transform = format!("translate({} 0)", tx);
+
+            html! {
+                <g transform=transform>
+                    { for discs }
+                </g>
+            }
+        });
+
+        html! {
+            <g>
+                { for col_groups }
+            </g>
+        }
     }
 }
 

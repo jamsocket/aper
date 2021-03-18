@@ -9,3 +9,21 @@ body {
     margin: auto;
     padding-top: 10px;
 }
+
+@keyframes slidein {
+    0% {
+        opacity: 0.1;
+        transform: translate(0, 0);
+    }
+
+    100% {
+        opacity 0.8;
+    }
+}
+
+.disc {
+    animation-duration: 0.4s;
+    animation-name: slidein;
+    animation-timing-function: cubic-bezier(.7,0,1,.79);
+}
+
