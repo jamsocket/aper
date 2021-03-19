@@ -12,7 +12,7 @@ a user-initiated state change before then. State machines that only change state
 result of user-initiated events can ignore this method, as the default implementation
 is to never suspend an event.</p>
 <p>This method is called by the server once after every call to <code>process_event</code>. If it
-returns <code>None</code>, no event is suspended, and any previously suspended event is cancelled.
+returns <code>None</code>, no event is suspended, and any previously suspended event is canceled.
 If it returns <code>Some</code>, the provided event becomes the “suspended” event, replacing the
 prior suspended event if there was one.</p>
 <p>Only one event can be suspended at a time. If a state machine wants to be triggered for
