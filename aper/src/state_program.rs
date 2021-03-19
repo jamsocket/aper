@@ -12,7 +12,7 @@ pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent
     /// is to never suspend an event.
     ///
     /// This method is called by the server once after every call to `process_event`. If it
-    /// returns `None`, no event is suspended, and any previously suspended event is cancelled.
+    /// returns `None`, no event is suspended, and any previously suspended event is canceled.
     /// If it returns `Some`, the provided event becomes the "suspended" event, replacing the
     /// prior suspended event if there was one.
     ///
