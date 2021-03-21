@@ -32,7 +32,6 @@ impl View for GameView {
     type State = DropFourGame;
 
     fn view(&self, state: &Self::State, context: &ViewContext<Self::Callback>) -> Html {
-
         return html! {
             <div class="main">
                 <h1>{"Drop Four"}</h1>

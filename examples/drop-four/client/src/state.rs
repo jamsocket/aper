@@ -59,9 +59,7 @@ impl StateMachine for DropFourGame {
         match (self.state, event.transition) {
             (PlayState::NextTurn(p), DropFourGameTransition::Drop(c)) => {
                 // Find first available row.
-                if let Some(insert_row) =
-                    (0..BOARD_ROWS).rev().find(|r| self.board[*r][c].is_none())
-                {
+                if let Some(insert_row) = self.lowest_open_row(c) {
                     self.board[insert_row][c] = Some(p);
 
                     self.state =
@@ -101,6 +99,10 @@ impl DropFourGame {
 
     pub fn reset(&self) -> DropFourGameTransition {
         DropFourGameTransition::Reset
+    }
+
+    fn lowest_open_row(&self, col: usize) -> Option<usize> {
+        (0..BOARD_ROWS).rev().find(|r| self.board[*r][c].is_none())
     }
 
     fn count_same_from(&self, row: i32, col: i32, row_d: i32, col_d: i32) -> usize {
@@ -145,10 +147,13 @@ impl DropFourGame {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::state::Player::{Brown, Teal};
     use aper::{PlayerID, Timestamp};
+
     use chrono::{TimeZone, Utc};
+
+    use crate::state::Player::{Brown, Teal};
+
+    use super::*;
 
     #[test]
     fn test_game() {
