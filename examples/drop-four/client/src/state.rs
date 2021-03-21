@@ -102,7 +102,7 @@ impl DropFourGame {
     }
 
     fn lowest_open_row(&self, col: usize) -> Option<usize> {
-        (0..BOARD_ROWS).rev().find(|r| self.board[*r][c].is_none())
+        (0..BOARD_ROWS).rev().find(|r| self.board[*r][col].is_none())
     }
 
     fn count_same_from(&self, row: i32, col: i32, row_d: i32, col_d: i32) -> usize {
