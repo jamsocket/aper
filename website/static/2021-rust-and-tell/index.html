@@ -80,13 +80,11 @@
                 <section data-markdown>
                     ## Structure
 
-                    1. `aper` core
-                        - Data structures and `StateMachine` trait.
+                    1. Core
+                        - `aper`: Data structures and `StateMachine` trait.
                     2. WebSocket client/server implementation:
-                        - `aper-actix`
-                            - [Actix](https://actix.rs/) service for synchronizing state over WebSocket.
-                        - `aper-yew`
-                            - [Yew](https://yew.rs/docs/en/) component that renders a view based on shared state.
+                        - `aper-actix`: [Actix](https://actix.rs/) service for synchronizing state over WebSocket.
+                        - `aper-yew`: [Yew](https://yew.rs/docs/en/) component that renders a view based on shared state.
                 </section>
                 <section>
                     <pre><code data-trim class="language-rust" data-line-numbers="1-5|2|4|1-5">
@@ -188,9 +186,7 @@ impl StateMachine for DropFourGame {
 
 
                 <section>
-                    <pre><code data-trim class="language-rust" data-line-numbers="1-7|1|3|6">
-use aper_actix::ServerBuilder;
-
+                    <pre><code data-trim class="language-rust" data-line-numbers="1-5|1|4">
 impl StateProgram&lt;DropFourGameTransition&gt; for DropFourGame {}
 
 fn main() -> std::io::Result&lt;()&gt; {
@@ -227,6 +223,17 @@ impl View for GameView {
                     </code></pre>
                 </section>
 
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="1-4|1|3">
+#[wasm_bindgen(start)]
+pub fn entry() {
+    ClientBuilder::new(GameView).mount_to_body();
+}
+                    </code></pre>
+                </section>
+                <section data-markdown>
+                    # Demo
+                </section>
                 <section data-markdown>
                     # Thanks!
 
