@@ -69,10 +69,7 @@ impl BoardComponent {
 
     fn view_hover_zones(&self) -> Html {
         let set_hover_col = self.link.callback(SetHoverCol);
-        let drop_tile = self
-            .props
-            .callback
-            .reform(|c| DropFourGameTransition::Drop(c));
+        let drop_tile = self.props.callback.reform(DropFourGameTransition::Drop);
         let zones = (0..BOARD_COLS as u32).map(move |c| {
             html! {
                 <rect

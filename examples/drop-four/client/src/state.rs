@@ -29,7 +29,7 @@ impl Board {
                 return i as usize - 1;
             }
         }
-        return NEEDED_IN_A_ROW;
+        NEEDED_IN_A_ROW
     }
 
     fn count_same_bidirectional(&self, row: i32, col: i32, row_d: i32, col_d: i32) -> usize {
@@ -39,13 +39,11 @@ impl Board {
 
     fn check_winner_at(&self, row: i32, col: i32) -> Option<Player> {
         let player = self.0[row as usize][col as usize];
-        if self.count_same_bidirectional(row, col, 1, 0) >= NEEDED_IN_A_ROW {
-            player
-        } else if self.count_same_bidirectional(row, col, 0, 1) >= NEEDED_IN_A_ROW {
-            player
-        } else if self.count_same_bidirectional(row, col, 1, 1) >= NEEDED_IN_A_ROW {
-            player
-        } else if self.count_same_bidirectional(row, col, 1, -1) >= NEEDED_IN_A_ROW {
+        if self.count_same_bidirectional(row, col, 1, 0) >= NEEDED_IN_A_ROW
+            || self.count_same_bidirectional(row, col, 0, 1) >= NEEDED_IN_A_ROW
+            || self.count_same_bidirectional(row, col, 1, 1) >= NEEDED_IN_A_ROW
+            || self.count_same_bidirectional(row, col, 1, -1) >= NEEDED_IN_A_ROW
+        {
             player
         } else {
             None
@@ -131,19 +129,14 @@ impl DropFourGame {
         &self.0
     }
 
-    fn board(&self) -> &[[Option<Player>; BOARD_COLS]; BOARD_ROWS] {
-        match &self.0 {
-            PlayState::Playing { board, .. } => &board.0,
-            _ => panic!("Called .board() on DropFourGame in Waiting state."),
-        }
-    }
-
     pub fn is_player_next(&self, player_id: PlayerID) -> bool {
         match self.0 {
-            PlayState::Playing { next_player, player_map, .. } => {
-                player_map.id_of_player(next_player) == player_id
-            }
-            _ => false
+            PlayState::Playing {
+                next_player,
+                player_map,
+                ..
+            } => player_map.id_of_player(next_player) == player_id,
+            _ => false,
         }
     }
 }
@@ -228,6 +221,15 @@ mod tests {
 
     use super::*;
 
+    fn expect_disc(game: &DropFourGame, row: usize, col: usize, value: Player) {
+        let board = match &game.0 {
+            PlayState::Playing { board, .. } => &board.0,
+            _ => panic!("Called .board() on DropFourGame in Waiting state."),
+        };
+
+        assert_eq!(Some(value), board[row][col]);
+    }
+
     #[test]
     fn test_game() {
         let mut game = DropFourGame::default();
@@ -272,7 +274,7 @@ mod tests {
                 ..
             }
         ));
-        assert_eq!(Some(Teal), game.board()[5][4]);
+        expect_disc(&game, 5, 4, Teal);
 
         //     v
         // .......
@@ -295,7 +297,7 @@ mod tests {
                 ..
             }
         ));
-        assert_eq!(Some(Brown), game.board()[4][4]);
+        expect_disc(&game, 4, 4, Brown);
 
         //     v
         // .......
@@ -318,7 +320,7 @@ mod tests {
                 ..
             }
         ));
-        assert_eq!(Some(Teal), game.board()[5][3]);
+        expect_disc(&game, 5, 3, Teal);
 
         //    v
         // .......
@@ -341,7 +343,7 @@ mod tests {
                 ..
             }
         ));
-        assert_eq!(Some(Brown), game.board()[5][5]);
+        expect_disc(&game, 5, 5, Brown);
 
         //      v
         // .......
@@ -364,7 +366,7 @@ mod tests {
                 ..
             }
         ));
-        assert_eq!(Some(Teal), game.board()[5][2]);
+        expect_disc(&game, 5, 2, Teal);
 
         //   v
         // .......
@@ -387,7 +389,7 @@ mod tests {
                 ..
             }
         ));
-        assert_eq!(Some(Brown), game.board()[4][2]);
+        expect_disc(&game, 4, 2, Brown);
 
         //   v
         // .......
@@ -410,7 +412,7 @@ mod tests {
                 ..
             }
         ));
-        assert_eq!(Some(Teal), game.board()[5][1]);
+        expect_disc(&game, 5, 1, Teal);
 
         //  v
         // .......
@@ -420,11 +422,7 @@ mod tests {
         // ..B.B..
         // .TTTTB.
 
-        game.apply(TransitionEvent::new(
-            Some(player1),
-            dummy_timestamp,
-            Reset
-        ));
+        game.apply(TransitionEvent::new(Some(player1), dummy_timestamp, Reset));
         assert!(matches!(
             game.state(),
             Playing {

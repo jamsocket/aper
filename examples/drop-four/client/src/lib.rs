@@ -8,8 +8,8 @@ use crate::state::PlayState;
 pub use crate::state::{
     Board, DropFourGame, DropFourGameTransition, Player, BOARD_COLS, BOARD_ROWS,
 };
-use board_component::BoardComponent;
 use aper::PlayerID;
+use board_component::BoardComponent;
 
 mod board_component;
 mod state;
@@ -18,7 +18,11 @@ mod state;
 struct GameView;
 
 impl GameView {
-    fn view_waiting(&self, waiting_player: Option<PlayerID>, context: &ViewContext<DropFourGameTransition>) -> Html {
+    fn view_waiting(
+        &self,
+        waiting_player: Option<PlayerID>,
+        context: &ViewContext<DropFourGameTransition>,
+    ) -> Html {
         return html! {
             if Some(context.player) == waiting_player {
                 html! {
@@ -68,7 +72,11 @@ impl GameView {
         };
     }
 
-    fn view_inner(&self, state: &DropFourGame, context: &ViewContext<DropFourGameTransition>) -> Html {
+    fn view_inner(
+        &self,
+        state: &DropFourGame,
+        context: &ViewContext<DropFourGameTransition>,
+    ) -> Html {
         match state.state() {
             PlayState::Playing {
                 board,
@@ -78,8 +86,10 @@ impl GameView {
             } => {
                 let interactive = state.is_player_next(context.player);
                 self.view_playing(board, *next_player, *winner, interactive, context)
-            },
-            PlayState::Waiting { waiting_player, .. } => self.view_waiting(*waiting_player, context),
+            }
+            PlayState::Waiting { waiting_player, .. } => {
+                self.view_waiting(*waiting_player, context)
+            }
         }
     }
 }
