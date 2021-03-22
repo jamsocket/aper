@@ -1,8 +1,7 @@
-use yew::{Callback, Component};
 use yew::prelude::*;
+use yew::{Callback, Component};
 
-use crate::{BOARD_COLS, BOARD_ROWS, DropFourGame, DropFourGameTransition, Player};
-use crate::state::PlayState;
+use crate::{Board, DropFourGameTransition, Player, BOARD_COLS, BOARD_ROWS};
 
 const CELL_SIZE: u32 = 80;
 const CELL_INNER_SIZE: u32 = 70;
@@ -18,7 +17,6 @@ const PADDING_SIDE: u32 = 40;
 const PADDING_TOP: u32 = 50;
 const PADDING_BOTTOM: u32 = 10;
 
-
 pub struct BoardComponent {
     hover_col: Option<u32>,
     props: BoardProps,
@@ -29,7 +27,9 @@ pub struct SetHoverCol(Option<u32>);
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct BoardProps {
-    pub state: DropFourGame,
+    pub board: Board,
+    pub player: Player,
+    pub interactive: bool,
     pub callback: Callback<DropFourGameTransition>,
 }
 
@@ -54,24 +54,27 @@ impl BoardComponent {
         };
     }
 
-    fn view_holes(&self) -> impl Iterator<Item=Html> {
-        (0..BOARD_COLS as u32).flat_map(
-            |c| (0..BOARD_ROWS as u32).map(move |r|
+    fn view_holes(&self) -> impl Iterator<Item = Html> {
+        (0..BOARD_COLS as u32).flat_map(|c| {
+            (0..BOARD_ROWS as u32).map(move |r| {
                 html! {<circle
                     r={CELL_HOLE_SIZE/2}
                     fill="black"
                     cx={CELL_SIZE * c + CELL_SIZE/2}
                     cy={CELL_SIZE * r + CELL_SIZE/2}
                 />}
-            )
-        )
+            })
+        })
     }
 
     fn view_hover_zones(&self) -> Html {
         let set_hover_col = self.link.callback(SetHoverCol);
-        let drop_tile = self.props.callback.reform(|c| DropFourGameTransition::Drop(c));
-        let zones = (0..BOARD_COLS as u32).map(
-            move |c| html! {
+        let drop_tile = self
+            .props
+            .callback
+            .reform(|c| DropFourGameTransition::Drop(c));
+        let zones = (0..BOARD_COLS as u32).map(move |c| {
+            html! {
                 <rect
                     x={CELL_SIZE * c}
                     width=CELL_SIZE
@@ -81,7 +84,7 @@ impl BoardComponent {
                     onclick=drop_tile.reform(move |_| c as usize)
                 />
             }
-        );
+        });
 
         html! {
             <g>
@@ -92,16 +95,16 @@ impl BoardComponent {
 
     fn view_tentative_disc(&self) -> Html {
         if let Some(disc_col) = self.hover_col {
-            if let PlayState::NextTurn(c) = self.props.state.state() {
+            if self.props.interactive {
                 let tx = CELL_SIZE * disc_col + CELL_SIZE / 2;
                 let ty = CELL_SIZE / 2;
                 let style = format!("transform: translate({}px, {}px)", tx, ty);
 
                 return html! {
                     <g style=style class="tentative" >
-                        { self.view_disc(c, -(CELL_INNER_SIZE as i32) / 2) }
+                        { self.view_disc(self.props.player, -(CELL_INNER_SIZE as i32) / 2) }
                     </g>
-                }
+                };
             }
         }
 
@@ -109,7 +112,7 @@ impl BoardComponent {
     }
 
     fn view_played_discs(&self) -> Html {
-        let board = self.props.state.board();
+        let board = self.props.board.0;
 
         let col_groups = (0..BOARD_COLS).map(|col| {
             let discs = (0..BOARD_ROWS).rev().flat_map(|row| {
