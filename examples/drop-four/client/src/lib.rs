@@ -67,7 +67,16 @@ impl GameView {
                     interactive=interactive
                     callback=context.callback.reform(Some).clone() />
                 <p>{status_message}</p>
-                <button onclick=context.callback.reform(|_| Some(DropFourGameTransition::Reset))>{"New Game"}</button>
+                {
+                    if winner.is_some() {
+                        html! {
+                            <button onclick=context.callback.reform(|_| Some(DropFourGameTransition::Reset))>{"New Game"}</button>
+                        }
+                    } else {
+                        html! {}
+                    }
+                }
+
             </div>
         };
     }
