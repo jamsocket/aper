@@ -134,6 +134,7 @@ impl DropFourGame {
             PlayState::Playing {
                 next_player,
                 player_map,
+                winner: None,
                 ..
             } => player_map.id_of_player(next_player) == player_id,
             _ => false,
