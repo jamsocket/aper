@@ -27,6 +27,10 @@
             .reveal pre code {
                 max-height: 650px;
             }
+
+            code {
+                color: #15298c;
+            }
         </style>
     </head>
     <body>
@@ -96,60 +100,88 @@ pub trait StateMachine {
                     </code></pre>
                 </section>
                 <section data-markdown>
-                    **Implementing `StateMachine`**
-
+                    ## Two Rules
+                    
                     1. Only `apply()` is allowed to modify state.
-                    2. Calls to `apply()` must be deterministic.
+                    
+                    2. `apply()` must be deterministic.
                 </section>
-
+                <section data-markdown>
+                    ## Implementing Drop Four
+                </section>
                 <section>
-                    <pre><code data-trim class="language-rust" data-line-numbers="2-5|7-9|12-15|18-21">
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
-pub enum Player {
-    Brown,
-    Teal
-}
+                    <pre><code data-trim class="language-rust" data-line-numbers="2-5|7-9,11-12">
+                        #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+                        pub enum PlayerColor {
+                            Brown,
+                            Teal
+                        }
+                        
+                        pub const ROWS: usize = 6;
+                        pub const COLS: usize = 7;
 
-pub const BOARD_ROWS: usize = 6;
-pub const BOARD_COLS: usize = 7;
-pub type Board = [[Option&lt;Player&gt;; BOARD_COLS]; BOARD_ROWS];
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
-pub enum PlayState {
-    NextTurn(Player),
-    Winner(Player)
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct DropFourGame {
-    board: Board,
-    state: PlayState
-}
+                        #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+                        pub struct Board([[Option&lt;PlayerColor&gt;; COLS]; ROWS]);
                     </code></pre>
                 </section>
 
                 <section>
-                    <pre><code data-trim class="language-rust" data-line-numbers="2-5,8|10|12-15|16-19|20">
+                    <img src="media/drop-four-state-flow.svg" />
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="2-12|3-5|6-11|15">
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum PlayState {
+    Waiting {
+        waiting_player: Option&lt;PlayerID&gt;,
+    },
+    Playing {
+        next_player: Player,
+        board: Board,
+        player_map: PlayerMap,
+        winner: Option&lt;Player&gt;
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct DropFourGame(PlayState);
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust">
+                        #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+                        pub struct PlayerMap {
+                            pub teal_player: PlayerID,
+                            pub brown_player: PlayerID
+                        }
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="2-6,9|11-23">
 #[derive(Transition, Serialize, Deserialize, Clone, PartialEq)]
-pub enum DropFourGameTransition {
+pub enum GameTransition {
+    Join,
     Drop(usize),
     Reset
 }
 
 impl StateMachine for DropFourGame {
-    type Transition = TransitionEvent&lt;DropFourGameTransition&gt;;
+    type Transition = TransitionEvent&lt;GameTransition&gt;;
 
     fn apply(&mut self, event: Self::Transition) {
-        match (self.state, event.transition) {
-            (PlayState::NextTurn(p),
-                DropFourGameTransition::Drop(c)) => {
-                // Handle a player taking a turn.
+        match event.transition {
+            GameTransition::Join => {
+                // ..
             }
-            (PlayState::Winner(p),
-                DropFourGameTransition::Reset) => {
-                // Handle a player starting a new game.
+            GameTransition::Drop(c) => {
+                // ..
             }
-            _ => {}
+            GameTransition::Reset => {
+                // ..
+            }
         }
     }
 }
@@ -157,37 +189,82 @@ impl StateMachine for DropFourGame {
                 </section>
 
                 <section>
-                    <pre><code data-trim class="language-rust" data-line-numbers="1|2|3|6-7|8|10|5,8,10">
-(PlayState::NextTurn(p), DropFourGameTransition::Drop(c)) => {
-    if let Some(insert_row) = self.lowest_open_row(c) {
-        self.board[insert_row][c] = Some(p);
-
-        self.state =
-            if let Some(winner) = self.check_winner_at(
-                    insert_row as i32, c as i32) {
-                PlayState::Winner(winner)
-            } else {
-                PlayState::NextTurn(p.other())
-            };
-    }
-}
+                    <pre><code data-trim class="language-rust">
+                        GameTransition::Join => {
+                            if let PlayState::Waiting {
+                                waiting_player: Some(waiting_player)
+                            } = self.0 {
+                                let player_map = PlayerMap {
+                                    teal_player: waiting_player,
+                                    brown_player: event.player.unwrap()
+                                };
+            
+                                self.0 = PlayState::Playing {
+                                    next_player: PlayerColor::Teal,
+                                    board: Default::default(),
+                                    player_map,
+                                    winner: None
+                                }
+                            } else {
+                                self.0 = PlayState::Waiting {
+                                    waiting_player: event.player
+                                }
+                            }
+                        }
                     </code></pre>
                 </section>
 
+                <section>
+                    <pre><code data-trim class="language-rust">
+                        GameTransition::Drop(c) => {
+                            if let PlayState::Playing {
+                                board,
+                                next_player,
+                                player_map,
+                                winner,
+                            } = &mut self.0 {
+                                if winner.is_some() {
+                                    return; // Someone has already won.
+                                }
+                                if player_map.id_of_color(*next_player)
+                                        != event.player.unwrap() {
+                                    return; // Play out of turn.
+                                }
+            
+                                if let Some(insert_row) = board.lowest_open_row(c) {
+                                    board.0[insert_row][c] = Some(*next_player);
+                                    *winner = board.check_winner_at(
+                                        insert_row as i32, c as i32);
+                                    *next_player = next_player.other();
+                                }
+                            }
+                        }
+                    </code></pre>
+                </section>
 
                 <section>
-                    <pre><code data-trim class="language-rust" data-line-numbers="1-4|2|3">
-(PlayState::Winner(p), DropFourGameTransition::Reset) => {
-    self.board = Default::default();
-    self.state = PlayState::NextTurn(p.other());
-}
+                    <pre><code data-trim class="language-rust">
+                        GameTransition::Reset => {
+                            if let PlayState::Playing {
+                                winner: Some(winner),
+                                player_map,
+                                ..
+                            } = self.0 {
+                                self.0 = PlayState::Playing {
+                                    next_player: winner.other(),
+                                    board: Default::default(),
+                                    player_map,
+                                    winner: None,
+                                }
+                            }
+                        }            
                     </code></pre>
                 </section>
 
 
                 <section>
                     <pre><code data-trim class="language-rust" data-line-numbers="1-5|1|4">
-impl StateProgram&lt;DropFourGameTransition&gt; for DropFourGame {}
+impl StateProgram&lt;GameTransition&gt; for DropFourGame {}
 
 fn main() -> std::io::Result&lt;()&gt; {
     ServerBuilder::new(DropFourGame::default()).serve()
@@ -198,7 +275,7 @@ fn main() -> std::io::Result&lt;()&gt; {
                 <section>
                     <pre><code data-trim class="language-rust" data-line-numbers="1-23|1|2-3|5-6|7-21|6,13,17-18">
 impl View for GameView {
-    type Callback = DropFourGameTransition;
+    type Callback = GameTransition;
     type State = DropFourGame;
 
     fn view(&self, state: &Self::State,
@@ -214,7 +291,7 @@ impl View for GameView {
                 &lt;p&gt;{self.view_state_text(state.state())}&lt;/p&gt;
                 &lt;button onclick={
                     context.callback.reform(
-                        |_| Some(DropFourGameTransition::Reset))
+                        |_| Some(GameTransition::Reset))
                 }&gt;{"New Game"}&lt;/button&gt;
             &lt;/div&gt;
         };

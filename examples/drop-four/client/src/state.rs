@@ -5,7 +5,7 @@ pub const BOARD_ROWS: usize = 6;
 pub const BOARD_COLS: usize = 7;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-pub struct Board(pub [[Option<Player>; BOARD_COLS]; BOARD_ROWS]);
+pub struct Board(pub [[Option<PlayerColor>; BOARD_COLS]; BOARD_ROWS]);
 const NEEDED_IN_A_ROW: usize = 4;
 
 impl Board {
@@ -37,7 +37,7 @@ impl Board {
             + self.count_same_from(row, col, -row_d, -col_d)
     }
 
-    fn check_winner_at(&self, row: i32, col: i32) -> Option<Player> {
+    fn check_winner_at(&self, row: i32, col: i32) -> Option<PlayerColor> {
         let player = self.0[row as usize][col as usize];
         if self.count_same_bidirectional(row, col, 1, 0) >= NEEDED_IN_A_ROW
             || self.count_same_bidirectional(row, col, 0, 1) >= NEEDED_IN_A_ROW
@@ -52,44 +52,49 @@ impl Board {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
-pub enum Player {
+pub enum PlayerColor {
     Brown,
     Teal,
 }
 
-impl Player {
-    pub fn index(&self) -> usize {
-        match self {
-            Player::Teal => 0,
-            Player::Brown => 1,
-        }
-    }
-
+impl PlayerColor {
     pub fn name(&self) -> &'static str {
         match self {
-            Player::Teal => "Teal",
-            Player::Brown => "Brown",
+            PlayerColor::Teal => "Teal",
+            PlayerColor::Brown => "Brown",
         }
     }
 
-    pub fn other(&self) -> Player {
+    pub fn other(&self) -> PlayerColor {
         match self {
-            Player::Brown => Player::Teal,
-            Player::Teal => Player::Brown,
+            PlayerColor::Brown => PlayerColor::Teal,
+            PlayerColor::Teal => PlayerColor::Brown,
         }
     }
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
-pub struct PlayerMap([PlayerID; 2]);
+pub struct PlayerMap {
+    pub teal_player: PlayerID,
+    pub brown_player: PlayerID
+}
 
 impl PlayerMap {
-    fn new_from_players(player1: PlayerID, player2: PlayerID) -> PlayerMap {
-        PlayerMap([player1, player2])
+    fn id_of_color(&self, color: PlayerColor) -> PlayerID {
+        match color {
+            PlayerColor::Brown => self.brown_player,
+            PlayerColor::Teal => self.teal_player
+        }
     }
 
-    fn id_of_player(&self, player: Player) -> PlayerID {
-        self.0[player.index()]
+    pub fn color_of_player(&self, player_id: PlayerID) -> Option<PlayerColor> {
+        if self.brown_player == player_id {
+            Some(PlayerColor::Brown)
+        } else if self.teal_player == player_id {
+            Some(PlayerColor::Teal)
+        } else {
+            None
+        }
     }
 }
 
@@ -99,11 +104,11 @@ pub enum PlayState {
         waiting_player: Option<PlayerID>,
     },
     Playing {
-        next_player: Player,
+        next_player: PlayerColor,
         board: Board,
         player_map: PlayerMap,
-        winner: Option<Player>,
-    },
+        winner: Option<PlayerColor>,
+    }
 }
 
 impl Default for PlayState {
@@ -115,7 +120,7 @@ impl Default for PlayState {
 }
 
 #[derive(Transition, Serialize, Deserialize, Clone, PartialEq, Debug)]
-pub enum DropFourGameTransition {
+pub enum GameTransition {
     Join,
     Drop(usize),
     Reset,
@@ -128,35 +133,25 @@ impl DropFourGame {
     pub fn state(&self) -> &PlayState {
         &self.0
     }
-
-    pub fn is_player_next(&self, player_id: PlayerID) -> bool {
-        match self.0 {
-            PlayState::Playing {
-                next_player,
-                player_map,
-                winner: None,
-                ..
-            } => player_map.id_of_player(next_player) == player_id,
-            _ => false,
-        }
-    }
 }
 
 impl StateMachine for DropFourGame {
-    type Transition = TransitionEvent<DropFourGameTransition>;
+    type Transition = TransitionEvent<GameTransition>;
 
     fn apply(&mut self, event: Self::Transition) {
         match event.transition {
-            DropFourGameTransition::Join => {
+            GameTransition::Join => {
                 self.0 = if let PlayState::Waiting {
                     waiting_player: Some(waiting_player),
                 } = self.0
                 {
-                    let player_map =
-                        PlayerMap::new_from_players(waiting_player, event.player.unwrap());
+                    let player_map = PlayerMap {
+                        teal_player: waiting_player,
+                        brown_player: event.player.unwrap()
+                    };
 
                     PlayState::Playing {
-                        next_player: Player::Teal,
+                        next_player: PlayerColor::Teal,
                         board: Default::default(),
                         player_map,
                         winner: None,
@@ -167,7 +162,7 @@ impl StateMachine for DropFourGame {
                     }
                 }
             }
-            DropFourGameTransition::Drop(c) => {
+            GameTransition::Drop(c) => {
                 if let PlayState::Playing {
                     board,
                     next_player,
@@ -178,7 +173,7 @@ impl StateMachine for DropFourGame {
                     if winner.is_some() {
                         return;
                     } // Someone has already won.
-                    if player_map.id_of_player(*next_player) != event.player.unwrap() {
+                    if player_map.id_of_color(*next_player) != event.player.unwrap() {
                         return;
                     } // Play out of turn.
 
@@ -189,7 +184,7 @@ impl StateMachine for DropFourGame {
                     }
                 }
             }
-            DropFourGameTransition::Reset => {
+            GameTransition::Reset => {
                 if let PlayState::Playing {
                     winner: Some(winner),
                     player_map,
@@ -208,7 +203,7 @@ impl StateMachine for DropFourGame {
     }
 }
 
-impl StateProgram<DropFourGameTransition> for DropFourGame {}
+impl StateProgram<GameTransition> for DropFourGame {}
 
 #[cfg(test)]
 mod tests {
@@ -216,13 +211,13 @@ mod tests {
 
     use chrono::{TimeZone, Utc};
 
-    use super::DropFourGameTransition::{Drop, Join, Reset};
+    use super::GameTransition::{Drop, Join, Reset};
     use super::PlayState::{Playing, Waiting};
-    use super::Player::{Brown, Teal};
+    use super::PlayerColor::{Brown, Teal};
 
     use super::*;
 
-    fn expect_disc(game: &DropFourGame, row: usize, col: usize, value: Player) {
+    fn expect_disc(game: &DropFourGame, row: usize, col: usize, value: PlayerColor) {
         let board = match &game.0 {
             PlayState::Playing { board, .. } => &board.0,
             _ => panic!("Called .board() on DropFourGame in Waiting state."),

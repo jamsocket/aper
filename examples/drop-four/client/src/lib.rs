@@ -6,7 +6,7 @@ use yew::prelude::*;
 
 use crate::state::PlayState;
 pub use crate::state::{
-    Board, DropFourGame, DropFourGameTransition, Player, BOARD_COLS, BOARD_ROWS,
+    Board, DropFourGame, GameTransition, PlayerColor, BOARD_COLS, BOARD_ROWS,
 };
 use aper::PlayerID;
 use board_component::BoardComponent;
@@ -21,7 +21,7 @@ impl GameView {
     fn view_waiting(
         &self,
         waiting_player: Option<PlayerID>,
-        context: &ViewContext<DropFourGameTransition>,
+        context: &ViewContext<GameTransition>,
     ) -> Html {
         return html! {
             if Some(context.player) == waiting_player {
@@ -37,7 +37,7 @@ impl GameView {
 
                 html! {
                     <div>
-                        <button onclick=context.callback.reform(|_| Some(DropFourGameTransition::Join))>{"Join"}</button>
+                        <button onclick=context.callback.reform(|_| Some(GameTransition::Join))>{"Join"}</button>
                         <p>{message}</p>
                     </div>
                 }
@@ -48,35 +48,44 @@ impl GameView {
     fn view_playing(
         &self,
         board: &Board,
-        next_player: Player,
-        winner: Option<Player>,
-        interactive: bool,
-        context: &ViewContext<DropFourGameTransition>,
+        next_player: PlayerColor,
+        winner: Option<PlayerColor>,
+        own_color: Option<PlayerColor>,
+        context: &ViewContext<GameTransition>,
     ) -> Html {
-        let status_message = if let Some(winner) = winner {
-            format!("{} is the winner!", winner.name())
+        let status_message = if let Some(own_color) = own_color {
+            if let Some(winner) = winner {
+                if winner == own_color {
+                    "Congrats, you are the winner!".to_string()
+                } else {
+                    format!("{} is the winner. Better luck next time!", winner.name())
+                }
+            } else if next_player == own_color {
+                "It's your turn!".to_string()
+            } else {
+                format!("It's {}'s turn", next_player.name())
+            }
         } else {
-            format!("It's {}'s turn", next_player.name())
+            format!("You're observing. {} is next.", next_player.name())
         };
 
         return html! {
             <div>
+                <p>{status_message}</p>
                 <BoardComponent
                     board=board
                     player=next_player
-                    interactive=interactive
+                    interactive={Some(next_player)==own_color}
                     callback=context.callback.reform(Some).clone() />
-                <p>{status_message}</p>
                 {
                     if winner.is_some() {
                         html! {
-                            <button onclick=context.callback.reform(|_| Some(DropFourGameTransition::Reset))>{"New Game"}</button>
+                            <button onclick=context.callback.reform(|_| Some(GameTransition::Reset))>{"New Game"}</button>
                         }
                     } else {
                         html! {}
                     }
                 }
-
             </div>
         };
     }
@@ -84,17 +93,18 @@ impl GameView {
     fn view_inner(
         &self,
         state: &DropFourGame,
-        context: &ViewContext<DropFourGameTransition>,
+        context: &ViewContext<GameTransition>,
     ) -> Html {
         match state.state() {
             PlayState::Playing {
                 board,
                 next_player,
                 winner,
+                player_map,
                 ..
             } => {
-                let interactive = state.is_player_next(context.player);
-                self.view_playing(board, *next_player, *winner, interactive, context)
+                let own_color = player_map.color_of_player(context.player);
+                self.view_playing(board, *next_player, *winner, own_color, context)
             }
             PlayState::Waiting { waiting_player, .. } => {
                 self.view_waiting(*waiting_player, context)
@@ -104,7 +114,7 @@ impl GameView {
 }
 
 impl View for GameView {
-    type Callback = DropFourGameTransition;
+    type Callback = GameTransition;
     type State = DropFourGame;
 
     fn view(&self, state: &Self::State, context: &ViewContext<Self::Callback>) -> Html {

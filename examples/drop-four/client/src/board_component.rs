@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yew::{Callback, Component};
 
-use crate::{Board, DropFourGameTransition, Player, BOARD_COLS, BOARD_ROWS};
+use crate::{Board, GameTransition, PlayerColor, BOARD_COLS, BOARD_ROWS};
 
 const CELL_SIZE: u32 = 80;
 const CELL_INNER_SIZE: u32 = 70;
@@ -28,16 +28,16 @@ pub struct SetHoverCol(Option<u32>);
 #[derive(Properties, Clone, PartialEq)]
 pub struct BoardProps {
     pub board: Board,
-    pub player: Player,
+    pub player: PlayerColor,
     pub interactive: bool,
-    pub callback: Callback<DropFourGameTransition>,
+    pub callback: Callback<GameTransition>,
 }
 
 impl BoardComponent {
-    fn view_disc(&self, player: Player, offset: i32) -> Html {
+    fn view_disc(&self, player: PlayerColor, offset: i32) -> Html {
         let color = match player {
-            Player::Brown => BROWN,
-            Player::Teal => TEAL,
+            PlayerColor::Brown => BROWN,
+            PlayerColor::Teal => TEAL,
         };
 
         return html! {
@@ -69,7 +69,7 @@ impl BoardComponent {
 
     fn view_hover_zones(&self) -> Html {
         let set_hover_col = self.link.callback(SetHoverCol);
-        let drop_tile = self.props.callback.reform(DropFourGameTransition::Drop);
+        let drop_tile = self.props.callback.reform(GameTransition::Drop);
         let zones = (0..BOARD_COLS as u32).map(move |c| {
             html! {
                 <rect
