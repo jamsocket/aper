@@ -26,5 +26,5 @@ and even with non-WebSocket protocols.
 
 - [Documentation](https://docs.rs/aper/)
 - [Getting Started with Aper guide](https://aper.dev/guide/)
-- [Redwords](https://redwords.paulbutler.org), an experimental multiplayer word game built with Aper.
+- [Redwords](https://redwords.paulbutler.org), a multiplayer word game built with Aper.
 - [Examples](examples)
