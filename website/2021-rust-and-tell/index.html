@@ -37,13 +37,20 @@
         <div class="reveal">
             <div class="slides">
                 <section data-markdown>
-                    ## Building a Multiplayer WebAssembly Game in Rust
+                    ## Building a Multiplayer WASM Game
 
                     Paul Butler ([@paulgb](https://twitter.com/paulgb)) / [Rust Berlin](https://berline.rs/2021/03/23/rust-and-tell.html) / March 2021
                 </section>
                 <section>
                     <video data-autoplay src="media/demo.mov"></video>
                 </section>
+                <section data-markdown>
+                    ## Outline
+
+                    1. Sharing State in Rust
+                    2. Implementing Drop Four
+                </section>
+
                 <section data-markdown>
                     ## Goal
                     
@@ -56,19 +63,19 @@
                     - Multiplayer games
                 </section>
                 <section data-markdown>
-                    ## Idea
+                    ## Naive Approach
 
-                    1. Record every state change into an ordered stream.
-                    2. Broadcast that stream on every client, in the same order.
+                    1. Combine every data mutation into a stream.
+                    2. Broadcast it to every client, maintaining order.
                 </section>
                 <section data-markdown>
-                    ## (one small problem)
+                    ## (one big problem)
                 </section>
                 <section>
                     <img src="media/aper-sketch.svg" style="width: 800px;" />
                 </section>
                 <section data-markdown>
-                    Capture **user intent**, not **raw actions**.
+                    Capture **user intent**, not **data mutations**.
                 </section>
                 <section>
                     <img src="media/aper-sketch-intent.svg" style="width: 800px;" />
@@ -137,10 +144,10 @@ pub enum PlayState {
         waiting_player: Option&lt;PlayerID&gt;,
     },
     Playing {
-        next_player: Player,
+        next_player: PlayerColor,
         board: Board,
-        player_map: PlayerMap,
-        winner: Option&lt;Player&gt;
+        winner: Option&lt;PlayerColor&gt;,
+        player_map: PlayerMap
     }
 }
 
@@ -189,7 +196,7 @@ impl StateMachine for DropFourGame {
                 </section>
 
                 <section>
-                    <pre><code data-trim class="language-rust">
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|17-19|5-15|2-4,16,20">
                         GameTransition::Join => {
                             if let PlayState::Waiting {
                                 waiting_player: Some(waiting_player)
@@ -202,10 +209,10 @@ impl StateMachine for DropFourGame {
                                 self.0 = PlayState::Playing {
                                     next_player: PlayerColor::Teal,
                                     board: Default::default(),
-                                    player_map,
-                                    winner: None
+                                    winner: None,
+                                    player_map
                                 }
-                            } else {
+                            } else if let PlayState::Waiting {..} = self.0 {
                                 self.0 = PlayState::Waiting {
                                     waiting_player: event.player
                                 }
@@ -215,7 +222,7 @@ impl StateMachine for DropFourGame {
                 </section>
 
                 <section>
-                    <pre><code data-trim class="language-rust">
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|8-10|11-14|16|17|18-19|20">
                         GameTransition::Drop(c) => {
                             if let PlayState::Playing {
                                 board,
@@ -243,7 +250,7 @@ impl StateMachine for DropFourGame {
                 </section>
 
                 <section>
-                    <pre><code data-trim class="language-rust">
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|2-6|8|9|10|11">
                         GameTransition::Reset => {
                             if let PlayState::Playing {
                                 winner: Some(winner),
@@ -261,9 +268,10 @@ impl StateMachine for DropFourGame {
                     </code></pre>
                 </section>
 
-
                 <section>
-                    <pre><code data-trim class="language-rust" data-line-numbers="1-5|1|4">
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|1-3|5-7">
+// Recall that DropFourGame implements
+// StateMachine&lt;Transition=TransitionEvent&lt;GameTransition&gt;&gt;
 impl StateProgram&lt;GameTransition&gt; for DropFourGame {}
 
 fn main() -> std::io::Result&lt;()&gt; {
@@ -273,30 +281,21 @@ fn main() -> std::io::Result&lt;()&gt; {
                 </section>
 
                 <section>
-                    <pre><code data-trim class="language-rust" data-line-numbers="1-23|1|2-3|5-6|7-21|6,13,17-18">
-impl View for GameView {
-    type Callback = GameTransition;
-    type State = DropFourGame;
-
-    fn view(&self, state: &Self::State,
-            context: &ViewContext&lt;Self::Callback&gt;) -&gt; Html {
-        return html! {
-            &lt;div class="main"&gt;
-                &lt;h1&gt;{"Drop Four"}&lt;/h1&gt;
-                &lt;BoardComponent
-                    state=state.clone()
-                    callback={
-                        context.callback.reform(Some).clone()
-                    } /&gt;
-                &lt;p&gt;{self.view_state_text(state.state())}&lt;/p&gt;
-                &lt;button onclick={
-                    context.callback.reform(
-                        |_| Some(GameTransition::Reset))
-                }&gt;{"New Game"}&lt;/button&gt;
-            &lt;/div&gt;
-        };
-    }
-}     
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|2|3|7-12">
+                        impl View for GameView {
+                            type Callback = GameTransition;
+                            type State = DropFourGame;
+                        
+                            fn view(&self, state: &Self::State,
+                                    context: &ViewContext&lt;Self::Callback&gt;) -&gt; Html {
+                                return html! {
+                                    &lt;div class="main"&gt;
+                                        &lt;h1&gt;{"Drop Four"}&lt;/h1&gt;
+                                        { self.view_inner(&state, context) }
+                                    &lt;/div&gt;
+                                };
+                            }
+                        }
                     </code></pre>
                 </section>
 
@@ -306,6 +305,13 @@ impl View for GameView {
 pub fn entry() {
     ClientBuilder::new(GameView).mount_to_body();
 }
+                    </code></pre>
+                </section>
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="*">
+                        fn main() {
+                            aper_build::build_client_wasm();
+                        }                        
                     </code></pre>
                 </section>
                 <section data-markdown>

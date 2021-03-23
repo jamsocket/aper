@@ -141,7 +141,7 @@ impl StateMachine for DropFourGame {
     fn apply(&mut self, event: Self::Transition) {
         match event.transition {
             GameTransition::Join => {
-                self.0 = if let PlayState::Waiting {
+                if let PlayState::Waiting {
                     waiting_player: Some(waiting_player),
                 } = self.0
                 {
@@ -150,14 +150,14 @@ impl StateMachine for DropFourGame {
                         brown_player: event.player.unwrap()
                     };
 
-                    PlayState::Playing {
+                    self.0 = PlayState::Playing {
                         next_player: PlayerColor::Teal,
                         board: Default::default(),
                         player_map,
                         winner: None,
                     }
-                } else {
-                    PlayState::Waiting {
+                } else if let PlayState::Waiting {..} = self.0 {
+                    self.0 = PlayState::Waiting {
                         waiting_player: event.player,
                     }
                 }
