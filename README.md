@@ -22,9 +22,10 @@ apps running in WebAssembly and communicating over WebSocket, the core state
 machine scaffolding can be used independent of the client/server architecture,
 and even with non-WebSocket protocols.
 
-**Aper is rapidly evolving. Consider this a *technology preview*.**
+**Aper is rapidly evolving. Consider this a *technology preview*.** See the [list of issues outstanding for version 1.0](https://github.com/aper-dev/aper/labels/v1-milestone)
 
 - [Documentation](https://docs.rs/aper/)
 - [Getting Started with Aper guide](https://aper.dev/guide/)
 - [Redwords](https://redwords.paulbutler.org), a multiplayer word game built with Aper.
 - [Examples](examples)
+- [Talk on Aper for Rust Berlin (20 minute video)](https://www.youtube.com/watch?v=HNzeouj0eKc&t=1832s)
