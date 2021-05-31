@@ -138,13 +138,15 @@
                         </a>
                         
                         
+                        
+
                     </div>
                 </div>
 
                 
                 <div id="search-wrapper" class="hidden">
                     <form id="searchbar-outer" class="searchbar-outer">
-                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
                     </form>
                     <div id="searchresults-outer" class="searchresults-outer hidden">
                         <div id="searchresults-header" class="searchresults-header"></div>
@@ -201,12 +203,12 @@ and apply every transition in the <code>stash</code> to the clone. This clone
 becomes the new value of <code>optimist</code>, and the old value is discarded.</li>
 </ul>
 <p>Aper implements both of these approaches.</p>
-<h1 id="managing-state"><a class="header" href="#managing-state">Managing State</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="managing-state"><a class="header" href="#managing-state">Managing State</a></h1>
 <p>In this section, we will look at the core <code>aper</code> crate
 and how it represents data. Once we have a solid handle
 on how data is represented, we will turn to synchronizing
 it across the network in the next section.</p>
-<h1 id="building-a-state-machine"><a class="header" href="#building-a-state-machine">Building a state machine</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="building-a-state-machine"><a class="header" href="#building-a-state-machine">Building a state machine</a></h1>
 <p>To solidify the concept of state machines, let's start with a simple
 example. Here's a simple data structure representing a counter. It stores
 an integer and gives us methods to modify it.</p>
@@ -311,7 +313,7 @@ scary, but implementing state machines from scratch isn't the only way
 to use Aper. In the next few sections,
 I'll show you how to build state machines by composing together 
 primitives that Aper provides.</p>
-<h1 id="constants-and-atoms"><a class="header" href="#constants-and-atoms">Constants and Atoms</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="constants-and-atoms"><a class="header" href="#constants-and-atoms">Constants and Atoms</a></h1>
 <p>Another way to build state machines is by combining other state 
 machines. Aper ships with some built-in state machines which provide
 common patterns for managing state.</p>
@@ -353,7 +355,7 @@ fn main() {
     assert_eq!(&amp;6, atom.value());
 }
 </code></pre>
-<h1 id="derive-macro"><a class="header" href="#derive-macro">Derive macro</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="derive-macro"><a class="header" href="#derive-macro">Derive macro</a></h1>
 <p>In the last section, we were introduced to the <code>Atom</code> state machine.
 If networks were infinitely fast, <code>Atom</code> might be the only state 
 machine we ever needed: every time a user changed the state, we'd 
@@ -474,7 +476,7 @@ contains it:</p>
     item.apply(mark_done);
 }
 </code></pre>
-<h1 id="lists"><a class="header" href="#lists">Lists</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="lists"><a class="header" href="#lists">Lists</a></h1>
 <p>Another built-in data structure is the <code>List</code>. Lists are ordered sequence that you can iterate over, and arbitrarily insert/remove from. The values in a list are themselves state machines (if you never want to modify the inner state of values on a list, you can use <code>Constant</code> as a wrapper around the values.)</p>
 <p>Let's use the <code>ToDoListItem</code> from the last section to create a <code>ToDoList</code></p>
 <pre><code class="language-rust noplaypen">use aper::data_structures::List;
@@ -534,7 +536,7 @@ fn main() {
 “click”, don't worry. Later, when we actually implement the UI, we 
 will see a design patter that allows us to eliminate the need for 
 <code>map_*</code> methods.</p>
-<h1 id="designing-with-state-machines"><a class="header" href="#designing-with-state-machines">Designing with state machines</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="designing-with-state-machines"><a class="header" href="#designing-with-state-machines">Designing with state machines</a></h1>
 <p>When working with state machines, situations often come up where there 
 are multiple ways to represent the same state. We saw this already 
 with the <code>ToDoListItem</code> <a href="derive.html">example</a>, where the state could be 
@@ -557,7 +559,7 @@ design philosophy. Aper's focus is on helping you to express the
 <strong>semantics of merging concurrent modifications</strong> to the same data 
 structure. The underlying data structures Aper provides are just a 
 means to that end.</p>
-<h1 id="implementing-a-new-state-machine"><a class="header" href="#implementing-a-new-state-machine">Implementing a new state machine</a></h1>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="implementing-a-new-state-machine"><a class="header" href="#implementing-a-new-state-machine">Implementing a new state machine</a></h1>
 <p>So far, aside from the <a href="building.html">opening example</a>, we've created
 state machines by composing primitive, pre-built
 state machines and using the derive macro. For total flexibility, you 

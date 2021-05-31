@@ -1,11 +1,11 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Aper"><meta name="keywords" content="rust, rustlang, rust-lang, aper"><title>aper - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><script src="../crates.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../aper/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Crate aper</p><div class="block version"><p>Version 0.0.1</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all aper's items</p></a><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class="location"></p><div id="sidebar-vars" data-name="aper" data-ty="mod" data-relpath="../"></div></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="">aper</a></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/aper/lib.rs.html#1-212" title="goto source code">[src]</a></span></h1><div class="docblock"><h1 id="aper" class="section-header"><a href="#aper">Aper</a></h1>
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../aper/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Crate aper</p><div class="block version"><p>Version 0.0.1</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all aper's items</p></a><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class="location"></p><div id="sidebar-vars" data-name="aper" data-ty="mod" data-relpath="../"></div><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="">aper</a><button id="copy-path" onclick="copy_path(this)"><img src="../clipboard.svg" width="19" height="18" alt="Copy item import"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/aper/lib.rs.html#1-212" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h1 id="aper" class="section-header"><a href="#aper">Aper</a></h1>
 <p>Aper is a framework for real-time sharing of arbitrary application state
 over <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSocket">WebSockets</a>.</p>
 <p>With Aper, you represent your program state as a state machine by
-implementing the <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> trait. Aper then provides the
+implementing the <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> trait. Aper then provides the
 infrastructure to keep clones of this state synchronized across
 multiple clients, including clients running in WebAssembly via
 WebSockets.</p>
@@ -17,17 +17,17 @@ that is used by the other crates.</p>
 implementations (respectively).</p>
 <h2 id="what-is-a-state-machine" class="section-header"><a href="#what-is-a-state-machine">What is a state machine?</a></h2>
 <p>For the purposes of Aper, a state machine is simply a <code>struct</code> or <code>enum</code> that
-implements <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> and has the following properties:</p>
+implements <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> and has the following properties:</p>
 <ul>
-<li>It defines a <a href="../aper/trait.StateMachine.html#associatedtype.Transition" title="StateMachine::Transition">StateMachine::Transition</a> type, through which every
+<li>It defines a <a href="trait.StateMachine.html#associatedtype.Transition" title="StateMachine::Transition">StateMachine::Transition</a> type, through which every
 possible change to the state can be described. It is usually useful,
 though not required, that this be an <code>enum</code> type.</li>
-<li>All state updates are deterministic: if you clone a <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> and a
-<a href="../aper/trait.Transition.html" title="Transition">Transition</a>, the result of applying the cloned transition to the cloned
+<li>All state updates are deterministic: if you clone a <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> and a
+<a href="trait.Transition.html" title="Transition">Transition</a>, the result of applying the cloned transition to the cloned
 state must be identical to applying the original transition to the original
 state.</li>
 </ul>
-<p>Here’s an example <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> implementing a counter:</p>
+<p>Here’s an example <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> implementing a counter:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
@@ -45,37 +45,37 @@ state.</li>
 
     <span class="kw">fn</span> <span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">CounterTransition</span>) {
         <span class="kw">match</span> <span class="ident">event</span> {
-            <span class="ident">CounterTransition</span>::<span class="ident">Reset</span> <span class="op">=</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span> <span class="op">=</span> <span class="number">0</span> }
-            <span class="ident">CounterTransition</span>::<span class="ident">Increment</span>(<span class="ident">amount</span>) <span class="op">=</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span> <span class="op">+</span><span class="op">=</span> <span class="ident">amount</span> }
-            <span class="ident">CounterTransition</span>::<span class="ident">Decrement</span>(<span class="ident">amount</span>) <span class="op">=</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span> <span class="op">-</span><span class="op">=</span> <span class="ident">amount</span> }
+            <span class="ident">CounterTransition::Reset</span> <span class="op">=</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span> <span class="op">=</span> <span class="number">0</span> }
+            <span class="ident">CounterTransition::Increment</span>(<span class="ident">amount</span>) <span class="op">=</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span> <span class="op">+</span><span class="op">=</span> <span class="ident">amount</span> }
+            <span class="ident">CounterTransition::Decrement</span>(<span class="ident">amount</span>) <span class="op">=</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span> <span class="op">-</span><span class="op">=</span> <span class="ident">amount</span> }
         }
     }
 }</pre></div>
 <h2 id="state-programs" class="section-header"><a href="#state-programs">State Programs</a></h2>
-<p><a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a>s can take whatever transition types they want, but in order to interface with
-the Aper client/server infrastructure, a <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> must have a <a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a> transition
-type. This wraps up a regular <a href="../aper/trait.Transition.html" title="Transition">Transition</a> with metadata that the client produces (namely, the
+<p><a href="trait.StateMachine.html" title="StateMachine">StateMachine</a>s can take whatever transition types they want, but in order to interface with
+the Aper client/server infrastructure, a <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> must have a <a href="struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a> transition
+type. This wraps up a regular <a href="trait.Transition.html" title="Transition">Transition</a> with metadata that the client produces (namely, the
 ID of the player who initiated the event and the timestamp of the event).</p>
-<p>In order to tell the Rust typesystem that a <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> is compatible, it must also implement
-the <a href="../aper/trait.StateProgram.html" title="StateProgram">StateProgram</a> trait. This also gives you a way to implement <em>suspended events</em>.</p>
-<p>Typically, a program in Aper will have only one trait that implements <a href="../aper/trait.StateProgram.html" title="StateProgram">StateProgram</a>, but may
-have multiple traits that implement <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> used in the underlying representation of
-<a href="../aper/trait.StateProgram.html" title="StateProgram">StateProgram</a>.</p>
-<p>If you just want to serve a <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> data structure and don’t need transition metadata,
-you can construct a <a href="../aper/struct.StateMachineContainerProgram.html" title="StateMachineContainerProgram">StateMachineContainerProgram</a> which simply strips the metadata and passes
+<p>In order to tell the Rust typesystem that a <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> is compatible, it must also implement
+the <a href="trait.StateProgram.html" title="StateProgram">StateProgram</a> trait. This also gives you a way to implement <em>suspended events</em>.</p>
+<p>Typically, a program in Aper will have only one trait that implements <a href="trait.StateProgram.html" title="StateProgram">StateProgram</a>, but may
+have multiple traits that implement <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> used in the underlying representation of
+<a href="trait.StateProgram.html" title="StateProgram">StateProgram</a>.</p>
+<p>If you just want to serve a <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> data structure and don’t need transition metadata,
+you can construct a <a href="struct.StateMachineContainerProgram.html" title="StateMachineContainerProgram">StateMachineContainerProgram</a> which simply strips the metadata and passes
 the raw transition into the state machine, i.e.:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="kw">use</span> <span class="ident">aper</span>::<span class="ident">StateMachineContainerProgram</span>;
-<span class="kw">let</span> <span class="ident">state_program</span> <span class="op">=</span> <span class="ident">StateMachineContainerProgram</span>(<span class="ident">Counter</span>::<span class="ident">default</span>());</pre></div>
+<span class="kw">use</span> <span class="ident">aper::StateMachineContainerProgram</span>;
+<span class="kw">let</span> <span class="ident">state_program</span> <span class="op">=</span> <span class="ident">StateMachineContainerProgram</span>(<span class="ident">Counter::default</span>());</pre></div>
 <h2 id="how-it-works" class="section-header"><a href="#how-it-works">How it works</a></h2>
 <p>When a client first connects to the server, the server sends back a complete serialized
-copy of the current state. After that, it sends and receives only <a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s to/from
-the server. By applying these <a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s to
+copy of the current state. After that, it sends and receives only <a href="struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s to/from
+the server. By applying these <a href="struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s to
 its local copy, each client keeps its local copy of the state synchronized
 with the server.</p>
 <p>It is important that the server guarantees that each client receives
-<a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s in the same order, since the way a transition is applied
+<a href="struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a>s in the same order, since the way a transition is applied
 may depend on previous state. For example, if a transition pushes a value
 to the end of a list, two clients receiving the transitions in a different
 order would have internal states which represented different orders of the
@@ -106,22 +106,22 @@ The state of each channel is independent from one another: state changes in one 
 do not impact the state in another, much like messages in one chat room do not appear in
 another.</li>
 </ul>
-</div><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+</div></details><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
 <table><tr class="module-item"><td><a class="mod" href="data_structures/index.html" title="aper::data_structures mod">data_structures</a></td><td class="docblock-short"></td></tr></table><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
 <table><tr class="module-item"><td><a class="struct" href="struct.PlayerID.html" title="aper::PlayerID struct">PlayerID</a></td><td class="docblock-short"><p>An opaque identifier for a single connected user.</p>
-</td></tr><tr class="module-item"><td><a class="struct" href="struct.StateMachineContainerProgram.html" title="aper::StateMachineContainerProgram struct">StateMachineContainerProgram</a></td><td class="docblock-short"><p>A <a href="../aper/trait.StateProgram.html" title="StateProgram">StateProgram</a> implementation that can be built from any <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a>. Transitions
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.StateMachineContainerProgram.html" title="aper::StateMachineContainerProgram struct">StateMachineContainerProgram</a></td><td class="docblock-short"><p>A <a href="trait.StateProgram.html" title="StateProgram">StateProgram</a> implementation that can be built from any <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a>. Transitions
 are stripped of their metadata and passed down to the underlying state machine.</p>
 </td></tr><tr class="module-item"><td><a class="struct" href="struct.TransitionEvent.html" title="aper::TransitionEvent struct">TransitionEvent</a></td><td class="docblock-short"></td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
 <table><tr class="module-item"><td><a class="enum" href="enum.StateUpdateMessage.html" title="aper::StateUpdateMessage enum">StateUpdateMessage</a></td><td class="docblock-short"><p>A message from the server to a client that tells it to update its state.</p>
 </td></tr></table><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
 <table><tr class="module-item"><td><a class="trait" href="trait.StateMachine.html" title="aper::StateMachine trait">StateMachine</a></td><td class="docblock-short"><p>This trait provides the methods that Aper needs to be able to interact with
 an object as a state machine.</p>
-</td></tr><tr class="module-item"><td><a class="trait" href="trait.StateProgram.html" title="aper::StateProgram trait">StateProgram</a></td><td class="docblock-short"><p>This trait can be added to a <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a> which takes a <a href="../aper/struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a> as
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.StateProgram.html" title="aper::StateProgram trait">StateProgram</a></td><td class="docblock-short"><p>This trait can be added to a <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a> which takes a <a href="struct.TransitionEvent.html" title="TransitionEvent">TransitionEvent</a> as
 its transition. Only state machines with this trait can be used directly with
 the aper client/server infrastructure.</p>
-</td></tr><tr class="module-item"><td><a class="trait" href="trait.StateProgramFactory.html" title="aper::StateProgramFactory trait">StateProgramFactory</a></td><td class="docblock-short"><p>A trait indicating that a struct can be used to create a <a href="../aper/trait.StateProgram.html" title="StateProgram">StateProgram</a> for a given type.</p>
-</td></tr><tr class="module-item"><td><a class="trait" href="trait.Transition.html" title="aper::Transition trait">Transition</a></td><td class="docblock-short"><p>This trait indicates that a type can be used as the transition of a <a href="../aper/trait.StateMachine.html" title="StateMachine">StateMachine</a>.</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.StateProgramFactory.html" title="aper::StateProgramFactory trait">StateProgramFactory</a></td><td class="docblock-short"><p>A trait indicating that a struct can be used to create a <a href="trait.StateProgram.html" title="StateProgram">StateProgram</a> for a given type.</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Transition.html" title="aper::Transition trait">Transition</a></td><td class="docblock-short"><p>This trait indicates that a type can be used as the transition of a <a href="trait.StateMachine.html" title="StateMachine">StateMachine</a>.</p>
 </td></tr></table><h2 id="types" class="section-header"><a href="#types">Type Definitions</a></h2>
 <table><tr class="module-item"><td><a class="type" href="type.Timestamp.html" title="aper::Timestamp type">Timestamp</a></td><td class="docblock-short"></td></tr></table><h2 id="derives" class="section-header"><a href="#derives">Derive Macros</a></h2>
-<table><tr class="module-item"><td><a class="derive" href="derive.StateMachine.html" title="aper::StateMachine derive">StateMachine</a></td><td class="docblock-short"></td></tr><tr class="module-item"><td><a class="derive" href="derive.Transition.html" title="aper::Transition derive">Transition</a></td><td class="docblock-short"></td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="aper" data-search-js="../search-index.js"></div>
+<table><tr class="module-item"><td><a class="derive" href="derive.StateMachine.html" title="aper::StateMachine derive">StateMachine</a></td><td class="docblock-short"></td></tr><tr class="module-item"><td><a class="derive" href="derive.Transition.html" title="aper::Transition derive">Transition</a></td><td class="docblock-short"></td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="aper" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
     <script src="../main.js"></script></body></html>

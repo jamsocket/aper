@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aper/src/data_structures/zeno_index.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>zeno_index.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../aper/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../aper/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button">?</button>
+                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -353,9 +353,9 @@
 <span id="350">350</span>
 <span id="351">351</span>
 <span id="352">352</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>::<span class="ident">Ordering</span>;
+<span class="kw">use</span> <span class="ident">std::cmp::Ordering</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">struct</span> <span class="ident">OpaqueIndex</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>);
@@ -392,7 +392,7 @@
 <span class="kw">impl</span> <span class="ident">FractionByte</span> {
     <span class="kw">fn</span> <span class="ident">new_between_bytes</span>(<span class="ident">lhs</span>: <span class="ident">u8</span>, <span class="ident">rhs</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FractionByte</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">lhs</span> <span class="op">&lt;</span> <span class="ident">rhs</span> <span class="op">-</span> <span class="number">1</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">FractionByte</span>::<span class="ident">Byte</span>((<span class="ident">rhs</span> <span class="op">-</span> <span class="ident">lhs</span>) <span class="op">/</span> <span class="number">2</span> <span class="op">+</span> <span class="ident">lhs</span>))
+            <span class="prelude-val">Some</span>(<span class="ident">FractionByte::Byte</span>((<span class="ident">rhs</span> <span class="op">-</span> <span class="ident">lhs</span>) <span class="op">/</span> <span class="number">2</span> <span class="op">+</span> <span class="ident">lhs</span>))
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
         }
@@ -400,20 +400,20 @@
 
     <span class="kw">fn</span> <span class="ident">new_between</span>(<span class="ident">lower_bound</span>: <span class="ident">FractionByte</span>, <span class="ident">upper_bound</span>: <span class="ident">FractionByte</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FractionByte</span><span class="op">&gt;</span> {
         <span class="kw">match</span> (<span class="ident">lower_bound</span>, <span class="ident">upper_bound</span>) {
-            (<span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">FractionByte::Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte::Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="ident">lhs</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAGIC_FLOOR</span> <span class="op">&amp;&amp;</span> <span class="ident">rhs</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">MAGIC_CEIL</span> {
-                    <span class="prelude-val">Some</span>(<span class="ident">FractionByte</span>::<span class="ident">Magic</span>)
+                    <span class="prelude-val">Some</span>(<span class="ident">FractionByte::Magic</span>)
                 } <span class="kw">else</span> {
-                    <span class="ident">FractionByte</span>::<span class="ident">new_between_bytes</span>(<span class="ident">lhs</span>, <span class="ident">rhs</span>)
+                    <span class="ident">FractionByte::new_between_bytes</span>(<span class="ident">lhs</span>, <span class="ident">rhs</span>)
                 }
             }
 
-            (<span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte</span>::<span class="ident">Magic</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">FractionByte</span>::<span class="ident">new_between_bytes</span>(<span class="ident">lhs</span>, <span class="ident">MAGIC_CEIL</span>)
+            (<span class="ident">FractionByte::Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte::Magic</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">FractionByte::new_between_bytes</span>(<span class="ident">lhs</span>, <span class="ident">MAGIC_CEIL</span>)
             }
 
-            (<span class="ident">FractionByte</span>::<span class="ident">Magic</span>, <span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">FractionByte</span>::<span class="ident">new_between_bytes</span>(<span class="ident">MAGIC_FLOOR</span>, <span class="ident">rhs</span>)
+            (<span class="ident">FractionByte::Magic</span>, <span class="ident">FractionByte::Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">FractionByte::new_between_bytes</span>(<span class="ident">MAGIC_FLOOR</span>, <span class="ident">rhs</span>)
             }
 
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
@@ -423,7 +423,7 @@
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">FractionByte</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">FractionByte</span>::<span class="ident">Magic</span>
+        <span class="ident">FractionByte::Magic</span>
     }
 }
 
@@ -436,22 +436,22 @@
 <span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">FractionByte</span> {
     <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Ordering</span> {
         <span class="kw">match</span> (<span class="self">self</span>, <span class="ident">other</span>) {
-            (<span class="ident">FractionByte</span>::<span class="ident">Magic</span>, <span class="ident">FractionByte</span>::<span class="ident">Magic</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Ordering</span>::<span class="ident">Equal</span>,
-            (<span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte</span>::<span class="ident">Magic</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">FractionByte::Magic</span>, <span class="ident">FractionByte::Magic</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Ordering::Equal</span>,
+            (<span class="ident">FractionByte::Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte::Magic</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">lhs</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAGIC_FLOOR</span> {
-                    <span class="ident">Ordering</span>::<span class="ident">Less</span>
+                    <span class="ident">Ordering::Less</span>
                 } <span class="kw">else</span> {
-                    <span class="ident">Ordering</span>::<span class="ident">Greater</span>
+                    <span class="ident">Ordering::Greater</span>
                 }
             }
-            (<span class="ident">FractionByte</span>::<span class="ident">Magic</span>, <span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">FractionByte::Magic</span>, <span class="ident">FractionByte::Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">rhs</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAGIC_FLOOR</span> {
-                    <span class="ident">Ordering</span>::<span class="ident">Greater</span>
+                    <span class="ident">Ordering::Greater</span>
                 } <span class="kw">else</span> {
-                    <span class="ident">Ordering</span>::<span class="ident">Less</span>
+                    <span class="ident">Ordering::Less</span>
                 }
             }
-            (<span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">lhs</span>.<span class="ident">cmp</span>(<span class="ident">rhs</span>),
+            (<span class="ident">FractionByte::Byte</span>(<span class="ident">lhs</span>), <span class="ident">FractionByte::Byte</span>(<span class="ident">rhs</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">lhs</span>.<span class="ident">cmp</span>(<span class="ident">rhs</span>),
         }
     }
 }
@@ -491,7 +491,7 @@
         <span class="self">self</span>.<span class="number">0</span>
             .<span class="ident">get</span>(<span class="ident">i</span>)
             .<span class="ident">cloned</span>()
-            .<span class="ident">map</span>(<span class="ident">FractionByte</span>::<span class="ident">Byte</span>)
+            .<span class="ident">map</span>(<span class="ident">FractionByte::Byte</span>)
             .<span class="ident">unwrap_or_default</span>()
     }
 }
@@ -499,7 +499,7 @@
 <span class="kw">impl</span> <span class="ident">ZenoIndex</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_before</span>(<span class="ident">fs</span>: <span class="kw-2">&amp;</span><span class="ident">ZenoIndex</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ZenoIndex</span> {
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">fs</span>.<span class="number">0</span>.<span class="ident">len</span>() {
-            <span class="kw">if</span> <span class="ident">fs</span>.<span class="number">0</span>[<span class="ident">i</span>] <span class="op">&gt;</span> <span class="ident">u8</span>::<span class="ident">MIN</span> {
+            <span class="kw">if</span> <span class="ident">fs</span>.<span class="number">0</span>[<span class="ident">i</span>] <span class="op">&gt;</span> <span class="ident">u8::MIN</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">fs</span>.<span class="number">0</span>[<span class="number">0</span>..(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>)].<span class="ident">into</span>();
                 <span class="ident">bytes</span>[<span class="ident">i</span>] <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
                 <span class="kw">return</span> <span class="ident">ZenoIndex</span>(<span class="ident">bytes</span>);
@@ -513,7 +513,7 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_after</span>(<span class="ident">fs</span>: <span class="kw-2">&amp;</span><span class="ident">ZenoIndex</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ZenoIndex</span> {
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">fs</span>.<span class="number">0</span>.<span class="ident">len</span>() {
-            <span class="kw">if</span> <span class="ident">fs</span>.<span class="number">0</span>[<span class="ident">i</span>] <span class="op">&lt;</span> <span class="ident">u8</span>::<span class="ident">MAX</span> {
+            <span class="kw">if</span> <span class="ident">fs</span>.<span class="number">0</span>[<span class="ident">i</span>] <span class="op">&lt;</span> <span class="ident">u8::MAX</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">fs</span>.<span class="number">0</span>[<span class="number">0</span>..(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>)].<span class="ident">into</span>();
                 <span class="ident">bytes</span>[<span class="ident">i</span>] <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
                 <span class="kw">return</span> <span class="ident">ZenoIndex</span>(<span class="ident">bytes</span>);
@@ -530,11 +530,11 @@
             <span class="comment">// Find the first index at which left and right values differ.</span>
             <span class="kw">let</span> <span class="ident">ld</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
             <span class="kw">let</span> <span class="ident">rd</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
-            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">comparison_chain</span>)]</span>
+            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::comparison_chain</span>)]</span>
             <span class="kw">if</span> <span class="ident">ld</span> <span class="op">&lt;</span> <span class="ident">rd</span> {
-                <span class="kw">return</span> <span class="kw">match</span> <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">ld</span>, <span class="ident">rd</span>) {
-                    <span class="prelude-val">Some</span>(<span class="ident">FractionByte</span>::<span class="ident">Magic</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ZenoIndex</span>(<span class="ident">left</span>.<span class="number">0</span>[<span class="number">0</span>..(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)].<span class="ident">into</span>()),
-                    <span class="prelude-val">Some</span>(<span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">b</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">return</span> <span class="kw">match</span> <span class="ident">FractionByte::new_between</span>(<span class="ident">ld</span>, <span class="ident">rd</span>) {
+                    <span class="prelude-val">Some</span>(<span class="ident">FractionByte::Magic</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ZenoIndex</span>(<span class="ident">left</span>.<span class="number">0</span>[<span class="number">0</span>..(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)].<span class="ident">into</span>()),
+                    <span class="prelude-val">Some</span>(<span class="ident">FractionByte::Byte</span>(<span class="ident">b</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">left</span>.<span class="number">0</span>[<span class="number">0</span>..(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)].<span class="ident">into</span>();
                         <span class="ident">bytes</span>.<span class="ident">push</span>(<span class="ident">b</span>);
                         <span class="ident">ZenoIndex</span>(<span class="ident">bytes</span>)
@@ -542,13 +542,13 @@
                     <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> (<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>)..(<span class="ident">left</span>.<span class="number">0</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="number">1</span>) {
                             <span class="kw">match</span> <span class="ident">left</span>.<span class="ident">digit</span>(<span class="ident">j</span>) {
-                                <span class="ident">FractionByte</span>::<span class="ident">Magic</span> <span class="op">=</span><span class="op">&gt;</span> {
+                                <span class="ident">FractionByte::Magic</span> <span class="op">=</span><span class="op">&gt;</span> {
                                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">left</span>.<span class="number">0</span>[<span class="number">0</span>..<span class="ident">j</span>].<span class="ident">into</span>();
                                     <span class="ident">bytes</span>.<span class="ident">push</span>(<span class="ident">MAGIC_CEIL</span>);
                                     <span class="kw">return</span> <span class="ident">ZenoIndex</span>(<span class="ident">bytes</span>);
                                 }
-                                <span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                                    <span class="kw">if</span> <span class="ident">b</span> <span class="op">&lt;</span> <span class="ident">u8</span>::<span class="ident">MAX</span> {
+                                <span class="ident">FractionByte::Byte</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                                    <span class="kw">if</span> <span class="ident">b</span> <span class="op">&lt;</span> <span class="ident">u8::MAX</span> {
                                         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">left</span>.<span class="number">0</span>[<span class="number">0</span>..<span class="ident">j</span>].<span class="ident">into</span>();
                                         <span class="ident">bytes</span>.<span class="ident">push</span>(<span class="ident">b</span> <span class="op">+</span> <span class="number">1</span>);
                                         <span class="kw">return</span> <span class="ident">ZenoIndex</span>(<span class="ident">bytes</span>);
@@ -559,13 +559,13 @@
 
                         <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> (<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>)..(<span class="ident">right</span>.<span class="number">0</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="number">1</span>) {
                             <span class="kw">match</span> <span class="ident">right</span>.<span class="ident">digit</span>(<span class="ident">j</span>) {
-                                <span class="ident">FractionByte</span>::<span class="ident">Magic</span> <span class="op">=</span><span class="op">&gt;</span> {
+                                <span class="ident">FractionByte::Magic</span> <span class="op">=</span><span class="op">&gt;</span> {
                                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">right</span>.<span class="number">0</span>[<span class="number">0</span>..<span class="ident">j</span>].<span class="ident">into</span>();
                                     <span class="ident">bytes</span>.<span class="ident">push</span>(<span class="ident">MAGIC_FLOOR</span>);
                                     <span class="kw">return</span> <span class="ident">ZenoIndex</span>(<span class="ident">bytes</span>);
                                 }
-                                <span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                                    <span class="kw">if</span> <span class="ident">b</span> <span class="op">&gt;</span> <span class="ident">u8</span>::<span class="ident">MIN</span> {
+                                <span class="ident">FractionByte::Byte</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                                    <span class="kw">if</span> <span class="ident">b</span> <span class="op">&gt;</span> <span class="ident">u8::MIN</span> {
                                         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">right</span>.<span class="number">0</span>[<span class="number">0</span>..<span class="ident">j</span>].<span class="ident">into</span>();
                                         <span class="ident">bytes</span>.<span class="ident">push</span>(<span class="ident">b</span> <span class="op">-</span> <span class="number">1</span>);
                                         <span class="kw">return</span> <span class="ident">ZenoIndex</span>(<span class="ident">bytes</span>);
@@ -574,14 +574,14 @@
                             }
                         }
 
-                        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Should never get here&quot;</span>)
+                        <span class="macro">panic!</span>(<span class="string">&quot;Should never get here&quot;</span>)
                     }
                 };
             } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">ld</span> <span class="op">&gt;</span> <span class="ident">rd</span> {
-                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;left should be less than right.&quot;</span>)
+                <span class="macro">panic!</span>(<span class="string">&quot;left should be less than right.&quot;</span>)
             }
         }
-        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Can&#39;t generate between two ZenoIndex values that are equal.&quot;</span>)
+        <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t generate between two ZenoIndex values that are equal.&quot;</span>)
     }
 }
 
@@ -596,20 +596,20 @@
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="op">=</span><span class="self">self</span>.<span class="number">0</span>.<span class="ident">len</span>() {
             <span class="kw">let</span> <span class="ident">sd</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
             <span class="kw">let</span> <span class="ident">od</span> <span class="op">=</span> <span class="ident">other</span>.<span class="ident">digit</span>(<span class="ident">i</span>);
-            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">comparison_chain</span>)]</span>
+            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::comparison_chain</span>)]</span>
             <span class="kw">if</span> <span class="ident">sd</span> <span class="op">&lt;</span> <span class="ident">od</span> {
-                <span class="kw">return</span> <span class="ident">Ordering</span>::<span class="ident">Less</span>;
+                <span class="kw">return</span> <span class="ident">Ordering::Less</span>;
             } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">sd</span> <span class="op">&gt;</span> <span class="ident">od</span> {
-                <span class="kw">return</span> <span class="ident">Ordering</span>::<span class="ident">Greater</span>;
+                <span class="kw">return</span> <span class="ident">Ordering::Greater</span>;
             }
         }
-        <span class="ident">Ordering</span>::<span class="ident">Equal</span>
+        <span class="ident">Ordering::Equal</span>
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ZenoIndex</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">ZenoIndex</span>(<span class="ident">Default</span>::<span class="ident">default</span>())
+        <span class="ident">ZenoIndex</span>(<span class="ident">Default::default</span>())
     }
 }
 
@@ -619,15 +619,15 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_zeno_index</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ZenoIndex</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ZenoIndex</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
 
-        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">ZenoIndex</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">ZenoIndex::default</span>();
 
         {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">low</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">low</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">20</span> {
-                <span class="ident">m</span> <span class="op">=</span> <span class="ident">ZenoIndex</span>::<span class="ident">new_before</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>);
+                <span class="ident">m</span> <span class="op">=</span> <span class="ident">ZenoIndex::new_before</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>);
                 <span class="ident">low</span>.<span class="ident">push</span>(<span class="ident">m</span>.<span class="ident">clone</span>())
             }
 
@@ -639,9 +639,9 @@
 
         {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">high</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">high</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">20</span> {
-                <span class="ident">m</span> <span class="op">=</span> <span class="ident">ZenoIndex</span>::<span class="ident">new_after</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>);
+                <span class="ident">m</span> <span class="op">=</span> <span class="ident">ZenoIndex::new_after</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>);
                 <span class="ident">high</span>.<span class="ident">push</span>(<span class="ident">m</span>.<span class="ident">clone</span>())
             }
 
@@ -649,15 +649,15 @@
         }
 
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..(<span class="ident">indices</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>) {
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">indices</span>[<span class="ident">i</span>] <span class="op">&lt;</span> <span class="ident">indices</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>])
+            <span class="macro">assert!</span>(<span class="ident">indices</span>[<span class="ident">i</span>] <span class="op">&lt;</span> <span class="ident">indices</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>])
         }
 
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">12</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_indices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ZenoIndex</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_indices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ZenoIndex</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..(<span class="ident">indices</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>) {
-                <span class="kw">let</span> <span class="ident">cb</span> <span class="op">=</span> <span class="ident">ZenoIndex</span>::<span class="ident">new_between</span>(<span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span>], <span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>]);
-                <span class="macro">assert</span><span class="macro">!</span>(<span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span>] <span class="op">&lt;</span> <span class="kw-2">&amp;</span><span class="ident">cb</span>);
-                <span class="macro">assert</span><span class="macro">!</span>(<span class="kw-2">&amp;</span><span class="ident">cb</span> <span class="op">&lt;</span> <span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>]);
+                <span class="kw">let</span> <span class="ident">cb</span> <span class="op">=</span> <span class="ident">ZenoIndex::new_between</span>(<span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span>], <span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>]);
+                <span class="macro">assert!</span>(<span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span>] <span class="op">&lt;</span> <span class="kw-2">&amp;</span><span class="ident">cb</span>);
+                <span class="macro">assert!</span>(<span class="kw-2">&amp;</span><span class="ident">cb</span> <span class="op">&lt;</span> <span class="kw-2">&amp;</span><span class="ident">indices</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>]);
                 <span class="ident">new_indices</span>.<span class="ident">push</span>(<span class="ident">cb</span>);
                 <span class="ident">new_indices</span>.<span class="ident">push</span>(<span class="ident">indices</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>].<span class="ident">clone</span>());
             }
@@ -667,45 +667,45 @@
     }
 
     <span class="kw">fn</span> <span class="ident">byte</span>(<span class="ident">v</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FractionByte</span> {
-        <span class="ident">FractionByte</span>::<span class="ident">Byte</span>(<span class="ident">v</span>)
+        <span class="ident">FractionByte::Byte</span>(<span class="ident">v</span>)
     }
 
-    <span class="kw">const</span> <span class="ident">MAGIC</span>: <span class="ident">FractionByte</span> <span class="op">=</span> <span class="ident">FractionByte</span>::<span class="ident">Magic</span>;
+    <span class="kw">const</span> <span class="ident">MAGIC</span>: <span class="ident">FractionByte</span> <span class="op">=</span> <span class="ident">FractionByte::Magic</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fraction_byte_comparisons</span>() {
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">byte</span>(<span class="number">0</span>) <span class="op">&lt;</span> <span class="ident">MAGIC</span>);
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">byte</span>(<span class="number">255</span>) <span class="op">&gt;</span> <span class="ident">MAGIC</span>);
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">byte</span>(<span class="number">127</span>) <span class="op">&lt;</span> <span class="ident">MAGIC</span>);
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">byte</span>(<span class="number">128</span>) <span class="op">&gt;</span> <span class="ident">MAGIC</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">MAGIC</span>, <span class="ident">MAGIC</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">byte</span>(<span class="number">128</span>), <span class="ident">byte</span>(<span class="number">128</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">byte</span>(<span class="number">8</span>) <span class="op">&lt;</span> <span class="ident">byte</span>(<span class="number">9</span>));
+        <span class="macro">assert!</span>(<span class="ident">byte</span>(<span class="number">0</span>) <span class="op">&lt;</span> <span class="ident">MAGIC</span>);
+        <span class="macro">assert!</span>(<span class="ident">byte</span>(<span class="number">255</span>) <span class="op">&gt;</span> <span class="ident">MAGIC</span>);
+        <span class="macro">assert!</span>(<span class="ident">byte</span>(<span class="number">127</span>) <span class="op">&lt;</span> <span class="ident">MAGIC</span>);
+        <span class="macro">assert!</span>(<span class="ident">byte</span>(<span class="number">128</span>) <span class="op">&gt;</span> <span class="ident">MAGIC</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">MAGIC</span>, <span class="ident">MAGIC</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">byte</span>(<span class="number">128</span>), <span class="ident">byte</span>(<span class="number">128</span>));
+        <span class="macro">assert!</span>(<span class="ident">byte</span>(<span class="number">8</span>) <span class="op">&lt;</span> <span class="ident">byte</span>(<span class="number">9</span>));
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fraction_byte_new_between_bytes</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">8</span>)), <span class="ident">FractionByte</span>::<span class="ident">new_between_bytes</span>(<span class="number">7</span>, <span class="number">9</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte</span>::<span class="ident">new_between_bytes</span>(<span class="number">5</span>, <span class="number">6</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte</span>::<span class="ident">new_between_bytes</span>(<span class="number">5</span>, <span class="number">5</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte</span>::<span class="ident">new_between_bytes</span>(<span class="number">5</span>, <span class="number">4</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">8</span>)), <span class="ident">FractionByte::new_between_bytes</span>(<span class="number">7</span>, <span class="number">9</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte::new_between_bytes</span>(<span class="number">5</span>, <span class="number">6</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte::new_between_bytes</span>(<span class="number">5</span>, <span class="number">5</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte::new_between_bytes</span>(<span class="number">5</span>, <span class="number">4</span>));
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_fraction_byte_new_between</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">8</span>)), <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">byte</span>(<span class="number">7</span>), <span class="ident">byte</span>(<span class="number">9</span>)));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">MAGIC</span>), <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">byte</span>(<span class="number">7</span>), <span class="ident">byte</span>(<span class="number">192</span>)));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">67</span>)), <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">byte</span>(<span class="number">7</span>), <span class="ident">MAGIC</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">126</span>)), <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">byte</span>(<span class="number">125</span>), <span class="ident">MAGIC</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">127</span>)), <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">byte</span>(<span class="number">126</span>), <span class="ident">MAGIC</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">128</span>)), <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">byte</span>(<span class="number">129</span>)));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">byte</span>(<span class="number">127</span>), <span class="ident">MAGIC</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">byte</span>(<span class="number">128</span>)));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">191</span>)), <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">byte</span>(<span class="number">255</span>)));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">MAGIC</span>));
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte</span>::<span class="ident">new_between</span>(<span class="ident">byte</span>(<span class="number">191</span>), <span class="ident">byte</span>(<span class="number">191</span>)));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">8</span>)), <span class="ident">FractionByte::new_between</span>(<span class="ident">byte</span>(<span class="number">7</span>), <span class="ident">byte</span>(<span class="number">9</span>)));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">MAGIC</span>), <span class="ident">FractionByte::new_between</span>(<span class="ident">byte</span>(<span class="number">7</span>), <span class="ident">byte</span>(<span class="number">192</span>)));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">67</span>)), <span class="ident">FractionByte::new_between</span>(<span class="ident">byte</span>(<span class="number">7</span>), <span class="ident">MAGIC</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">126</span>)), <span class="ident">FractionByte::new_between</span>(<span class="ident">byte</span>(<span class="number">125</span>), <span class="ident">MAGIC</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">127</span>)), <span class="ident">FractionByte::new_between</span>(<span class="ident">byte</span>(<span class="number">126</span>), <span class="ident">MAGIC</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">128</span>)), <span class="ident">FractionByte::new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">byte</span>(<span class="number">129</span>)));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte::new_between</span>(<span class="ident">byte</span>(<span class="number">127</span>), <span class="ident">MAGIC</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte::new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">byte</span>(<span class="number">128</span>)));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">byte</span>(<span class="number">191</span>)), <span class="ident">FractionByte::new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">byte</span>(<span class="number">255</span>)));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte::new_between</span>(<span class="ident">MAGIC</span>, <span class="ident">MAGIC</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">FractionByte::new_between</span>(<span class="ident">byte</span>(<span class="number">191</span>), <span class="ident">byte</span>(<span class="number">191</span>)));
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="aper" data-search-js="../../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="aper" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
     <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>
