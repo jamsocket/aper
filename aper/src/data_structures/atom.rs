@@ -11,7 +11,10 @@ pub struct Atom<T: Clone + PartialEq + Debug + Unpin> {
     value: T,
 }
 
-impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug> Atom<T> {
+impl<T> Atom<T>
+where
+    T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
+{
     /// Create a new [Atom] with a given initial value.
     pub fn new(initial: T) -> Self {
         Atom { value: initial }
@@ -29,8 +32,9 @@ impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialE
     }
 }
 
-impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug>
-    StateMachine for Atom<T>
+impl<T> StateMachine for Atom<T>
+where
+    T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
     type Transition = ReplaceAtom<T>;
 
@@ -40,9 +44,9 @@ impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialE
     }
 }
 
-impl<
-        T: Default + 'static + Clone + PartialEq + Debug + Unpin + Send + Serialize + DeserializeOwned,
-    > Default for Atom<T>
+impl<T> Default for Atom<T>
+where
+    T: Default + 'static + Clone + PartialEq + Debug + Unpin + Send + Serialize + DeserializeOwned,
 {
     fn default() -> Self {
         Atom::new(Default::default())
@@ -53,8 +57,8 @@ impl<
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ReplaceAtom<T: Clone + PartialEq + Debug + Unpin>(T);
 
-impl<T: 'static + Clone + PartialEq + Debug + Unpin + Serialize + DeserializeOwned + Send>
-    Transition for ReplaceAtom<T>
+impl<T> Transition for ReplaceAtom<T> where
+    T: 'static + Clone + PartialEq + Debug + Unpin + Serialize + DeserializeOwned + Send
 {
 }
 
