@@ -10,8 +10,8 @@ pub struct Constant<T: Clone + PartialEq + Debug + Unpin> {
     value: T,
 }
 
-impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug>
-    Constant<T>
+impl<T> Constant<T>
+    where T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
     /// Create a new [Constant] with a given initial value.
     pub fn new(initial: T) -> Self {
@@ -24,8 +24,8 @@ impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialE
     }
 }
 
-impl<T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug>
-    StateMachine for Constant<T>
+impl<T> StateMachine for Constant<T>
+    where T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug
 {
     type Transition = InvalidTransition;
 

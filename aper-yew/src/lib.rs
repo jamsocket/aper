@@ -31,10 +31,10 @@ mod view;
 mod wire_wrapped;
 
 pub use crate::view::{View, ViewContext};
+pub use client::ClientBuilder;
 use state_manager::StateManager;
 pub use update_interval::UpdateInterval;
 use wire_wrapped::WireWrapped;
-pub use client::ClientBuilder;
 
 /// Properties for [StateProgramComponent].
 #[derive(Properties, Clone)]
