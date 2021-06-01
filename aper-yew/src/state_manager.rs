@@ -1,16 +1,18 @@
 use aper::{StateProgram, Timestamp, Transition, TransitionEvent};
 use chrono::Utc;
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 /// A container for the local copy of the state. Maintains an estimate of the
 /// time on the server.
 #[derive(Debug)]
 pub struct StateManager<T: Transition, State: StateProgram<T>> {
-    state: Box<State>,
+    /// The client's latest up-to-date snapshot 
+    golden_state: Box<State>,
+    /// The client's optimistic projection of the latest up-to-date snapshot
+    optimistic_state: Box<State>,
+    sent_transition: Option<TransitionEvent<T>>,
     last_server_time: Timestamp,
     last_local_time: Timestamp,
-    phantom: PhantomData<T>,
 }
 
 impl<T: Transition, State: StateProgram<T>> StateManager<T, State> {
@@ -24,21 +26,59 @@ impl<T: Transition, State: StateProgram<T>> StateManager<T, State> {
 
     pub fn new(state: State, server_time: Timestamp) -> StateManager<T, State> {
         StateManager {
-            state: Box::new(state),
+            golden_state: Box::new(state.clone()),
+            optimistic_state: Box::new(state),
+            sent_transition: None,
             last_server_time: server_time,
             last_local_time: Utc::now(),
-            phantom: Default::default(),
         }
     }
 
-    pub fn process_event(&mut self, event: TransitionEvent<T>) {
+    /// Process an event that originated at this client
+    pub fn process_local_event(&mut self, event: TransitionEvent<T>) {
+        // if sent_transition is Some(_), do nothing.
+        // otherwise
+        // - apply event to optimistic_state
+        // - store event in sent_transition
+        if self.sent_transition.is_none() {
+            self.optimistic_state.apply(event.clone());
+            self.sent_transition = Some(event);
+        }
+    }
+
+    /// Process an event that came from the server 
+    pub fn process_remote_event(&mut self, event: TransitionEvent<T>) {
+        // if sent_transition is None, same behavior as before
+        // otherwise:
+        // - if sent_transition is NOT the same as event:
+        //   - apply event to golden_state
+        //   - clone golden_state as optimistic_state
+        //   - reset sent_transition
+
         self.last_local_time = Utc::now();
         self.last_server_time = event.timestamp;
 
-        self.state.apply(event);
+        match &self.sent_transition {
+            Some(transition) => {
+                if *transition != event {
+                    self.golden_state.apply(event);
+                    self.optimistic_state = self.golden_state.clone();
+                    self.sent_transition = None;
+                } else {
+                    self.golden_state.apply(event);
+                    self.sent_transition = None;
+                }
+            }
+            None => {
+                self.golden_state.apply(event);
+                self.optimistic_state = self.golden_state.clone();
+            }
+        }
     }
 
+    // We don't want to expose the golden state
+    // As far as the caller is concerned, the optimistic state *is* the golden state
     pub fn get_state(&self) -> &State {
-        &self.state
+        &self.optimistic_state
     }
 }

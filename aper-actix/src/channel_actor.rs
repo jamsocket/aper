@@ -8,6 +8,7 @@ use crate::messages::{ChannelMessage, WrappedStateUpdateMessage};
 use crate::player_actor::PlayerActor;
 use crate::suspended_event_manager::SuspendedEventManager;
 
+
 /// Actor representing a channel, responsible for receiving messages from players and
 /// broadcasting them to all connected players.
 pub struct ChannelActor<T: Transition, State: StateProgram<T>> {
@@ -44,6 +45,8 @@ impl<T: Transition, State: StateProgram<T>> ChannelActor<T, State> {
         self.state.apply(event.clone());
         let suspended_event = self.state.suspended_event();
         self.suspended_event.replace(suspended_event, ctx);
+
+        std::thread::sleep(std::time::Duration::from_secs(1));
 
         for listener in &self.listeners {
             listener.do_send(WrappedStateUpdateMessage(

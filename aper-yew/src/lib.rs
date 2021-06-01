@@ -172,6 +172,8 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback 
                                 transition,
                             );
 
+                            state_manager.process_local_event(event.clone());
+
                             if self.binary {
                                 self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
                             } else {
@@ -200,7 +202,7 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback 
                     }
                     StateUpdateMessage::TransitionState(msg) => match &mut self.status {
                         Status::Connected(state_manager, _) => {
-                            state_manager.process_event(msg);
+                            state_manager.process_remote_event(msg);
                         }
                         _ => panic!(
                             "Received GameStateTransition while in state {:?}",
