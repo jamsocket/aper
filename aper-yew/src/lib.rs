@@ -172,18 +172,21 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback 
                                 transition,
                             );
 
-                            state_manager.process_local_event(event.clone());
+                            let state_changed = state_manager.process_local_event(event.clone());
 
                             if self.binary {
                                 self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
                             } else {
                                 self.wss_task.as_mut().unwrap().send(Json(&event));
                             }
+
+                            state_changed
                         }
                         _ => panic!("Shouldn't receive StateTransition before connected."),
                     }
+                } else {
+                    false
                 }
-                false
             }
             Msg::ServerMessage(c) => {
                 let WireWrapped { value, binary } = c;

@@ -34,8 +34,9 @@ impl<T: Transition, State: StateProgram<T>> StateManager<T, State> {
         }
     }
 
-    /// Process an event that originated at this client
-    pub fn process_local_event(&mut self, event: TransitionEvent<T>) {
+    /// Process an event that originated at this client.
+    /// Returns `true` if the transition resulted in an optimistic state change.
+    pub fn process_local_event(&mut self, event: TransitionEvent<T>) -> bool {
         // if sent_transition is Some(_), do nothing.
         // otherwise
         // - apply event to optimistic_state
@@ -43,6 +44,9 @@ impl<T: Transition, State: StateProgram<T>> StateManager<T, State> {
         if self.sent_transition.is_none() {
             self.optimistic_state.apply(event.clone());
             self.sent_transition = Some(event);
+            true
+        } else {
+            false
         }
     }
 

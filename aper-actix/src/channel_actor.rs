@@ -46,8 +46,6 @@ impl<T: Transition, State: StateProgram<T>> ChannelActor<T, State> {
         let suspended_event = self.state.suspended_event();
         self.suspended_event.replace(suspended_event, ctx);
 
-        std::thread::sleep(std::time::Duration::from_secs(1));
-
         for listener in &self.listeners {
             listener.do_send(WrappedStateUpdateMessage(
                 StateUpdateMessage::TransitionState(event.clone()),
