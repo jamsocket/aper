@@ -172,16 +172,21 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback 
                                 transition,
                             );
 
+                            let state_changed = state_manager.process_local_event(event.clone());
+
                             if self.binary {
                                 self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
                             } else {
                                 self.wss_task.as_mut().unwrap().send(Json(&event));
                             }
+
+                            state_changed
                         }
                         _ => panic!("Shouldn't receive StateTransition before connected."),
                     }
+                } else {
+                    false
                 }
-                false
             }
             Msg::ServerMessage(c) => {
                 let WireWrapped { value, binary } = c;
@@ -200,7 +205,7 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback 
                     }
                     StateUpdateMessage::TransitionState(msg) => match &mut self.status {
                         Status::Connected(state_manager, _) => {
-                            state_manager.process_event(msg);
+                            state_manager.process_remote_event(msg);
                         }
                         _ => panic!(
                             "Received GameStateTransition while in state {:?}",

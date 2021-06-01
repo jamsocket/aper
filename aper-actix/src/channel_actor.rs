@@ -8,6 +8,7 @@ use crate::messages::{ChannelMessage, WrappedStateUpdateMessage};
 use crate::player_actor::PlayerActor;
 use crate::suspended_event_manager::SuspendedEventManager;
 
+
 /// Actor representing a channel, responsible for receiving messages from players and
 /// broadcasting them to all connected players.
 pub struct ChannelActor<T: Transition, State: StateProgram<T>> {
