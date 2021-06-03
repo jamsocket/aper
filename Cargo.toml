@@ -10,5 +10,4 @@ members = [
     "aper-actix",
     "aper-yew",
     "aper-build",
-    "doctests",
 ]
