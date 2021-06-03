@@ -1,1 +1,0 @@
-# Synchronizing state machines
