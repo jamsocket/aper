@@ -64,32 +64,20 @@ impl<T: Transition, State: StateProgram<T>> StateManager<T, State> {
 
         match &self.sent_transition {
             Some(transition) => {
-                self.golden_state.apply(event);
-
                 if *transition != event {
+                    self.golden_state.apply(event);
                     self.optimistic_state = self.golden_state.clone();
+                    self.sent_transition = None;
+                } else {
+                    self.golden_state.apply(event);
+                    self.sent_transition = None;
                 }
-
-                self.sent_transition = None;
+            }
+            None => {
+                self.golden_state.apply(event);
+                self.optimistic_state = self.golden_state.clone();
             }
         }
-
-        // match &self.sent_transition {
-        //     Some(transition) => {
-        //         if *transition != event {
-        //             self.golden_state.apply(event);
-        //             self.optimistic_state = self.golden_state.clone();
-        //             self.sent_transition = None;
-        //         } else {
-        //             self.golden_state.apply(event);
-        //             self.sent_transition = None;
-        //         }
-        //     }
-        //     None => {
-        //         self.golden_state.apply(event);
-        //         self.optimistic_state = self.golden_state.clone();
-        //     }
-        // }
     }
 
     // We don't want to expose the golden state
