@@ -8,6 +8,15 @@ use crate::data_structures::ZenoIndex;
 use crate::{StateMachine, Transition};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum ListPosition {
+    Beginning,
+    End,
+    AbsolutePosition(ZenoIndex),
+    Before(Uuid, ZenoIndex),
+    After(Uuid, ZenoIndex),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(bound = "")]
 pub enum ListOperation<T: StateMachine + PartialEq> {
     Insert(ZenoIndex, Uuid, T),
@@ -90,6 +99,41 @@ pub type OperationWithId<T> = (Uuid, ListOperation<T>);
 impl<T: StateMachine + PartialEq> List<T> {
     pub fn new() -> List<T> {
         Self::default()
+    }
+
+    pub fn get_location(&self, position: ListPosition) -> ZenoIndex {
+        match position {
+            ListPosition::Beginning => {
+                // return a zenoindex < the index of the first list element
+                if let Some((i, _)) = self.items.iter().next() {
+                    ZenoIndex::new_before(i)
+                } else {
+                    ZenoIndex::default()
+                }
+            }
+            ListPosition::End => {
+                if let Some((i, _)) = self.items.iter().next_back() {
+                    ZenoIndex::new_after(i)
+                } else {
+                    ZenoIndex::default()
+                }
+            }
+            ListPosition::AbsolutePosition(p) => p,
+            ListPosition::Before(uuid, fallback_location) => {
+                if let Some(location) = self.items_inv.get(&uuid) {
+                    ZenoIndex::new_before(&location)
+                } else {
+                    ZenoIndex::new_before(&fallback_location)
+                }
+            }
+            ListPosition::After(uuid, fallback_location) => {
+                if let Some(location) = self.items_inv.get(&uuid) {
+                    ZenoIndex::new_after(&location)
+                } else {
+                    ZenoIndex::new_after(&fallback_location)
+                }
+            }
+        }
     }
 
     fn do_insert(&mut self, location: ZenoIndex, id: Uuid, value: T) {
@@ -195,6 +239,54 @@ impl<T: StateMachine + PartialEq> List<T> {
 mod tests {
     use super::*;
     use crate::data_structures::Atom;
+
+    #[test]
+    fn test_get_location() {
+        let mut my_list: List<Atom<u32>> = List::new();
+        let mut ids: Vec<Uuid> = vec![];
+
+        for i in 0..10 {
+            let (id, transition) = my_list.append(Atom::new(i));
+            ids.push(id);
+
+            my_list.apply(transition);
+        }
+
+        // Beginning
+
+        assert!(
+            my_list.get_location(ListPosition::Beginning) < *my_list.items.keys().next().unwrap()
+        );
+
+        // Ending
+
+        assert!(
+            my_list.get_location(ListPosition::End) > *my_list.items.keys().next_back().unwrap()
+        );
+
+        // AbsolutePosition
+
+        assert_eq!(
+            my_list.get_location(ListPosition::AbsolutePosition(
+                my_list.items_inv[&ids[4]].clone()
+            )),
+            my_list.items_inv[&ids[4]]
+        );
+
+        // Before
+
+        assert!(my_list.get_location(
+            ListPosition::Before(ids[7], my_list.items_inv[&ids[7]].clone()))
+                < my_list.items_inv[&ids[7]]
+        );
+
+        // After
+
+        assert!(my_list.get_location(
+            ListPosition::After(ids[7], my_list.items_inv[&ids[7]].clone()))
+                 > my_list.items_inv[&ids[7]]
+        );
+    }
 
     #[test]
     fn test_insert_between_merge() {
