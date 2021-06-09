@@ -6,7 +6,7 @@ use std::fmt::Debug;
 /// time on the server.
 #[derive(Debug)]
 pub struct StateManager<T: Transition, State: StateProgram<T>> {
-    /// The client's latest up-to-date snapshot 
+    /// The client's latest up-to-date snapshot
     golden_state: Box<State>,
     /// The client's optimistic projection of the latest up-to-date snapshot
     optimistic_state: Box<State>,
@@ -50,7 +50,7 @@ impl<T: Transition, State: StateProgram<T>> StateManager<T, State> {
         }
     }
 
-    /// Process an event that came from the server 
+    /// Process an event that came from the server
     pub fn process_remote_event(&mut self, event: TransitionEvent<T>) {
         // if sent_transition is None, same behavior as before
         // otherwise:
