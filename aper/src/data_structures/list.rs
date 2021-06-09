@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
+use std::ops::Bound::{Excluded, Unbounded};
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -19,9 +20,12 @@ pub enum ListPosition {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(bound = "")]
 pub enum ListOperation<T: StateMachine + PartialEq> {
-    Insert(ZenoIndex, Uuid, T),
-    Append(Uuid, T),
-    Prepend(Uuid, T),
+    // TODO: implement this new operation
+    Insert(ListPosition, Uuid, T),
+    // TODO: delete the following operations
+    //Insert(ZenoIndex, Uuid, T),
+    //Append(Uuid, T),
+    //Prepend(Uuid, T),
     Delete(Uuid),
     Move(Uuid, ZenoIndex),
     Apply(Uuid, <T as StateMachine>::Transition),
@@ -64,22 +68,6 @@ impl<T: StateMachine + PartialEq> StateMachine for List<T> {
 
     fn apply(&mut self, transition_event: Self::Transition) {
         match transition_event {
-            ListOperation::Append(id, value) => {
-                let location = if let Some((last_location, _)) = self.items.iter().next_back() {
-                    ZenoIndex::new_after(last_location)
-                } else {
-                    ZenoIndex::default()
-                };
-                self.do_insert(location, id, value)
-            }
-            ListOperation::Prepend(id, value) => {
-                let location = if let Some((first_location, _)) = self.items.iter().next() {
-                    ZenoIndex::new_before(first_location)
-                } else {
-                    ZenoIndex::default()
-                };
-                self.do_insert(location, id, value)
-            }
             ListOperation::Insert(location, id, value) => self.do_insert(location, id, value),
             ListOperation::Delete(id) => self.do_delete(id),
             ListOperation::Move(id, location) => self.do_move(id, location),
@@ -102,17 +90,17 @@ impl<T: StateMachine + PartialEq> List<T> {
     }
 
     pub fn get_location(&self, position: ListPosition) -> ZenoIndex {
-        match position {
+        let location = match position {
             ListPosition::Beginning => {
                 // return a zenoindex < the index of the first list element
-                if let Some((i, _)) = self.items.iter().next() {
+                return if let Some((i, _)) = self.items.iter().next() {
                     ZenoIndex::new_before(i)
                 } else {
                     ZenoIndex::default()
-                }
+                };
             }
             ListPosition::End => {
-                if let Some((i, _)) = self.items.iter().next_back() {
+                return if let Some((i, _)) = self.items.iter().next_back() {
                     ZenoIndex::new_after(i)
                 } else {
                     ZenoIndex::default()
@@ -133,21 +121,23 @@ impl<T: StateMachine + PartialEq> List<T> {
                     ZenoIndex::new_after(&fallback_location)
                 }
             }
-        }
-    }
+        };
 
-    fn do_insert(&mut self, location: ZenoIndex, id: Uuid, value: T) {
-        let location = if self.items.get(&location).is_some() {
-            let mut it = self.items.range(&location..);
-            it.next();
-            if let Some((next_location, _)) = it.next() {
+        if self.items.contains_key(&location) {
+            if let Some((next_location, _)) =
+                self.items.range((Excluded(&location), Unbounded)).next()
+            {
                 ZenoIndex::new_between(&location, next_location)
             } else {
                 ZenoIndex::new_after(&location)
             }
         } else {
             location
-        };
+        }
+    }
+
+    fn do_insert(&mut self, position: ListPosition, id: Uuid, value: T) {
+        let location = self.get_location(position);
         self.items.insert(location.clone(), id);
         self.items_inv.insert(id, location);
         self.pool.insert(id, value);
@@ -176,28 +166,37 @@ impl<T: StateMachine + PartialEq> List<T> {
         let loc1 = self.items_inv.get(id1).unwrap();
         let loc2 = self.items_inv.get(id2).unwrap();
         let new_loc = ZenoIndex::new_between(loc1, loc2);
-        (id, ListOperation::Insert(new_loc, id, value))
+        (
+            id,
+            ListOperation::Insert(ListPosition::AbsolutePosition(new_loc), id, value),
+        )
     }
 
     /// Construct an [OperationWithId] representing appending the given object to this
     /// list.
     pub fn append(&self, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
-        (id, ListOperation::Append(id, value))
+        (id, ListOperation::Insert(ListPosition::End, id, value))
     }
 
     /// Construct a [OperationWithId] representing prepending the given object to this
     /// list.
     pub fn prepend(&self, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
-        (id, ListOperation::Prepend(id, value))
+        (
+            id,
+            ListOperation::Insert(ListPosition::Beginning, id, value),
+        )
     }
 
     /// Construct a [OperationWithId] representing inserting the given object at the
     /// given location in this list.
     pub fn insert(&self, location: ZenoIndex, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
-        (id, ListOperation::Insert(location, id, value))
+        (
+            id,
+            ListOperation::Insert(ListPosition::AbsolutePosition(location), id, value),
+        )
     }
 
     /// Construct a [ListOperation] representing deleting the object given (by id)
@@ -266,25 +265,28 @@ mod tests {
 
         // AbsolutePosition
 
-        assert_eq!(
+        assert!(
             my_list.get_location(ListPosition::AbsolutePosition(
                 my_list.items_inv[&ids[4]].clone()
-            )),
-            my_list.items_inv[&ids[4]]
+            )) > my_list.items_inv[&ids[4]]
         );
 
         // Before
 
-        assert!(my_list.get_location(
-            ListPosition::Before(ids[7], my_list.items_inv[&ids[7]].clone()))
-                < my_list.items_inv[&ids[7]]
+        assert!(
+            my_list.get_location(ListPosition::Before(
+                ids[7],
+                my_list.items_inv[&ids[7]].clone()
+            )) < my_list.items_inv[&ids[7]]
         );
 
         // After
 
-        assert!(my_list.get_location(
-            ListPosition::After(ids[7], my_list.items_inv[&ids[7]].clone()))
-                 > my_list.items_inv[&ids[7]]
+        assert!(
+            my_list.get_location(ListPosition::After(
+                ids[7],
+                my_list.items_inv[&ids[7]].clone()
+            )) > my_list.items_inv[&ids[7]]
         );
     }
 
