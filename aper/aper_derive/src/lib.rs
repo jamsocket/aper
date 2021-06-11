@@ -2,7 +2,7 @@ extern crate proc_macro;
 
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn::{Item, ItemStruct, Type};
+use syn::{Item, ItemStruct, Type, Visibility};
 
 #[proc_macro_derive(Transition)]
 pub fn transition_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -100,7 +100,7 @@ impl<'a> Field<'a> {
     }
 }
 
-fn generate_transform(enum_name: &Ident, fields: &[Field]) -> TokenStream {
+fn generate_transform(enum_name: &Ident, fields: &[Field], visibility: &Visibility) -> TokenStream {
     let variants: TokenStream = fields
         .iter()
         .flat_map(Field::generate_enum_variant)
@@ -108,7 +108,7 @@ fn generate_transform(enum_name: &Ident, fields: &[Field]) -> TokenStream {
 
     quote! {
         #[derive(aper::Transition, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
-        enum #enum_name {
+        #visibility enum #enum_name {
             #variants
         }
     }
@@ -133,7 +133,8 @@ fn impl_state_machine_derive(ast: &ItemStruct) -> TokenStream {
         .flat_map(|e| Field::generate_transition_case(e, &enum_name))
         .collect();
 
-    let transform_enum = generate_transform(&enum_name, &fields);
+    let visibility = &ast.vis;
+    let transform_enum = generate_transform(&enum_name, &fields, visibility);
 
     quote! {
         impl aper::StateMachine for #name {
