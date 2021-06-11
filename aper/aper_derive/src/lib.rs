@@ -108,7 +108,7 @@ fn generate_transform(enum_name: &Ident, fields: &[Field]) -> TokenStream {
 
     quote! {
         #[derive(aper::Transition, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
-        enum #enum_name {
+        pub enum #enum_name {
             #variants
         }
     }
