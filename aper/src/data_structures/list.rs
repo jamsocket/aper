@@ -1,7 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
+use std::marker::PhantomData;
 use std::ops::Bound::{Excluded, Unbounded};
 
+use serde::de::Visitor;
+use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -45,12 +48,56 @@ pub struct ListItem<'a, T: StateMachine + PartialEq> {
 
 /// Represents a list of items, similar to a `Vec`, but designed to be robust
 /// to concurrent modifications from multiple users.
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
-#[serde(bound = "")]
+#[derive(Clone, PartialEq, Debug)]
 pub struct List<T: StateMachine + PartialEq> {
     items: BTreeMap<ZenoIndex, Uuid>,
     items_inv: BTreeMap<Uuid, ZenoIndex>,
     pool: HashMap<Uuid, T>,
+}
+
+impl<T: StateMachine + PartialEq> Serialize for List<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(self.items.len()))?;
+        for i in self.items.iter().map(|(zi, id)| (zi, id, &self.pool[id])) {
+            seq.serialize_element(&i)?;
+        }
+        seq.end()
+    }
+}
+
+impl<'de, T: StateMachine + PartialEq> Deserialize<'de> for List<T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct ListVisitor<T>(PhantomData<T>);
+        impl<'de, T: StateMachine + PartialEq> Visitor<'de> for ListVisitor<T> {
+            type Value = List<T>;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a sequence of tuples")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let mut list = List::new();
+
+                while let Some((zi, id, v)) = seq.next_element::<(ZenoIndex, Uuid, T)>()? {
+                    list.items.insert(zi.clone(), id);
+                    list.items_inv.insert(id, zi);
+                    list.pool.insert(id, v);
+                }
+                Ok(list)
+            }
+        }
+
+        deserializer.deserialize_seq(ListVisitor(PhantomData))
+    }
 }
 
 impl<T: StateMachine + PartialEq> Default for List<T> {
@@ -408,5 +455,16 @@ mod tests {
                 assert_eq!(vec![143, 23, 3, 99, 44], result);
             }
         }
+    }
+
+    #[test]
+    fn test_list_serialization() {
+        // Serialization of nonempty List to JSON used to fail
+        // because serde-json requires map keys to be strings.
+
+        let mut list: List<Atom<i64>> = List::default();
+        list.apply(list.append(Atom::new(5)).1);
+
+        serde_json::to_string(&list).unwrap();
     }
 }
