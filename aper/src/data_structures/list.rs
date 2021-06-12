@@ -465,6 +465,12 @@ mod tests {
         let mut list: List<Atom<i64>> = List::default();
         list.apply(list.append(Atom::new(5)).1);
 
-        serde_json::to_string(&list).unwrap();
+        let result = serde_json::to_string(&list).unwrap();
+
+        let parsed_list: List<Atom<i64>> = serde_json::from_str(&result).unwrap();
+
+        assert_eq!(list.items, parsed_list.items);
+        assert_eq!(list.items_inv, parsed_list.items_inv);
+        assert_eq!(list.pool, parsed_list.pool);
     }
 }
