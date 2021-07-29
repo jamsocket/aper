@@ -34,8 +34,10 @@ pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> {
 }
 
 /// A trait indicating that a struct can be used to create a [StateProgram] for a given type.
-pub trait StateProgramFactory<State: StateProgram>: Clone + Sized + Unpin + 'static + Send {
-    fn create(&mut self) -> State;
+pub trait StateProgramFactory: Clone + Sized + Unpin + 'static + Send {
+    type State: StateProgram;
+
+    fn create(&mut self) -> Self::State;
 }
 
 /// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
@@ -69,9 +71,9 @@ impl<S: StateMachine + Default> StateMachineContainerProgramFactory<S> {
     }
 }
 
-impl<S: StateMachine + Default> StateProgramFactory<StateMachineContainerProgram<S>>
-    for StateMachineContainerProgramFactory<S>
-{
+impl<S: StateMachine + Default> StateProgramFactory for StateMachineContainerProgramFactory<S> {
+    type State = StateMachineContainerProgram<S>;
+
     fn create(&mut self) -> StateMachineContainerProgram<S> {
         StateMachineContainerProgram(S::default())
     }
@@ -90,7 +92,9 @@ impl<S: StateProgram + Default> DefaultStateProgramFactory<S> {
     }
 }
 
-impl<S: StateProgram + Default> StateProgramFactory<S> for DefaultStateProgramFactory<S> {
+impl<S: StateProgram + Default> StateProgramFactory for DefaultStateProgramFactory<S> {
+    type State = S;
+
     fn create(&mut self) -> S {
         S::default()
     }

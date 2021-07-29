@@ -81,38 +81,29 @@ impl<P: StateProgram, C: JamsocketContext> JamsocketService for AperJamsocketSer
 
 #[derive(Clone)]
 pub struct AperJamsocketServiceBuilder<
-    P: StateProgram,
-    K: StateProgramFactory<P> + Send + Sync + Clone,
+    K: StateProgramFactory + Send + Sync + Clone,
     C: JamsocketContext + Unpin + 'static,
 > {
-    ph_p: PhantomData<P>,
     ph_c: PhantomData<C>,
 
     state_program_factory: K,
 }
 
-impl<
-        P: StateProgram,
-        K: StateProgramFactory<P> + Send + Sync + Clone,
-        C: JamsocketContext + Unpin + 'static,
-    > AperJamsocketServiceBuilder<P, K, C>
+impl<K: StateProgramFactory + Send + Sync + Clone, C: JamsocketContext + Unpin + 'static>
+    AperJamsocketServiceBuilder<K, C>
 {
     pub fn new(state_program_factory: K) -> Self {
         AperJamsocketServiceBuilder {
-            ph_p: Default::default(),
             ph_c: Default::default(),
             state_program_factory,
         }
     }
 }
 
-impl<
-        P: StateProgram,
-        K: StateProgramFactory<P> + Send + Sync + Clone,
-        C: JamsocketContext + Unpin + 'static,
-    > JamsocketServiceBuilder<C> for AperJamsocketServiceBuilder<P, K, C>
+impl<K: StateProgramFactory + Send + Sync + Clone, C: JamsocketContext + Unpin + 'static>
+    JamsocketServiceBuilder<C> for AperJamsocketServiceBuilder<K, C>
 {
-    type Service = AperJamsocketService<P, C>;
+    type Service = AperJamsocketService<K::State, C>;
 
     fn build(mut self, _room_id: &str, context: C) -> Self::Service {
         let state = self.state_program_factory.create();

@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use aper::{StateProgram, StateProgramFactory};
+use aper::StateProgramFactory;
 use aper_jamsocket::AperJamsocketServiceBuilder;
 use env_logger::Builder;
 use jamsocket_server::{do_serve, ServerSettings};
 
-pub fn serve<S: StateProgram + Send + Sync, F: StateProgramFactory<S> + Send + Sync + Clone>(
+pub fn serve<F: StateProgramFactory + Send + Sync + Clone>(
     state_program_factory: F,
 ) -> std::io::Result<()> {
     let mut builder = Builder::new();
