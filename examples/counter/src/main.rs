@@ -1,7 +1,7 @@
-use aper::StateMachineContainerProgram;
-use aper_actix::ServerBuilder;
+use aper::StateMachineContainerProgramFactory;
+use aper_serve::serve;
 use client::Counter;
 
 fn main() -> std::io::Result<()> {
-    ServerBuilder::new(StateMachineContainerProgram(Counter::default())).serve()
+    serve(StateMachineContainerProgramFactory::<Counter>::new())
 }

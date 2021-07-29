@@ -147,7 +147,10 @@ use std::fmt::{Display, Formatter};
 use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
 pub use state_machine::{StateMachine, Transition};
-pub use state_program::{StateMachineContainerProgram, StateProgram, StateProgramFactory};
+pub use state_program::{
+    DefaultStateProgramFactory, StateMachineContainerProgram, StateMachineContainerProgramFactory,
+    StateProgram, StateProgramFactory,
+};
 
 pub mod data_structures;
 mod state_machine;
@@ -184,8 +187,8 @@ impl<T: Transition> TransitionEvent<T> {
         transition: T,
     ) -> TransitionEvent<T> {
         TransitionEvent {
-            player,
             timestamp,
+            player,
             transition,
         }
     }
@@ -195,7 +198,7 @@ impl<T: Transition> Transition for TransitionEvent<T> {}
 
 /// A message from the server to a client that tells it to update its state.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum StateUpdateMessage<T: Transition, State: StateProgram<T>> {
+pub enum StateUpdateMessage<State: StateProgram> {
     /// Instructs the client to completely discard its existing state and replace it
     /// with the provided one. This is currently only used to set the initial state
     /// when a client first connects.
@@ -208,5 +211,5 @@ pub enum StateUpdateMessage<T: Transition, State: StateProgram<T>> {
     /// Instructs the client to apply the given [TransitionEvent] to its copy of
     /// the state to synchronize it with the server. All state updates
     /// after the initial state is sent are sent through [StateUpdateMessage::TransitionState].
-    TransitionState(#[serde(bound = "")] TransitionEvent<T>),
+    TransitionState(#[serde(bound = "")] TransitionEvent<State::T>),
 }

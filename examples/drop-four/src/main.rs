@@ -1,7 +1,7 @@
-use aper_actix::ServerBuilder;
+use aper::DefaultStateProgramFactory;
+use aper_serve::serve;
 use client::DropFourGame;
 
 fn main() -> std::io::Result<()> {
-    ServerBuilder::new(DropFourGame::default()).serve()
+    serve(DefaultStateProgramFactory::<DropFourGame>::new())
 }
-

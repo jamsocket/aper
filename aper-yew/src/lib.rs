@@ -17,7 +17,7 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{PlayerID, StateProgram, StateUpdateMessage, Transition, TransitionEvent};
+use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
 use std::fmt::Debug;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
@@ -56,7 +56,7 @@ pub struct StateProgramComponentProps<V: View> {
 /// The component does not have a copy of the state until it has connected and received
 /// an initial copy of the server's current state.
 #[derive(Debug)]
-pub enum Status<T: Transition, State: StateProgram<T>> {
+pub enum Status<State: StateProgram> {
     /// The component is in the process of connecting to the server but has not yet
     /// had its connection accepted.
     WaitingToConnect,
@@ -65,7 +65,7 @@ pub enum Status<T: Transition, State: StateProgram<T>> {
     WaitingForInitialState,
     /// The component has connected to the server and is assumed to contain an up-to-date
     /// copy of the state.
-    Connected(StateManager<T, State>, PlayerID),
+    Connected(StateManager<State>, PlayerID),
     /// There was some error during the `WaitingToConnect` or `WaitingForInitialState`
     /// phase. The component's `onerror()` callback should have triggered, so the owner
     /// of this component may use this callback to take over rendering from this component
@@ -76,14 +76,14 @@ pub enum Status<T: Transition, State: StateProgram<T>> {
 /// Represents a message this component could receive, either from the server or from
 /// an event triggered by the user.
 #[derive(Debug)]
-pub enum Msg<T: Transition, State: StateProgram<T>> {
+pub enum Msg<State: StateProgram> {
     /// A [Transition] object was initiated by the view, usually because of a
     /// user interaction.
-    StateTransition(Option<T>),
+    StateTransition(Option<State::T>),
     /// A [StateUpdateMessage] was received from the server.
-    ServerMessage(WireWrapped<StateUpdateMessage<T, State>>),
+    ServerMessage(WireWrapped<StateUpdateMessage<State>>),
     /// The status of the connection with the remote server has changed.
-    UpdateStatus(Box<Status<T, State>>),
+    UpdateStatus(Box<Status<State>>),
     /// Trigger a redraw of this View. Redraws are automatically triggered after a
     /// [Msg::ServerMessage] is received, so this is used to trigger a redraw that
     /// is _not_ tied to a state change. The only difference between these redraws will
@@ -96,9 +96,8 @@ pub enum Msg<T: Transition, State: StateProgram<T>> {
 /// Yew Component which owns a copy of the state as well as a connection to the server,
 /// and keeps its local copy of the state in sync with the server.
 pub struct StateProgramComponent<
-    T: Transition,
-    Program: StateProgram<T>,
-    V: 'static + View<State = Program, Callback = T>,
+    Program: StateProgram,
+    V: 'static + View<State = Program, Callback = Program::T>,
 > {
     link: ComponentLink<Self>,
     props: StateProgramComponentProps<V>,
@@ -107,15 +106,15 @@ pub struct StateProgramComponent<
     wss_task: Option<WebSocketTask>,
 
     /// Status of connection with the server.
-    status: Status<T, Program>,
+    status: Status<Program>,
 
     /// Whether or not to use binary (bincode) to communicate with the server.
     /// This is set to whichever the server chose to send as its first message.
     binary: bool,
 }
 
-impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback = T>>
-    StateProgramComponent<T, Program, V>
+impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>>
+    StateProgramComponent<Program, V>
 {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
@@ -138,10 +137,10 @@ impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback 
     }
 }
 
-impl<T: Transition, Program: StateProgram<T>, V: View<State = Program, Callback = T>> Component
-    for StateProgramComponent<T, Program, V>
+impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Component
+    for StateProgramComponent<Program, V>
 {
-    type Message = Msg<T, Program>;
+    type Message = Msg<Program>;
     type Properties = StateProgramComponentProps<V>;
 
     /// On creation, we initialize the connection, which starts the process of

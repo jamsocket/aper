@@ -1,5 +1,5 @@
 use crate::{StateProgramComponent, StateProgramComponentProps, View};
-use aper::{StateProgram, Transition};
+use aper::StateProgram;
 use yew::prelude::*;
 
 /// WebSocket URLs must be absolute, not relative, paths. For ergonomics, we
@@ -13,22 +13,21 @@ fn get_full_ws_url(path: &str) -> String {
         scheme => panic!("Unknown scheme: {}", scheme),
     };
 
-    format!("{}://{}/{}", ws_protocol, &host, &path)
+    format!("{}://{}/ws/{}", ws_protocol, &host, &path)
 }
 
 pub struct ClientBuilder<
-    T: Transition,
-    Program: StateProgram<T>,
-    V: 'static + View<State = Program, Callback = T>,
+    Program: StateProgram,
+    V: 'static + View<State = Program, Callback = Program::T>,
 > {
     ws_url: String,
     view: V,
 }
 
-impl<T: Transition, Program: StateProgram<T>, V: 'static + View<State = Program, Callback = T>>
-    ClientBuilder<T, Program, V>
+impl<Program: StateProgram, V: 'static + View<State = Program, Callback = Program::T>>
+    ClientBuilder<Program, V>
 {
-    pub fn new(view: V) -> ClientBuilder<T, Program, V> {
+    pub fn new(view: V) -> ClientBuilder<Program, V> {
         console_error_panic_hook::set_once();
 
         ClientBuilder {
@@ -54,6 +53,6 @@ impl<T: Transition, Program: StateProgram<T>, V: 'static + View<State = Program,
             view: self.view,
         };
 
-        App::<StateProgramComponent<T, Program, V>>::new().mount_to_body_with_props(props);
+        App::<StateProgramComponent<Program, V>>::new().mount_to_body_with_props(props);
     }
 }

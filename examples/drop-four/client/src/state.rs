@@ -203,7 +203,9 @@ impl StateMachine for DropFourGame {
     }
 }
 
-impl StateProgram<GameTransition> for DropFourGame {}
+impl StateProgram for DropFourGame {
+    type T = GameTransition;
+}
 
 #[cfg(test)]
 mod tests {

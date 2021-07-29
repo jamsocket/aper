@@ -1,10 +1,14 @@
+use std::marker::PhantomData;
+
 use crate::{StateMachine, Transition, TransitionEvent};
 use serde::{Deserialize, Serialize};
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
-pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent<T>> {
+pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> {
+    type T: Transition;
+
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
     /// a user-initiated state change before then. State machines that only change state as a
@@ -24,15 +28,13 @@ pub trait StateProgram<T: Transition>: StateMachine<Transition = TransitionEvent
     ///
     /// Since they are not associated with a particular player, suspended events trigger
     /// `process_event` with a `None` as the player in the [TransitionEvent].
-    fn suspended_event(&self) -> Option<TransitionEvent<T>> {
+    fn suspended_event(&self) -> Option<TransitionEvent<Self::T>> {
         None
     }
 }
 
 /// A trait indicating that a struct can be used to create a [StateProgram] for a given type.
-pub trait StateProgramFactory<T: Transition, State: StateProgram<T>>:
-    Sized + Unpin + 'static + Send
-{
+pub trait StateProgramFactory<State: StateProgram>: Clone + Sized + Unpin + 'static + Send {
     fn create(&mut self) -> State;
 }
 
@@ -50,4 +52,58 @@ impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> {
     }
 }
 
-impl<SM: StateMachine> StateProgram<SM::Transition> for StateMachineContainerProgram<SM> {}
+impl<SM: StateMachine> StateProgram for StateMachineContainerProgram<SM> {
+    type T = SM::Transition;
+}
+
+#[derive(Clone)]
+pub struct StateMachineContainerProgramFactory<S: StateMachine + Default> {
+    s: PhantomData<S>,
+}
+
+impl<S: StateMachine + Default> StateMachineContainerProgramFactory<S> {
+    pub fn new() -> Self {
+        StateMachineContainerProgramFactory {
+            s: Default::default(),
+        }
+    }
+}
+
+impl<S: StateMachine + Default> StateProgramFactory<StateMachineContainerProgram<S>>
+    for StateMachineContainerProgramFactory<S>
+{
+    fn create(&mut self) -> StateMachineContainerProgram<S> {
+        StateMachineContainerProgram(S::default())
+    }
+}
+
+#[derive(Clone)]
+pub struct DefaultStateProgramFactory<S: StateProgram + Default> {
+    phantom: PhantomData<S>,
+}
+
+impl<S: StateProgram + Default> DefaultStateProgramFactory<S> {
+    pub fn new() -> Self {
+        DefaultStateProgramFactory {
+            phantom: Default::default(),
+        }
+    }
+}
+
+impl<S: StateProgram + Default> StateProgramFactory<S> for DefaultStateProgramFactory<S> {
+    fn create(&mut self) -> S {
+        S::default()
+    }
+}
+
+impl<S: StateMachine + Default> Default for StateMachineContainerProgramFactory<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<S: StateProgram + Default> Default for DefaultStateProgramFactory<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
