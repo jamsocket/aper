@@ -20,6 +20,7 @@ pub fn serve<F: StateProgramFactory + Send + Sync + Clone>(
         heartbeat_timeout: Duration::from_secs(120),
         port: 8080,
         room_id_strategy: Default::default(),
+        shutdown_policy: jamsocket_server::ServiceShutdownPolicy::Never,
     };
 
     do_serve(host_factory, server_settings)
