@@ -7,11 +7,11 @@ use std::fmt::Debug;
 /// the perspective of managing state: it is only ever changed by
 /// completely replacing it.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
-pub struct Atom<T: Clone + PartialEq + Debug + Unpin> {
+pub struct Atom<T: Clone + PartialEq + Debug + Unpin + Send + Sync> {
     value: T,
 }
 
-impl<T> Atom<T>
+impl<T: Send + Sync> Atom<T>
 where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<T> StateMachine for Atom<T>
+impl<T: Send + Sync> StateMachine for Atom<T>
 where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<T> Default for Atom<T>
+impl<T: Send + Sync> Default for Atom<T>
 where
     T: Default + 'static + Clone + PartialEq + Debug + Unpin + Send + Serialize + DeserializeOwned,
 {
@@ -57,7 +57,7 @@ where
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ReplaceAtom<T: Clone + PartialEq + Debug + Unpin>(T);
 
-impl<T> Transition for ReplaceAtom<T> where
+impl<T: Send + Sync> Transition for ReplaceAtom<T> where
     T: 'static + Clone + PartialEq + Debug + Unpin + Serialize + DeserializeOwned + Send
 {
 }

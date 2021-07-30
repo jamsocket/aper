@@ -1,7 +1,8 @@
-use aper::{PlayerID, StateProgram, StateProgramFactory, StateUpdateMessage, TransitionEvent};
-use chrono::Utc;
-use jamsocket::{JamsocketContext, JamsocketService, JamsocketServiceBuilder, MessageRecipient};
 use std::marker::PhantomData;
+
+use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
+use chrono::Utc;
+use jamsocket::{JamsocketContext, JamsocketService, JamsocketServiceFactory, MessageRecipient};
 
 pub struct AperJamsocketService<P: StateProgram, C: JamsocketContext> {
     state: P,
@@ -79,34 +80,30 @@ impl<P: StateProgram, C: JamsocketContext> JamsocketService for AperJamsocketSer
     }
 }
 
-#[derive(Clone)]
 pub struct AperJamsocketServiceBuilder<
-    K: StateProgramFactory + Send + Sync + Clone,
-    C: JamsocketContext + Unpin + 'static,
+    K: StateProgram<U=String>,
 > {
-    ph_c: PhantomData<C>,
-
-    state_program_factory: K,
+    ph_k: PhantomData<K>,
 }
 
-impl<K: StateProgramFactory + Send + Sync + Clone, C: JamsocketContext + Unpin + 'static>
-    AperJamsocketServiceBuilder<K, C>
-{
-    pub fn new(state_program_factory: K) -> Self {
+/// This manual derive is necessary because the derive macro for Default
+/// isn't smart enough to realize that `K` is only used as a phantom type,
+/// so it adds `K: Default` to the bounds of the derived implementation.
+impl<K: StateProgram<U=String>> Default for AperJamsocketServiceBuilder<K> {
+    fn default() -> Self {
         AperJamsocketServiceBuilder {
-            ph_c: Default::default(),
-            state_program_factory,
+            ph_k: Default::default()
         }
     }
 }
 
-impl<K: StateProgramFactory + Send + Sync + Clone, C: JamsocketContext + Unpin + 'static>
-    JamsocketServiceBuilder<C> for AperJamsocketServiceBuilder<K, C>
+impl<K: StateProgram<U=String>, C: JamsocketContext>
+    JamsocketServiceFactory<C> for AperJamsocketServiceBuilder<K>
 {
-    type Service = AperJamsocketService<K::State, C>;
+    type Service = AperJamsocketService<K, C>;
 
-    fn build(mut self, _room_id: &str, context: C) -> Self::Service {
-        let state = self.state_program_factory.create();
+    fn build(&self, room_id: &str, context: C) -> Self::Service {
+        let state = K::new(room_id.to_string());
 
         AperJamsocketService {
             state,

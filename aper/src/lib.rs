@@ -141,16 +141,12 @@
 //!   do not impact the state in another, much like messages in one chat room do not appear in
 //!   another.
 
-use chrono::{DateTime, Utc};
-use std::fmt::{Display, Formatter};
-
 use chrono::serde::ts_milliseconds;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 pub use state_machine::{StateMachine, Transition};
-pub use state_program::{
-    DefaultStateProgramFactory, StateMachineContainerProgram, StateMachineContainerProgramFactory,
-    StateProgram, StateProgramFactory,
-};
+pub use state_program::{StateMachineContainerProgram, StateProgram};
+use std::fmt::{Display, Formatter};
 
 pub mod data_structures;
 mod state_machine;

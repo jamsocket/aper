@@ -1696,12 +1696,12 @@ checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 [[package]]
 name = "jamsocket"
 version = "0.1.0"
-source = "git+https://github.com/jamsocket/jamsocket#4db2f3af207328482c30f900bc6b43b43983ad95"
+source = "git+https://github.com/jamsocket/jamsocket#8652c14956284aea3ef5914ecf9be9340b4affed"
 
 [[package]]
 name = "jamsocket-server"
 version = "0.1.0"
-source = "git+https://github.com/jamsocket/jamsocket#4db2f3af207328482c30f900bc6b43b43983ad95"
+source = "git+https://github.com/jamsocket/jamsocket#8652c14956284aea3ef5914ecf9be9340b4affed"
 dependencies = [
  "actix 0.12.0",
  "actix-files 0.6.0-beta.6",

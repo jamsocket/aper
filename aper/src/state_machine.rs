@@ -5,7 +5,7 @@ use std::fmt::Debug;
 
 /// This trait indicates that a type can be used as the transition of a [StateMachine].
 pub trait Transition:
-    Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug + PartialEq
+    Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug + PartialEq + Sync
 {
 }
 
@@ -16,7 +16,7 @@ pub trait Transition:
 /// state machine. It's up to you to implement accessor methods (or use public
 /// fields) in order to expose the data necessary to render your views.
 pub trait StateMachine:
-    Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug
+    Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug + Sync
 {
     /// The [StateMachine::Transition] type associates another type with this state machine
     /// as its transitions.

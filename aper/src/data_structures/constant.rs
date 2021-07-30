@@ -6,11 +6,11 @@ use std::fmt::Debug;
 /// A struct that can wrap a value so that it can be used in place
 /// of a state machine, but
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
-pub struct Constant<T: Clone + PartialEq + Debug + Unpin> {
+pub struct Constant<T: Clone + PartialEq + Debug + Unpin + Send + Sync> {
     value: T,
 }
 
-impl<T> Constant<T>
+impl<T: Send + Sync> Constant<T>
 where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
@@ -25,7 +25,7 @@ where
     }
 }
 
-impl<T> StateMachine for Constant<T>
+impl<T: Send + Sync> StateMachine for Constant<T>
 where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
