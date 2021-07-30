@@ -17,10 +17,10 @@ machine, as well as the infrastructure to keep that state machine synchronized
 across multiple instances running in your users' browsers.
 
 Aper integrates with [Yew](https://yew.rs/docs/en/) on the client side, and
-[Actix](https://actix.rs/) for the server. Although the focus is on browser-based
-apps running in WebAssembly and communicating over WebSocket, the core state
-machine scaffolding can be used independent of the client/server architecture,
-and even with non-WebSocket protocols.
+[Jamsocket](https://github.com/jamsocket/jamsocket) as the server.
+Although the focus is on browser-based apps running in WebAssembly and communicating
+over WebSocket, the core state machine scaffolding can be used independent of the
+client/server architecture, and even with non-WebSocket protocols.
 
 **Aper is rapidly evolving. Consider this a *technology preview*.** See the [list of issues outstanding for version 1.0](https://github.com/aper-dev/aper/labels/v1-milestone)
 
