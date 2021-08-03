@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 /// the aper client/server infrastructure.
 pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> {
     type T: Transition;
-    type U;
 
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
@@ -31,7 +30,7 @@ pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> {
         None
     }
 
-    fn new(init_value: Self::U) -> Self;
+    fn new(init_value: &str) -> Self;
 }
 
 /// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
@@ -50,9 +49,8 @@ impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> {
 
 impl<SM: StateMachine + Default> StateProgram for StateMachineContainerProgram<SM> {
     type T = SM::Transition;
-    type U = String;
 
-    fn new(_init_value: String) -> Self {
+    fn new(_init_value: &str) -> Self {
         Self::default()
     }
 }

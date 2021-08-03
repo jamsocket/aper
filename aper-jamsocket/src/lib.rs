@@ -2,16 +2,15 @@ use std::marker::PhantomData;
 
 use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
 use chrono::Utc;
-use jamsocket::{JamsocketContext, JamsocketService, JamsocketServiceFactory, MessageRecipient};
+use jamsocket::{JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService, WrappedJamsocketService};
 
-pub struct AperJamsocketService<P: StateProgram, C: JamsocketContext> {
+pub struct AperJamsocketService<P: StateProgram> {
     state: P,
     suspended_event: Option<TransitionEvent<P::T>>,
-    context: C,
 }
 
-impl<P: StateProgram, C: JamsocketContext> AperJamsocketService<P, C> {
-    fn update_suspended_event(&mut self) {
+impl<P: StateProgram> AperJamsocketService<P> {
+    fn update_suspended_event(&mut self, ctx: &impl JamsocketContext) {
         let susp = self.state.suspended_event();
         if susp == self.suspended_event {
             return;
@@ -19,14 +18,14 @@ impl<P: StateProgram, C: JamsocketContext> AperJamsocketService<P, C> {
 
         if let Some(ev) = &susp {
             if let Ok(dur) = ev.timestamp.signed_duration_since(Utc::now()).to_std() {
-                self.context.set_timer(dur.as_millis() as u32);
+                ctx.set_timer(dur.as_millis() as u32);
             }
         }
 
         self.suspended_event = susp;
     }
 
-    fn process_transition(&mut self, user: u32, transition: TransitionEvent<P::T>) {
+    fn process_transition(&mut self, user: u32, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
         if transition.player != Some(PlayerID(user as usize)) {
             log::warn!(
                 "Received a transition from a client with an invalid player ID. {:?} != {}",
@@ -36,19 +35,26 @@ impl<P: StateProgram, C: JamsocketContext> AperJamsocketService<P, C> {
             return;
         }
         self.state.apply(transition.clone());
-        self.context.send_message(
+        ctx.send_message(
             MessageRecipient::Broadcast,
             serde_json::to_string(&StateUpdateMessage::TransitionState::<P>(transition))
                 .unwrap()
                 .as_str(),
         );
-        self.update_suspended_event();
+        self.update_suspended_event(ctx);
     }
 }
 
-impl<P: StateProgram, C: JamsocketContext> JamsocketService for AperJamsocketService<P, C> {
-    fn connect(&mut self, user: u32) {
-        self.context.send_message(
+impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
+    fn new(room_id: &str, _ctx: &impl JamsocketContext) -> Self {
+        AperJamsocketService {
+            state: P::new(room_id),
+            suspended_event: None
+        }
+    }
+
+    fn connect(&mut self, user: u32, ctx: &impl JamsocketContext) {
+        ctx.send_message(
             MessageRecipient::User(user),
             serde_json::to_string(&StateUpdateMessage::ReplaceState::<P>(
                 self.state.clone(),
@@ -60,55 +66,51 @@ impl<P: StateProgram, C: JamsocketContext> JamsocketService for AperJamsocketSer
         );
     }
 
-    fn disconnect(&mut self, _user: u32) {}
+    fn disconnect(&mut self, _user: u32, _ctx: &impl JamsocketContext) {}
 
-    fn message(&mut self, user: u32, message: &str) {
+    fn message(&mut self, user: u32, message: &str, ctx: &impl JamsocketContext) {
         let transition: TransitionEvent<P::T> = serde_json::from_str(message).unwrap();
-        self.process_transition(user, transition);
+        self.process_transition(user, transition, ctx);
     }
 
-    fn binary(&mut self, user: u32, message: &[u8]) {
+    fn binary(&mut self, user: u32, message: &[u8], ctx: &impl JamsocketContext) {
         let transition: TransitionEvent<P::T> = bincode::deserialize(message).unwrap();
-        self.process_transition(user, transition);
+        self.process_transition(user, transition, ctx);
     }
 
-    fn timer(&mut self) {
+    fn timer(&mut self, ctx: &impl JamsocketContext) {
         if let Some(event) = self.suspended_event.take() {
             self.state.apply(event);
-            self.update_suspended_event();
+            self.update_suspended_event(ctx);
         }
     }
 }
 
 pub struct AperJamsocketServiceBuilder<
-    K: StateProgram<U=String>,
+    K: StateProgram,
+    C: JamsocketContext,
 > {
     ph_k: PhantomData<K>,
+    ph_c: PhantomData<C>,
 }
 
-/// This manual derive is necessary because the derive macro for Default
-/// isn't smart enough to realize that `K` is only used as a phantom type,
-/// so it adds `K: Default` to the bounds of the derived implementation.
-impl<K: StateProgram<U=String>> Default for AperJamsocketServiceBuilder<K> {
+impl<
+    K: StateProgram,
+    C: JamsocketContext,
+> Default for AperJamsocketServiceBuilder<K, C> {
     fn default() -> Self {
         AperJamsocketServiceBuilder {
-            ph_k: Default::default()
+            ph_k: Default::default(),
+            ph_c: Default::default(),
         }
     }
 }
 
-impl<K: StateProgram<U=String>, C: JamsocketContext>
-    JamsocketServiceFactory<C> for AperJamsocketServiceBuilder<K>
-{
-    type Service = AperJamsocketService<K, C>;
+impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C> for AperJamsocketServiceBuilder<K, C> {
+    type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
 
     fn build(&self, room_id: &str, context: C) -> Self::Service {
-        let state = K::new(room_id.to_string());
-
-        AperJamsocketService {
-            state,
-            suspended_event: None,
-            context,
-        }
+        let service = AperJamsocketService::new(room_id, &context);
+        WrappedJamsocketService::new(service, context)
     }
 }
