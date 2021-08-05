@@ -10,5 +10,4 @@ members = [
     "aper-jamsocket",
     "aper-serve",
     "aper-yew",
-    "aper-build",
 ]

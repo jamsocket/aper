@@ -327,10 +327,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aper-build"
-version = "0.1.0"
-
-[[package]]
 name = "aper-jamsocket"
 version = "0.1.0"
 dependencies = [
