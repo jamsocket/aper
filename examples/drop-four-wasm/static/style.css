@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro&display=swap');
+
+body {
+    font-family: Montserrat, sans-serif;
+}
+
+.main {
+    max-width: 650px;
+    margin: auto;
+    padding-top: 10px;
+}
+
+@keyframes slidein {
+    0% {
+        opacity: 0.1;
+        transform: translate(0, 0);
+    }
+
+    100% {
+        opacity 0.8;
+    }
+}
+
+.disc {
+    animation-duration: 0.4s;
+    animation-name: slidein;
+    animation-timing-function: cubic-bezier(.7,0,1,.79);
+}
+
+.tentative {
+    transition: transform 0.2s;
+}
+
+button {
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: none;
+    background-color: #c1cfe8;
+    color: #002058;
+    font-size: 14pt;
+    font-weight: bold;
+    border-bottom: 1px solid #5a7fbf;
+    border-right: 1px solid #5a7fbf;
+}

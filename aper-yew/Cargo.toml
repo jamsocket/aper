@@ -11,5 +11,5 @@ aper = {path="../aper"}
 chrono = { version = "0.4.19", features = ["serde", "wasmbind"] }
 console_error_panic_hook = "0.1.6"
 serde = "1.0.126"
-web-sys = "0.3.48"
-yew = "0.17.4"
+web-sys = "0.3.52"
+yew = "0.18.0"
