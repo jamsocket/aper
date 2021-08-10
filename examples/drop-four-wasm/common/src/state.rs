@@ -76,14 +76,14 @@ impl PlayerColor {
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
 pub struct PlayerMap {
     pub teal_player: PlayerID,
-    pub brown_player: PlayerID
+    pub brown_player: PlayerID,
 }
 
 impl PlayerMap {
     fn id_of_color(&self, color: PlayerColor) -> PlayerID {
         match color {
             PlayerColor::Brown => self.brown_player,
-            PlayerColor::Teal => self.teal_player
+            PlayerColor::Teal => self.teal_player,
         }
     }
 
@@ -108,7 +108,7 @@ pub enum PlayState {
         board: Board,
         player_map: PlayerMap,
         winner: Option<PlayerColor>,
-    }
+    },
 }
 
 impl Default for PlayState {
@@ -147,7 +147,7 @@ impl StateMachine for DropFourGame {
                 {
                     let player_map = PlayerMap {
                         teal_player: waiting_player,
-                        brown_player: event.player.unwrap()
+                        brown_player: event.player.unwrap(),
                     };
 
                     self.0 = PlayState::Playing {
@@ -156,7 +156,7 @@ impl StateMachine for DropFourGame {
                         player_map,
                         winner: None,
                     }
-                } else if let PlayState::Waiting {..} = self.0 {
+                } else if let PlayState::Waiting { .. } = self.0 {
                     self.0 = PlayState::Waiting {
                         waiting_player: event.player,
                     }

@@ -3,7 +3,7 @@
 use aper::PlayerID;
 use aper_yew::{ClientBuilder, View, ViewContext};
 use board_component::BoardComponent;
-use drop_four_service::{
+use drop_four_common::{
     Board, DropFourGame, GameTransition, PlayState, PlayerColor, BOARD_COLS, BOARD_ROWS,
 };
 use wasm_bindgen::prelude::*;
@@ -114,7 +114,7 @@ impl View for GameView {
         return html! {
             <div class="main">
                 <h1>{"Drop Four"}</h1>
-                { self.view_inner(&state, context) }
+                { self.view_inner(state, context) }
             </div>
         };
     }

@@ -1,0 +1,7 @@
+static_files = "static"
+
+[client]
+package = "drop-four-client"
+
+[service]
+package = "drop-four-service"
