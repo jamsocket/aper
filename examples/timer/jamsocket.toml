@@ -1,0 +1,7 @@
+static_files = "static"
+
+[client]
+package = "timer-client"
+
+[service]
+package = "timer-service"

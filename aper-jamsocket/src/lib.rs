@@ -25,15 +25,7 @@ impl<P: StateProgram> AperJamsocketService<P> {
         self.suspended_event = susp;
     }
 
-    fn process_transition(&mut self, user: u32, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
-        if transition.player != Some(PlayerID(user as usize)) {
-            log::warn!(
-                "Received a transition from a client with an invalid player ID. {:?} != {}",
-                transition.player,
-                user
-            );
-            return;
-        }
+    fn process_transition(&mut self, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
         self.state.apply(transition.clone());
         ctx.send_message(
             MessageRecipient::Broadcast,
@@ -43,14 +35,30 @@ impl<P: StateProgram> AperJamsocketService<P> {
         );
         self.update_suspended_event(ctx);
     }
+
+    fn check_and_process_transition(&mut self, user: u32, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
+        if transition.player != Some(PlayerID(user as usize)) {
+            log::warn!(
+                "Received a transition from a client with an invalid player ID. {:?} != {}",
+                transition.player,
+                user
+            );
+            return;
+        }
+        self.process_transition(transition, ctx);
+    }
 }
 
 impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
-    fn new(room_id: &str, _ctx: &impl JamsocketContext) -> Self {
-        AperJamsocketService {
+    fn new(room_id: &str, ctx: &impl JamsocketContext) -> Self {
+        let mut serv = AperJamsocketService {
             state: P::new(room_id),
             suspended_event: None
-        }
+        };
+
+        serv.update_suspended_event(ctx);
+
+        serv
     }
 
     fn connect(&mut self, user: u32, ctx: &impl JamsocketContext) {
@@ -70,17 +78,17 @@ impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
 
     fn message(&mut self, user: u32, message: &str, ctx: &impl JamsocketContext) {
         let transition: TransitionEvent<P::T> = serde_json::from_str(message).unwrap();
-        self.process_transition(user, transition, ctx);
+        self.check_and_process_transition(user, transition, ctx);
     }
 
     fn binary(&mut self, user: u32, message: &[u8], ctx: &impl JamsocketContext) {
         let transition: TransitionEvent<P::T> = bincode::deserialize(message).unwrap();
-        self.process_transition(user, transition, ctx);
+        self.check_and_process_transition(user, transition, ctx);
     }
 
     fn timer(&mut self, ctx: &impl JamsocketContext) {
         if let Some(event) = self.suspended_event.take() {
-            self.state.apply(event);
+            self.process_transition(event, ctx);
             self.update_suspended_event(ctx);
         }
     }

@@ -1,0 +1,13 @@
+[package]
+name = "timer-service"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aper = { path="../../../aper" }
+aper-jamsocket = { path="../../../aper-jamsocket" }
+jamsocket-wasm = {git = "https://github.com/jamsocket/jamsocket"}
+timer-common = {path="../common"}
