@@ -1,24 +1,17 @@
 [package]
-name = "client"
+name = "drop-four-client"
 version = "0.1.0"
-authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-
 [dependencies]
 aper = {path="../../../aper"}
+aper-jamsocket = {path="../../../aper-jamsocket"}
 aper-yew = {path="../../../aper-yew"}
-console_error_panic_hook = "0.1.6"
-serde = { version = "1.0.124", features = ["derive"] }
-wasm-bindgen = "0.2"
-web-sys = "0.3.48"
+serde = { version = "1.0.127", features = ["derive"] }
+wasm-bindgen = "0.2.75"
 yew = "0.18.0"
-
-[dev-dependencies]
-chrono = "0.4.19"
-
+jamsocket-wasm = {git = "https://github.com/jamsocket/jamsocket"}
+drop-four-common = {path="../common"}

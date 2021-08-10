@@ -44,8 +44,7 @@ impl BoardComponent {
             <g>
                 <circle
                     r={(CELL_INNER_SIZE/2).to_string()}
-                    fill=color
-                    cy=offset.to_string() />
+                    fill=color cy=offset.to_string() />
                 <circle
                     r={(CELL_INNER_SIZE/2).to_string()}
                     fill="black"
@@ -167,7 +166,7 @@ impl Component for BoardComponent {
                 </mask>
 
                 <g transform=format!("translate({} {})", PADDING_SIDE, PADDING_TOP) >
-                    <g transform=format!("scale(0.98) translate(6 6)") >
+                    <g transform="scale(0.98) translate(6 6)">
                         <rect width=width.to_string() height=height.to_string() fill=BOARD_BG mask="url(#board)" />
                     </g>
 

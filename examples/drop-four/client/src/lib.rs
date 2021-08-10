@@ -1,15 +1,15 @@
 #![recursion_limit = "1024"]
 
-use crate::state::PlayState;
-pub use crate::state::{Board, DropFourGame, GameTransition, PlayerColor, BOARD_COLS, BOARD_ROWS};
 use aper::PlayerID;
 use aper_yew::{ClientBuilder, View, ViewContext};
 use board_component::BoardComponent;
+use drop_four_common::{
+    Board, DropFourGame, GameTransition, PlayState, PlayerColor, BOARD_COLS, BOARD_ROWS,
+};
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
 mod board_component;
-mod state;
 
 #[derive(Clone)]
 struct GameView;
@@ -87,11 +87,7 @@ impl GameView {
         };
     }
 
-    fn view_inner(
-        &self,
-        state: &DropFourGame,
-        context: &ViewContext<GameTransition>,
-    ) -> Html {
+    fn view_inner(&self, state: &DropFourGame, context: &ViewContext<GameTransition>) -> Html {
         match state.state() {
             PlayState::Playing {
                 board,
@@ -118,7 +114,7 @@ impl View for GameView {
         return html! {
             <div class="main">
                 <h1>{"Drop Four"}</h1>
-                { self.view_inner(&state, context) }
+                { self.view_inner(state, context) }
             </div>
         };
     }
