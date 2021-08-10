@@ -3,9 +3,7 @@ use yew::prelude::*;
 use aper_yew::{View, ViewContext, ClientBuilder};
 use aper::{StateMachineContainerProgram};
 
-mod state;
-
-pub use state::{Counter, CounterTransition};
+pub use counter_common::{Counter, CounterTransition};
 
 #[derive(Clone)]
 struct CounterView;

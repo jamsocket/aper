@@ -1,0 +1,13 @@
+[package]
+name = "counter-service"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aper-jamsocket = {path="../../../aper-jamsocket"}
+aper = {path="../../../aper"}
+jamsocket-wasm = {git = "https://github.com/jamsocket/jamsocket"}
+counter-common = {path="../common"}

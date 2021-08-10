@@ -1,0 +1,7 @@
+static_files = "static"
+
+[client]
+package = "counter-client"
+
+[service]
+package = "counter-service"

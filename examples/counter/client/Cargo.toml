@@ -1,14 +1,11 @@
 [package]
-name = "client"
+name = "counter-client"
 version = "0.1.0"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 crate-type = ["cdylib", "rlib"]
-
 
 [dependencies]
 aper = {path = "../../../aper"}
@@ -17,5 +14,5 @@ console_error_panic_hook = "0.1.6"
 serde = { version = "1.0.124", features = ["derive"] }
 wasm-bindgen = "0.2"
 web-sys = "0.3.48"
-yew = "0.17.4"
-
+yew = "0.18.0"
+counter-common = {path="../common"}
