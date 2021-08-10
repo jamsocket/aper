@@ -137,17 +137,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "drop-four-service"
-version = "0.1.0"
-dependencies = [
- "aper",
- "aper-jamsocket",
- "jamsocket-wasm",
- "serde",
-]
-
-[[package]]
-name = "drop_four"
+name = "drop-four-client"
 version = "0.1.0"
 dependencies = [
  "aper",
@@ -158,6 +148,16 @@ dependencies = [
  "serde",
  "wasm-bindgen",
  "yew",
+]
+
+[[package]]
+name = "drop-four-service"
+version = "0.1.0"
+dependencies = [
+ "aper",
+ "aper-jamsocket",
+ "jamsocket-wasm",
+ "serde",
 ]
 
 [[package]]

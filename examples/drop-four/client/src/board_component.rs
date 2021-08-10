@@ -43,10 +43,11 @@ impl BoardComponent {
         return html! {
             <g>
                 <circle
-                    r={CELL_INNER_SIZE/2}
-                    fill=&color cy=offset />
+                    r={(CELL_INNER_SIZE/2).to_string()}
+                    fill=color
+                    cy=offset.to_string() />
                 <circle
-                    r={CELL_INNER_SIZE/2}
+                    r={(CELL_INNER_SIZE/2).to_string()}
                     fill="black"
                     opacity="0.2"
                     mask="url(#hole_shadow)" />
@@ -58,10 +59,10 @@ impl BoardComponent {
         (0..BOARD_COLS as u32).flat_map(|c| {
             (0..BOARD_ROWS as u32).map(move |r| {
                 html! {<circle
-                    r={CELL_HOLE_SIZE/2}
+                    r={(CELL_HOLE_SIZE/2).to_string()}
                     fill="black"
-                    cx={CELL_SIZE * c + CELL_SIZE/2}
-                    cy={CELL_SIZE * r + CELL_SIZE/2}
+                    cx={(CELL_SIZE * c + CELL_SIZE/2).to_string()}
+                    cy={(CELL_SIZE * r + CELL_SIZE/2).to_string()}
                 />}
             })
         })
@@ -73,10 +74,10 @@ impl BoardComponent {
         let zones = (0..BOARD_COLS as u32).map(move |c| {
             html! {
                 <rect
-                    x={CELL_SIZE * c}
-                    width=CELL_SIZE
-                    height={CELL_SIZE * BOARD_ROWS as u32}
-                    opacity=0
+                    x={(CELL_SIZE * c).to_string()}
+                    width=CELL_SIZE.to_string()
+                    height={(CELL_SIZE * BOARD_ROWS as u32).to_string()}
+                    opacity="0"
                     onmouseover=set_hover_col.reform(move |_| Some(c))
                     onclick=drop_tile.reform(move |_| c as usize)
                 />
@@ -155,26 +156,26 @@ impl Component for BoardComponent {
         let svg_height = height + PADDING_TOP + PADDING_BOTTOM;
 
         return html! {
-            <svg width=svg_width height=svg_height>
+            <svg width=svg_width.to_string() height=svg_height.to_string()>
                 <mask id="board">
-                    <rect width=width height=height fill="white" />
+                    <rect width=width.to_string() height=height.to_string() fill="white" />
                     { for self.view_holes() }
                 </mask>
                 <mask id="hole_shadow">
-                    <circle r={CELL_HOLE_SIZE/2} fill="white" />
-                    <circle r={CELL_HOLE_SIZE/2} fill="black" cy=4 />
+                    <circle r={(CELL_HOLE_SIZE/2).to_string()} fill="white" />
+                    <circle r={(CELL_HOLE_SIZE/2).to_string()} fill="black" cy="4" />
                 </mask>
 
                 <g transform=format!("translate({} {})", PADDING_SIDE, PADDING_TOP) >
                     <g transform=format!("scale(0.98) translate(6 6)") >
-                        <rect width=width height=height fill=BOARD_BG mask="url(#board)" />
+                        <rect width=width.to_string() height=height.to_string() fill=BOARD_BG mask="url(#board)" />
                     </g>
 
                     { self.view_played_discs() }
 
                     { self.view_tentative_disc() }
 
-                    <rect width=width height=height fill=BOARD_FG mask="url(#board)" />
+                    <rect width=width.to_string() height=height.to_string() fill=BOARD_FG mask="url(#board)" />
 
                     { self.view_hover_zones() }
                 </g>

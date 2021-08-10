@@ -1,15 +1,12 @@
 #![recursion_limit = "1024"]
 
+use crate::state::PlayState;
+pub use crate::state::{Board, DropFourGame, GameTransition, PlayerColor, BOARD_COLS, BOARD_ROWS};
+use aper::PlayerID;
 use aper_yew::{ClientBuilder, View, ViewContext};
+use board_component::BoardComponent;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-
-use crate::state::PlayState;
-pub use crate::state::{
-    Board, DropFourGame, GameTransition, PlayerColor, BOARD_COLS, BOARD_ROWS,
-};
-use aper::PlayerID;
-use board_component::BoardComponent;
 
 mod board_component;
 mod state;
@@ -73,7 +70,7 @@ impl GameView {
             <div>
                 <p>{status_message}</p>
                 <BoardComponent
-                    board=board
+                    board=board.clone()
                     player=next_player
                     interactive={Some(next_player)==own_color}
                     callback=context.callback.reform(Some).clone() />
