@@ -1,12 +1,13 @@
-use std::marker::PhantomData;
+use std::{collections::HashMap, marker::PhantomData};
 
 use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
 use chrono::Utc;
-use jamsocket::{JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService, WrappedJamsocketService};
+use jamsocket::{ClientId, JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService, WrappedJamsocketService};
 
 pub struct AperJamsocketService<P: StateProgram> {
     state: P,
     suspended_event: Option<TransitionEvent<P::T>>,
+    client_to_player: HashMap<ClientId, PlayerID>,
 }
 
 impl<P: StateProgram> AperJamsocketService<P> {
@@ -36,8 +37,14 @@ impl<P: StateProgram> AperJamsocketService<P> {
         self.update_suspended_event(ctx);
     }
 
-    fn check_and_process_transition(&mut self, user: u32, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
-        if transition.player != Some(PlayerID(user as usize)) {
+    fn check_and_process_transition(&mut self, client_id: ClientId, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
+        let user = if let Some(user) = self.client_to_player.get(&client_id) {
+            user
+        } else {
+            return
+        };
+
+        if transition.player != Some(*user) {
             log::warn!(
                 "Received a transition from a client with an invalid player ID. {:?} != {}",
                 transition.player,
@@ -53,7 +60,8 @@ impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
     fn new(room_id: &str, ctx: &impl JamsocketContext) -> Self {
         let mut serv = AperJamsocketService {
             state: P::new(room_id),
-            suspended_event: None
+            suspended_event: None,
+            client_to_player: HashMap::default(),
         };
 
         serv.update_suspended_event(ctx);
@@ -61,27 +69,30 @@ impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
         serv
     }
 
-    fn connect(&mut self, user: u32, ctx: &impl JamsocketContext) {
+    fn connect(&mut self, client_id: ClientId, ctx: &impl JamsocketContext) {
+        let player_id = PlayerID(self.client_to_player.len());
+        self.client_to_player.insert(client_id, player_id);
+
         ctx.send_message(
-            MessageRecipient::User(user),
+            MessageRecipient::Client(client_id),
             serde_json::to_string(&StateUpdateMessage::ReplaceState::<P>(
                 self.state.clone(),
                 Utc::now(),
-                PlayerID(user as usize),
+                player_id,
             ))
             .unwrap()
             .as_str(),
         );
     }
 
-    fn disconnect(&mut self, _user: u32, _ctx: &impl JamsocketContext) {}
+    fn disconnect(&mut self, _user: ClientId, _ctx: &impl JamsocketContext) {}
 
-    fn message(&mut self, user: u32, message: &str, ctx: &impl JamsocketContext) {
+    fn message(&mut self, user: ClientId, message: &str, ctx: &impl JamsocketContext) {
         let transition: TransitionEvent<P::T> = serde_json::from_str(message).unwrap();
         self.check_and_process_transition(user, transition, ctx);
     }
 
-    fn binary(&mut self, user: u32, message: &[u8], ctx: &impl JamsocketContext) {
+    fn binary(&mut self, user: ClientId, message: &[u8], ctx: &impl JamsocketContext) {
         let transition: TransitionEvent<P::T> = bincode::deserialize(message).unwrap();
         self.check_and_process_transition(user, transition, ctx);
     }
@@ -117,8 +128,8 @@ impl<
 impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C> for AperJamsocketServiceBuilder<K, C> {
     type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
 
-    fn build(&self, room_id: &str, context: C) -> Self::Service {
+    fn build(&self, room_id: &str, context: C) -> Option<Self::Service> {
         let service = AperJamsocketService::new(room_id, &context);
-        WrappedJamsocketService::new(service, context)
+        Some(WrappedJamsocketService::new(service, context))
     }
 }
