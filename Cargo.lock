@@ -336,7 +336,7 @@ dependencies = [
  "aper",
  "bincode",
  "chrono",
- "jamsocket 0.1.1",
+ "jamsocket",
  "log",
  "serde",
  "serde_json",
@@ -1157,19 +1157,15 @@ checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
 name = "jamsocket"
-version = "0.1.0"
-source = "git+https://github.com/jamsocket/jamsocket#4ac39f86c219b7e90a50e7c04b94f78b96af21a1"
-
-[[package]]
-name = "jamsocket"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18309cc4793aa12fc203cfc2ec1ff9f2e3221b17894d082f08375964b0928e7d"
 
 [[package]]
 name = "jamsocket-server"
-version = "0.1.0"
-source = "git+https://github.com/jamsocket/jamsocket#4ac39f86c219b7e90a50e7c04b94f78b96af21a1"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "729ef4591953066328c1429be402a9621b3d5857bc4f5681a1e1e03b2d5a66ca"
 dependencies = [
  "actix",
  "actix-files",
@@ -1177,7 +1173,7 @@ dependencies = [
  "actix-web-actors",
  "anyhow",
  "async-std",
- "jamsocket 0.1.0",
+ "jamsocket",
  "log",
  "rand",
  "serde",
