@@ -2,13 +2,11 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::Bound::{Excluded, Unbounded};
-
+use fractional_index::ZenoIndex;
 use serde::de::Visitor;
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-use crate::data_structures::ZenoIndex;
 use crate::{StateMachine, Transition};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -174,7 +172,7 @@ impl<T: StateMachine + PartialEq> List<T> {
             if let Some((next_location, _)) =
                 self.items.range((Excluded(&location), Unbounded)).next()
             {
-                ZenoIndex::new_between(&location, next_location)
+                ZenoIndex::new_between(&location, next_location).expect("Should always be able to find a zeno index between adjacent keys.")
             } else {
                 ZenoIndex::new_after(&location)
             }
@@ -212,7 +210,7 @@ impl<T: StateMachine + PartialEq> List<T> {
         let id = Uuid::new_v4();
         let loc1 = self.items_inv.get(id1).unwrap();
         let loc2 = self.items_inv.get(id2).unwrap();
-        let new_loc = ZenoIndex::new_between(loc1, loc2);
+        let new_loc = ZenoIndex::new_between(loc1, loc2).expect("Should be able to insert between two items in list.");
         (
             id,
             ListOperation::Insert(ListPosition::AbsolutePosition(new_loc), id, value),
@@ -396,7 +394,7 @@ mod tests {
 
             list.apply(
                 list.insert(
-                    ZenoIndex::new_between(&locations[2], &locations[3]),
+                    ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
                     Atom::new(44),
                 )
                 .1,
@@ -404,7 +402,7 @@ mod tests {
 
             list.apply(
                 list.insert(
-                    ZenoIndex::new_between(&locations[0], &locations[1]),
+                    ZenoIndex::new_between(&locations[0], &locations[1]).unwrap(),
                     Atom::new(23),
                 )
                 .1,
@@ -412,7 +410,7 @@ mod tests {
 
             list.apply(
                 list.insert(
-                    ZenoIndex::new_between(&locations[1], &locations[2]),
+                    ZenoIndex::new_between(&locations[1], &locations[2]).unwrap(),
                     Atom::new(84),
                 )
                 .1,
@@ -445,7 +443,7 @@ mod tests {
 
             list.apply(list.move_item(
                 uuids[0],
-                ZenoIndex::new_between(&locations[2], &locations[3]),
+                ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
             ));
 
             list.apply(list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])));
