@@ -9,5 +9,5 @@ edition = "2018"
 aper = {path = "../aper"}
 aper-jamsocket = {path = "../aper-jamsocket"}
 env_logger = "0.9.0"
-jamsocket-server = { version="0.1.1" }
+jamsocket-server = { version="0.1.3" }
 log = "0.4.14"
