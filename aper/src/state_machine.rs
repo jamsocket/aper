@@ -1,6 +1,6 @@
 pub use aper_derive::{StateMachine, Transition};
 use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::fmt::Debug;
 
 /// This trait indicates that a type can be used as the transition of a [StateMachine].
@@ -8,6 +8,9 @@ pub trait Transition:
     Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug + PartialEq + Sync
 {
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum NeverConflict {}
 
 /// This trait provides the methods that Aper needs to be able to interact with
 /// an object as a state machine.
@@ -21,7 +24,7 @@ pub trait StateMachine:
     /// The [StateMachine::Transition] type associates another type with this state machine
     /// as its transitions.
     type Transition: Transition;
-    type Conflict: Debug;
+    type Conflict: Debug + Serialize + DeserializeOwned + Clone + PartialEq;
 
     /// Update the state machine according to the given [Transition]. This method *must* be
     /// deterministic: calling it on a clone of the state with a clone of the [Transition]

@@ -1,22 +1,8 @@
 //! # Aper
 //!
-//! Aper is a framework for real-time sharing of arbitrary application state
-//! over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
-//!
-//! With Aper, you represent your program state as a state machine by
-//! implementing the [StateMachine] trait. Aper then provides the
-//! infrastructure to keep clones of this state synchronized across
-//! multiple clients, including clients running in WebAssembly via
-//! WebSockets.
-//!
-//! ## Organization
-//!
-//! The Aper project is divided over a number of crates. This crate,
-//! `aper`, does not provide any functionality, it merely defines a spec
-//! that is used by the other crates.
-//!
-//! The other crates, `aper-yew` and `aper-actix`, provide client and server
-//! implementations (respectively).
+//! Aper is a data structure library in which every data structure is a state
+//! machine and every mutation is a first-class value that can be serialized
+//! and sent over the network, or stored for later.
 //!
 //! ## What is a state machine?
 //!
@@ -25,6 +11,10 @@
 //! - It defines a [StateMachine::Transition] type, through which every
 //!   possible change to the state can be described. It is usually useful,
 //!   though not required, that this be an `enum` type.
+//! - It defines a [StateMachine::Conflict] type, which describes a conflict which
+//!   may occur when a transition is applied that is not valid at the time it is
+//!   applied. For simple types where a conflict is impossible, you can use
+//!   [NeverConflict] for this.
 //! - All state updates are deterministic: if you clone a [StateMachine] and a
 //!   [Transition], the result of applying the cloned transition to the cloned
 //!   state must be identical to applying the original transition to the original
@@ -33,10 +23,10 @@
 //! Here's an example [StateMachine] implementing a counter:
 //!
 //! ```rust
-//! # use aper::{StateMachine, Transition};
+//! # use aper::{StateMachine, Transition, NeverConflict};
 //! # use serde::{Serialize, Deserialize};
 //! #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-//! struct Counter(i64);
+//! struct Counter { value: i64 };
 //!
 //! #[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
 //! enum CounterTransition {
@@ -47,31 +37,19 @@
 //!
 //! impl StateMachine for Counter {
 //!     type Transition = CounterTransition;
+//!     type Conflict = NeverConflict;
 //!
-//!     fn apply(&mut self, event: CounterTransition) {
+//!     fn apply(&mut self, event: CounterTransition) -> Result<(), NeverConflict> {
 //!         match event {
-//!             CounterTransition::Reset => { self.0 = 0 }
-//!             CounterTransition::Increment(amount) => { self.0 += amount }
-//!             CounterTransition::Decrement(amount) => { self.0 -= amount }
+//!             CounterTransition::Reset => { self.value = 0 }
+//!             CounterTransition::Increment(amount) => { self.value += amount }
+//!             CounterTransition::Decrement(amount) => { self.value -= amount }
 //!         }
+//! 
+//!         Ok(())
 //!     }
 //! }
 //! ```
-//!
-//! ## How it works
-//!
-//! When a client first connects to the server, the server sends back a complete serialized
-//! copy of the current state. After that, it sends and receives only [TransitionEvent]s to/from
-//! the server. By applying these [TransitionEvent]s to
-//! its local copy, each client keeps its local copy of the state synchronized
-//! with the server.
-//!
-//! It is important that the server guarantees that each client receives
-//! [TransitionEvent]s in the same order, since the way a transition is applied
-//! may depend on previous state. For example, if a transition pushes a value
-//! to the end of a list, two clients receiving the transitions in a different
-//! order would have internal states which represented different orders of the
-//! list.
 //!
 //! ## Why not CRDT?
 //!
@@ -85,24 +63,8 @@
 //! By relying on a central authority, a state-machine approach allows you to
 //! implement data structures with arbitrary update logic, such as atomic moves
 //! of a value between two data structures, or the rules of a board game.
-//!
-//! ## Vocabulary Conventions
-//!
-//! - A **player** is a connection to the service. The term _user_ is probably a more conventional
-//!   description, but _multiplayer_ is often used in the context of non-game multi-user apps, and
-//!   I've chosen to adopt it here because I think our users should be having fun.
-//! - A **transition** represents a way to update the state. For example, “draw a circle at (4, 6)”
-//!   is a transition.
-//! - An **event** (or *transition event*) is a specific invocation of a transition by a user
-//!   at a time. For example, “player A drew a circle at (4, 6) at 10:04 PM” is an event.
-//! - A **channel** is the combination of a state object and the players currently connected to
-//!   it. You can think of this as analogous to a room or channel in a chat app, except
-//!   that the state is an arbitrary state machine instead of a sequential list of messages.
-//!   The state of each channel is independent from one another: state changes in one channel
-//!   do not impact the state in another, much like messages in one chat room do not appear in
-//!   another.
 
-pub use state_machine::{StateMachine, Transition};
+pub use state_machine::{StateMachine, Transition, NeverConflict};
 
 pub mod data_structures;
 mod state_machine;

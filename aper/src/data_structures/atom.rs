@@ -1,7 +1,7 @@
+use crate::state_machine::NeverConflict;
 use crate::{StateMachine, Transition};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use std::convert::Infallible;
 use std::fmt::Debug;
 
 /// A [StateMachine] representing a value which is "atomic" from
@@ -38,9 +38,9 @@ where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
     type Transition = ReplaceAtom<T>;
-    type Conflict = Infallible;
+    type Conflict = NeverConflict;
 
-    fn apply(&mut self, transition_event: Self::Transition) -> Result<(), Infallible> {
+    fn apply(&mut self, transition_event: Self::Transition) -> Result<(), NeverConflict> {
         let ReplaceAtom(v) = transition_event;
         self.value = v;
         Ok(())

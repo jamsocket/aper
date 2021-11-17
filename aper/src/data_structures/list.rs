@@ -21,12 +21,7 @@ pub enum ListPosition {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(bound = "")]
 pub enum ListOperation<T: StateMachine + PartialEq> {
-    // TODO: implement this new operation
     Insert(ListPosition, Uuid, T),
-    // TODO: delete the following operations
-    //Insert(ZenoIndex, Uuid, T),
-    //Append(Uuid, T),
-    //Prepend(Uuid, T),
     Delete(Uuid),
     Move(Uuid, ZenoIndex),
     Apply(Uuid, <T as StateMachine>::Transition),
@@ -108,7 +103,7 @@ impl<T: StateMachine + PartialEq> Default for List<T> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ListConflict<T: StateMachine> {
     /// No item exists with the given UUID. It may have been deleted
     /// after the transition was created.
