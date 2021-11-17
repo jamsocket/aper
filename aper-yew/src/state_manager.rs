@@ -42,7 +42,9 @@ impl<State: StateProgram> StateManager<State> {
         // - apply event to optimistic_state
         // - store event in sent_transition
         if self.sent_transition.is_none() {
-            self.optimistic_state.apply(event.clone());
+            if self.optimistic_state.apply(event.clone()).is_err() {
+                return false;
+            }
             self.sent_transition = Some(event);
             true
         } else {
@@ -61,7 +63,9 @@ impl<State: StateProgram> StateManager<State> {
 
         self.last_local_time = Utc::now();
         self.last_server_time = event.timestamp;
-        self.golden_state.apply(event.clone()); // TODO: avoid clone?
+        self.golden_state
+            .apply(event.clone())
+            .expect("Message from server caused conflict.");
 
         match &self.sent_transition {
             Some(transition) => {

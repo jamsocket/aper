@@ -39,7 +39,7 @@ impl<P: StateProgram> AperJamsocketService<P> {
         transition: TransitionEvent<P::T>,
         ctx: &impl JamsocketContext,
     ) {
-        self.state.apply(transition.clone());
+        self.state.apply(transition.clone()).unwrap();
         ctx.send_message(
             MessageRecipient::Broadcast,
             serde_json::to_string(&StateUpdateMessage::TransitionState::<P>(transition))

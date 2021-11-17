@@ -43,9 +43,10 @@ pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM);
 
 impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> {
     type Transition = TransitionEvent<SM::Transition>;
+    type Conflict = SM::Conflict;
 
-    fn apply(&mut self, transition: Self::Transition) {
-        self.0.apply(transition.transition);
+    fn apply(&mut self, transition: Self::Transition) -> Result<(), Self::Conflict> {
+        self.0.apply(transition.transition)
     }
 }
 

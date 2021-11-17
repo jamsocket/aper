@@ -1,6 +1,7 @@
 use crate::{StateMachine, Transition};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use std::convert::Infallible;
 use std::fmt::Debug;
 
 /// A struct that can wrap a value so that it can be used in place
@@ -30,8 +31,9 @@ where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
     type Transition = InvalidTransition;
+    type Conflict = Infallible;
 
-    fn apply(&mut self, _transition_event: InvalidTransition) {
+    fn apply(&mut self, _transition_event: InvalidTransition) -> Result<(), Infallible> {
         panic!("Constant should never receive transition event.");
     }
 }

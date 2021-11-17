@@ -21,10 +21,11 @@ pub trait StateMachine:
     /// The [StateMachine::Transition] type associates another type with this state machine
     /// as its transitions.
     type Transition: Transition;
+    type Conflict: Debug;
 
     /// Update the state machine according to the given [Transition]. This method *must* be
     /// deterministic: calling it on a clone of the state with a clone of the [Transition]
     /// must result in the same state, even at a different time and on a different machine. This
     /// is the requirement that allows Aper to keep the state in sync across multiple machines.
-    fn apply(&mut self, transition: Self::Transition);
+    fn apply(&mut self, transition: Self::Transition) -> Result<(), Self::Conflict>;
 }
