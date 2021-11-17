@@ -3,7 +3,6 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/aper-dev/aper?style=social)](https://github.com/aper-dev/aper)
 [![crates.io](https://img.shields.io/crates/v/aper.svg)](https://crates.io/crates/aper)
 [![docs.rs](https://img.shields.io/badge/docs-release-brightgreen)](https://docs.rs/aper/)
-[![docs.rs](https://img.shields.io/badge/docs-latest-orange)](https://aper.dev/doc/aper/index.html)
 [![wokflow state](https://github.com/aper-dev/aper/workflows/build/badge.svg)](https://github.com/aper-dev/aper/actions/workflows/rust.yml)
 
 <img src="https://aper.dev/ape.svg" alt="Cartoonized face of an ape." width="200px" />
