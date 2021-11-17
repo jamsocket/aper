@@ -13,7 +13,7 @@ fn get_full_ws_url(path: &str) -> String {
         scheme => panic!("Unknown scheme: {}", scheme),
     };
 
-    format!("{}://{}/ws/{}", ws_protocol, &host, &path)
+    format!("{}://{}/{}", ws_protocol, &host, &path)
 }
 
 pub struct ClientBuilder<
