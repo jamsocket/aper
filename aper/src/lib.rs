@@ -1,4 +1,4 @@
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../README.md")]
 
 pub mod data_structures;
 pub use aper_derive::StateMachine;
