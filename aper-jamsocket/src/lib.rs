@@ -1,4 +1,3 @@
-use aper::Transition;
 use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
 pub use jamsocket::ClientId;
@@ -7,7 +6,7 @@ use jamsocket::{
     WrappedJamsocketService,
 };
 use serde::{Deserialize, Serialize};
-pub use state_program::{StateProgram, StateMachineContainerProgram};
+pub use state_program::{StateMachineContainerProgram, StateProgram};
 use std::convert::Infallible;
 use std::marker::PhantomData;
 
@@ -67,7 +66,9 @@ impl<P: StateProgram> AperJamsocketService<P> {
     }
 }
 
-impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
+impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P>
+    where P::T: Unpin + Send + Sync + 'static
+{
     fn new(room_id: &str, ctx: &impl JamsocketContext) -> Self {
         let mut serv = AperJamsocketService {
             state: P::new(room_id),
@@ -128,6 +129,7 @@ impl<K: StateProgram, C: JamsocketContext> Default for AperJamsocketServiceBuild
 
 impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C>
     for AperJamsocketServiceBuilder<K, C>
+    where K::T: Unpin + Send + Sync + 'static
 {
     type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
     type Error = Infallible;
@@ -140,7 +142,9 @@ impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C>
 
 /// A message from the server to a client that tells it to update its state.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum StateUpdateMessage<State: StateProgram> {
+pub enum StateUpdateMessage<State: StateProgram> 
+where State::T: Unpin + Send + Sync + 'static + Clone
+{
     /// Instructs the client to completely discard its existing state and replace it
     /// with the provided one. This is currently only used to set the initial state
     /// when a client first connects.
@@ -160,17 +164,17 @@ pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct TransitionEvent<T>
-where
-    T: Transition + Clone,
+where T: Unpin + Send + Sync + 'static + Clone
 {
     #[serde(with = "ts_milliseconds")]
     pub timestamp: Timestamp,
     pub player: Option<ClientId>,
-    #[serde(bound = "")]
     pub transition: T,
 }
 
-impl<T: Transition> TransitionEvent<T> {
+impl<T> TransitionEvent<T>
+where T: Unpin + Send + Sync + 'static + Clone
+{
     pub fn new(
         player: Option<ClientId>,
         timestamp: Timestamp,
@@ -183,5 +187,3 @@ impl<T: Transition> TransitionEvent<T> {
         }
     }
 }
-
-impl<T: Transition> Transition for TransitionEvent<T> {}

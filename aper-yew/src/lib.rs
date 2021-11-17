@@ -17,8 +17,15 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-pub use aper_jamsocket::{ClientId, StateProgram, StateUpdateMessage, TransitionEvent, StateMachineContainerProgram};
+pub use crate::view::{View, ViewContext};
+pub use aper_jamsocket::{
+    ClientId, StateMachineContainerProgram, StateProgram, StateUpdateMessage, TransitionEvent,
+};
+pub use client::ClientBuilder;
+use state_manager::StateManager;
 use std::fmt::Debug;
+pub use update_interval::UpdateInterval;
+use wire_wrapped::WireWrapped;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
 use yew::services::WebSocketService;
@@ -29,12 +36,6 @@ mod state_manager;
 mod update_interval;
 mod view;
 mod wire_wrapped;
-
-pub use crate::view::{View, ViewContext};
-pub use client::ClientBuilder;
-use state_manager::StateManager;
-pub use update_interval::UpdateInterval;
-use wire_wrapped::WireWrapped;
 
 /// Properties for [StateProgramComponent].
 #[derive(Properties, Clone)]
@@ -77,7 +78,7 @@ pub enum Status<State: StateProgram> {
 /// an event triggered by the user.
 #[derive(Debug)]
 pub enum Msg<State: StateProgram> {
-    /// A [Transition] object was initiated by the view, usually because of a
+    /// A [aper::Transition] object was initiated by the view, usually because of a
     /// user interaction.
     StateTransition(Option<State::T>),
     /// A [StateUpdateMessage] was received from the server.

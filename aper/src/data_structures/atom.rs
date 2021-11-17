@@ -1,5 +1,4 @@
-use crate::state_machine::NeverConflict;
-use crate::{StateMachine, Transition};
+use crate::{NeverConflict, StateMachine};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -59,11 +58,6 @@ where
 /// Represents a transition used to change the value of an [Atom].
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ReplaceAtom<T: Clone + PartialEq + Debug + Unpin>(T);
-
-impl<T: Send + Sync> Transition for ReplaceAtom<T> where
-    T: 'static + Clone + PartialEq + Debug + Unpin + Serialize + DeserializeOwned + Send
-{
-}
 
 #[cfg(test)]
 mod tests {

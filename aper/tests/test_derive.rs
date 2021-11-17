@@ -1,6 +1,6 @@
-use aper::{StateMachine};
 use aper::data_structures::Atom;
-use serde::{Serialize, Deserialize};
+use aper::StateMachine;
+use serde::{Deserialize, Serialize};
 
 #[derive(StateMachine, Debug, Serialize, Deserialize, Clone)]
 struct MyRecordStruct {
@@ -16,7 +16,8 @@ fn test_derive() {
     };
 
     r.apply(r.map_left(|d| d.replace(4))).unwrap();
-    r.apply(r.map_right(|d| d.replace("foo".to_string()))).unwrap();
+    r.apply(r.map_right(|d| d.replace("foo".to_string())))
+        .unwrap();
 
     assert_eq!(&4, r.left.value());
     assert_eq!("foo", r.right.value());

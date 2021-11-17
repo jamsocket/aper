@@ -1,6 +1,6 @@
 #![recursion_limit = "1024"]
 
-use aper::PlayerID;
+use aper_jamsocket::ClientId;
 use aper_yew::{ClientBuilder, View, ViewContext};
 use board_component::BoardComponent;
 use drop_four_common::{
@@ -17,11 +17,11 @@ struct GameView;
 impl GameView {
     fn view_waiting(
         &self,
-        waiting_player: Option<PlayerID>,
+        waiting_player: Option<ClientId>,
         context: &ViewContext<GameTransition>,
     ) -> Html {
         return html! {
-            if Some(context.player) == waiting_player {
+            if Some(context.client) == waiting_player {
                 html! {
                     <p>{"Waiting for another player."}</p>
                 }
@@ -96,7 +96,7 @@ impl GameView {
                 player_map,
                 ..
             } => {
-                let own_color = player_map.color_of_player(context.player);
+                let own_color = player_map.color_of_player(context.client);
                 self.view_playing(board, *next_player, *winner, own_color, context)
             }
             PlayState::Waiting { waiting_player, .. } => {

@@ -1,4 +1,4 @@
-use aper::{StateMachine, Transition, NeverConflict};
+use aper::{StateMachine, NeverConflict};
 use aper_jamsocket::{StateProgram, TransitionEvent};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ pub struct Timer {
     pub last_increment: DateTime<Utc>,
 }
 
-#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum TimerEvent {
     Reset,
     Increment,

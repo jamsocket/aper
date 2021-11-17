@@ -1,4 +1,4 @@
-use crate::{StateMachine, Transition};
+use crate::StateMachine;
 use fractional_index::ZenoIndex;
 use serde::de::Visitor;
 use serde::ser::SerializeSeq;
@@ -26,8 +26,6 @@ pub enum ListOperation<T: StateMachine + PartialEq> {
     Move(Uuid, ZenoIndex),
     Apply(Uuid, <T as StateMachine>::Transition),
 }
-
-impl<T: StateMachine + PartialEq> Transition for ListOperation<T> {}
 
 /// Represents a view of an entry in a list during iteration. Each
 /// item contains a borrow of its `value`; its `location` as a [ZenoIndex],

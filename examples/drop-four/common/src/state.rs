@@ -1,4 +1,4 @@
-use aper::{NeverConflict, StateMachine, Transition};
+use aper::{NeverConflict, StateMachine};
 use aper_jamsocket::{ClientId, StateProgram, TransitionEvent};
 use serde::{Deserialize, Serialize};
 
@@ -120,7 +120,7 @@ impl Default for PlayState {
     }
 }
 
-#[derive(Transition, Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub enum GameTransition {
     Join,
     Drop(usize),

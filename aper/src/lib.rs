@@ -1,70 +1,36 @@
-//! # Aper
-//!
-//! Aper is a data structure library in which every data structure is a state
-//! machine and every mutation is a first-class value that can be serialized
-//! and sent over the network, or stored for later.
-//!
-//! ## What is a state machine?
-//!
-//! For the purposes of Aper, a state machine is simply a `struct` or `enum` that
-//! implements [StateMachine] and has the following properties:
-//! - It defines a [StateMachine::Transition] type, through which every
-//!   possible change to the state can be described. It is usually useful,
-//!   though not required, that this be an `enum` type.
-//! - It defines a [StateMachine::Conflict] type, which describes a conflict which
-//!   may occur when a transition is applied that is not valid at the time it is
-//!   applied. For simple types where a conflict is impossible, you can use
-//!   [NeverConflict] for this.
-//! - All state updates are deterministic: if you clone a [StateMachine] and a
-//!   [Transition], the result of applying the cloned transition to the cloned
-//!   state must be identical to applying the original transition to the original
-//!   state.
-//!
-//! Here's an example [StateMachine] implementing a counter:
-//!
-//! ```rust
-//! # use aper::{StateMachine, Transition, NeverConflict};
-//! # use serde::{Serialize, Deserialize};
-//! #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-//! struct Counter { value: i64 };
-//!
-//! #[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
-//! enum CounterTransition {
-//!     Reset,
-//!     Increment(i64),
-//!     Decrement(i64),
-//! }
-//!
-//! impl StateMachine for Counter {
-//!     type Transition = CounterTransition;
-//!     type Conflict = NeverConflict;
-//!
-//!     fn apply(&mut self, event: CounterTransition) -> Result<(), NeverConflict> {
-//!         match event {
-//!             CounterTransition::Reset => { self.value = 0 }
-//!             CounterTransition::Increment(amount) => { self.value += amount }
-//!             CounterTransition::Decrement(amount) => { self.value -= amount }
-//!         }
-//! 
-//!         Ok(())
-//!     }
-//! }
-//! ```
-//!
-//! ## Why not CRDT?
-//!
-//! [Conflict-free replicated data types](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type)
-//! are a really neat way of representing data that's shared between peers.
-//! In order to avoid the need for a central “source of truth”, CRDTs require
-//! that update operations (i.e. state transitions) be [commutative](https://en.wikipedia.org/wiki/Commutative_property).
-//! This allows them to represent a bunch of common data structures, but doesn't
-//! allow you to represent arbitrarily complex update logic.
-//!
-//! By relying on a central authority, a state-machine approach allows you to
-//! implement data structures with arbitrary update logic, such as atomic moves
-//! of a value between two data structures, or the rules of a board game.
-
-pub use state_machine::{StateMachine, Transition, NeverConflict};
+#![doc = include_str!("../../README.md")]
 
 pub mod data_structures;
-mod state_machine;
+pub use aper_derive::StateMachine;
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+
+/// An unconstructable type, meant to serve as the `Conflict` type of a [`StateMachine`]
+/// for which a conflict can never arise.
+///
+/// This is similar to [`std::convert::Infallible`], but with some derives to allow
+/// it to be used as a [`StateMachine::Conflict`].
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum NeverConflict {}
+
+/// This trait provides the methods that Aper needs to be able to interact with
+/// an object as a state machine.
+///
+/// None of the methods in this trait provide access to the internal data of the
+/// state machine. It's up to you to implement accessor methods (or use public
+/// fields) in order to expose the data necessary to render your views.
+pub trait StateMachine:
+    Sized + Unpin + 'static + Send + Clone + DeserializeOwned + Serialize + Debug + Sync
+{
+    /// The [`StateMachine::Transition`] type associates another type with this state machine
+    /// as its transitions.
+    type Transition: Debug + Serialize + DeserializeOwned + Clone + PartialEq;
+    type Conflict: Debug + Serialize + DeserializeOwned + Clone + PartialEq;
+
+    /// Update the state machine according to the given [`Transition`]. This method *must* be
+    /// deterministic: calling it on a clone of the state with a clone of the [`Transition`]
+    /// must result in the same state, even at a different time and on a different machine. This
+    /// is the requirement that allows Aper to keep the state in sync across multiple machines.
+    fn apply(&mut self, transition: Self::Transition) -> Result<(), Self::Conflict>;
+}

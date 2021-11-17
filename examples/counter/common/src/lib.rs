@@ -1,4 +1,4 @@
-use aper::{StateMachine, Transition, NeverConflict};
+use aper::{NeverConflict, StateMachine};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -6,7 +6,7 @@ pub struct Counter {
     value: i64,
 }
 
-#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum CounterTransition {
     Add(i64),
     Subtract(i64),
