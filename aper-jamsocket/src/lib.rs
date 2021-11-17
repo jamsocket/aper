@@ -1,12 +1,15 @@
-use std::marker::PhantomData;
-use std::convert::Infallible;
 use aper::Transition;
-use chrono::{DateTime, Utc};
-use jamsocket::{JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService, WrappedJamsocketService};
-pub use jamsocket::ClientId;
-pub use state_program::StateProgram;
-use serde::{Serialize, Deserialize};
 use chrono::serde::ts_milliseconds;
+use chrono::{DateTime, Utc};
+pub use jamsocket::ClientId;
+use jamsocket::{
+    JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService,
+    WrappedJamsocketService,
+};
+use serde::{Deserialize, Serialize};
+pub use state_program::StateProgram;
+use std::convert::Infallible;
+use std::marker::PhantomData;
 
 mod state_program;
 
@@ -31,7 +34,11 @@ impl<P: StateProgram> AperJamsocketService<P> {
         self.suspended_event = susp;
     }
 
-    fn process_transition(&mut self, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
+    fn process_transition(
+        &mut self,
+        transition: TransitionEvent<P::T>,
+        ctx: &impl JamsocketContext,
+    ) {
         self.state.apply(transition.clone());
         ctx.send_message(
             MessageRecipient::Broadcast,
@@ -42,7 +49,12 @@ impl<P: StateProgram> AperJamsocketService<P> {
         self.update_suspended_event(ctx);
     }
 
-    fn check_and_process_transition(&mut self, client_id: ClientId, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
+    fn check_and_process_transition(
+        &mut self,
+        client_id: ClientId,
+        transition: TransitionEvent<P::T>,
+        ctx: &impl JamsocketContext,
+    ) {
         if transition.player != Some(client_id) {
             log::warn!(
                 "Received a transition from a client with an invalid player ID. {:?} != {:?}",
@@ -100,18 +112,12 @@ impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
     }
 }
 
-pub struct AperJamsocketServiceBuilder<
-    K: StateProgram,
-    C: JamsocketContext,
-> {
+pub struct AperJamsocketServiceBuilder<K: StateProgram, C: JamsocketContext> {
     ph_k: PhantomData<K>,
     ph_c: PhantomData<C>,
 }
 
-impl<
-    K: StateProgram,
-    C: JamsocketContext,
-> Default for AperJamsocketServiceBuilder<K, C> {
+impl<K: StateProgram, C: JamsocketContext> Default for AperJamsocketServiceBuilder<K, C> {
     fn default() -> Self {
         AperJamsocketServiceBuilder {
             ph_k: Default::default(),
@@ -120,7 +126,9 @@ impl<
     }
 }
 
-impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C> for AperJamsocketServiceBuilder<K, C> {
+impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C>
+    for AperJamsocketServiceBuilder<K, C>
+{
     type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
     type Error = Infallible;
 

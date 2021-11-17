@@ -26,6 +26,5 @@ client/server architecture, and even with non-WebSocket protocols.
 
 - [Documentation](https://docs.rs/aper/)
 - [Getting Started with Aper guide](https://aper.dev/guide/)
-- [Redwords](https://redwords.paulbutler.org), a multiplayer word game built with Aper.
 - [Examples](examples)
 - [Talk on Aper for Rust Berlin (20 minute video)](https://www.youtube.com/watch?v=HNzeouj0eKc&t=1832s)

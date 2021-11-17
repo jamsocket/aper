@@ -1,13 +1,13 @@
-use std::collections::{BTreeMap, HashMap};
-use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::ops::Bound::{Excluded, Unbounded};
+use crate::{StateMachine, Transition};
 use fractional_index::ZenoIndex;
 use serde::de::Visitor;
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::fmt::Debug;
+use std::marker::PhantomData;
+use std::ops::Bound::{Excluded, Unbounded};
 use uuid::Uuid;
-use crate::{StateMachine, Transition};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ListPosition {
@@ -172,7 +172,8 @@ impl<T: StateMachine + PartialEq> List<T> {
             if let Some((next_location, _)) =
                 self.items.range((Excluded(&location), Unbounded)).next()
             {
-                ZenoIndex::new_between(&location, next_location).expect("Should always be able to find a zeno index between adjacent keys.")
+                ZenoIndex::new_between(&location, next_location)
+                    .expect("Should always be able to find a zeno index between adjacent keys.")
             } else {
                 ZenoIndex::new_after(&location)
             }
@@ -210,7 +211,8 @@ impl<T: StateMachine + PartialEq> List<T> {
         let id = Uuid::new_v4();
         let loc1 = self.items_inv.get(id1).unwrap();
         let loc2 = self.items_inv.get(id2).unwrap();
-        let new_loc = ZenoIndex::new_between(loc1, loc2).expect("Should be able to insert between two items in list.");
+        let new_loc = ZenoIndex::new_between(loc1, loc2)
+            .expect("Should be able to insert between two items in list.");
         (
             id,
             ListOperation::Insert(ListPosition::AbsolutePosition(new_loc), id, value),
