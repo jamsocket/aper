@@ -1,5 +1,4 @@
-use crate::state_machine::NeverConflict;
-use crate::{StateMachine, Transition};
+use crate::{NeverConflict, StateMachine};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -41,8 +40,6 @@ where
 /// A type representing
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct InvalidTransition;
-
-impl Transition for InvalidTransition {}
 
 #[cfg(test)]
 mod tests {
