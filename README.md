@@ -15,20 +15,20 @@ and sent over the network, or stored for later.
 ## What is a state machine?
 
 For the purposes of Aper, a state machine is simply a `struct` or `enum` that
-implements [`StateMachine`] and has the following properties:
-- It defines a [`StateMachine::Transition`] type, through which every
+implements `StateMachine` and has the following properties:
+- It defines a `StateMachine::Transition` type, through which every
   possible change to the state can be described. It is usually useful,
   though not required, that this be an `enum` type.
-- It defines a [`StateMachine::Conflict`] type, which describes a conflict which
+- It defines a `StateMachine::Conflict` type, which describes a conflict which
   may occur when a transition is applied that is not valid at the time it is
   applied. For simple types where a conflict is impossible, you can use
-  [`NeverConflict`] for this.
-- All state updates are deterministic: if you clone a [`StateMachine`] and a
-  [`Transition`], the result of applying the cloned transition to the cloned
+  `NeverConflict` for this.
+- All state updates are deterministic: if you clone a `StateMachine` and a
+  `Transition`, the result of applying the cloned transition to the cloned
   state must be identical to applying the original transition to the original
   state.
 
-Here's an example [`StateMachine`] implementing a counter:
+Here's an example `StateMachine` implementing a counter:
 
 ```rust
 # use aper::{StateMachine, Transition, NeverConflict};
