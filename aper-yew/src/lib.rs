@@ -17,7 +17,7 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper_jamsocket::{ClientId, StateProgram, StateUpdateMessage, TransitionEvent};
+pub use aper_jamsocket::{ClientId, StateProgram, StateUpdateMessage, TransitionEvent, StateMachineContainerProgram};
 use std::fmt::Debug;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};

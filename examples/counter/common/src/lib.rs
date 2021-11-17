@@ -1,4 +1,4 @@
-use aper::{StateMachine, Transition};
+use aper::{StateMachine, Transition, NeverConflict};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -21,8 +21,9 @@ impl Counter {
 
 impl StateMachine for Counter {
     type Transition = CounterTransition;
+    type Conflict = NeverConflict;
 
-    fn apply(&mut self, event: CounterTransition) {
+    fn apply(&mut self, event: CounterTransition) -> Result<(), NeverConflict> {
         match event {
             CounterTransition::Add(i) => {
                 self.value += i;
@@ -34,5 +35,7 @@ impl StateMachine for Counter {
                 self.value = 0;
             }
         }
+
+        Ok(())
     }
 }

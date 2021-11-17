@@ -1,7 +1,6 @@
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-use aper_yew::{View, ViewContext, ClientBuilder};
-use aper::{StateMachineContainerProgram};
+use aper_yew::{View, ViewContext, ClientBuilder, StateMachineContainerProgram};
 
 pub use counter_common::{Counter, CounterTransition};
 

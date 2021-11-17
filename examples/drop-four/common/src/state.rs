@@ -1,4 +1,5 @@
-use aper::{PlayerID, StateMachine, StateProgram, Transition, TransitionEvent};
+use aper::{NeverConflict, StateMachine, Transition};
+use aper_jamsocket::{ClientId, StateProgram, TransitionEvent};
 use serde::{Deserialize, Serialize};
 
 pub const BOARD_ROWS: usize = 6;
@@ -75,19 +76,19 @@ impl PlayerColor {
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
 pub struct PlayerMap {
-    pub teal_player: PlayerID,
-    pub brown_player: PlayerID,
+    pub teal_player: ClientId,
+    pub brown_player: ClientId,
 }
 
 impl PlayerMap {
-    fn id_of_color(&self, color: PlayerColor) -> PlayerID {
+    fn id_of_color(&self, color: PlayerColor) -> ClientId {
         match color {
             PlayerColor::Brown => self.brown_player,
             PlayerColor::Teal => self.teal_player,
         }
     }
 
-    pub fn color_of_player(&self, player_id: PlayerID) -> Option<PlayerColor> {
+    pub fn color_of_player(&self, player_id: ClientId) -> Option<PlayerColor> {
         if self.brown_player == player_id {
             Some(PlayerColor::Brown)
         } else if self.teal_player == player_id {
@@ -101,7 +102,7 @@ impl PlayerMap {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum PlayState {
     Waiting {
-        waiting_player: Option<PlayerID>,
+        waiting_player: Option<ClientId>,
     },
     Playing {
         next_player: PlayerColor,
@@ -137,8 +138,9 @@ impl DropFourGame {
 
 impl StateMachine for DropFourGame {
     type Transition = TransitionEvent<GameTransition>;
+    type Conflict = NeverConflict;
 
-    fn apply(&mut self, event: Self::Transition) {
+    fn apply(&mut self, event: Self::Transition) -> Result<(), NeverConflict> {
         match event.transition {
             GameTransition::Join => {
                 if let PlayState::Waiting {
@@ -171,10 +173,10 @@ impl StateMachine for DropFourGame {
                 } = &mut self.0
                 {
                     if winner.is_some() {
-                        return;
+                        return Ok(());
                     } // Someone has already won.
                     if player_map.id_of_color(*next_player) != event.player.unwrap() {
-                        return;
+                        return Ok(());
                     } // Play out of turn.
 
                     if let Some(insert_row) = board.lowest_open_row(c) {
@@ -200,6 +202,8 @@ impl StateMachine for DropFourGame {
                 }
             }
         }
+
+        Ok(())
     }
 }
 
@@ -213,7 +217,7 @@ impl StateProgram for DropFourGame {
 
 #[cfg(test)]
 mod tests {
-    use aper::PlayerID;
+    use aper_jamsocket::ClientId;
 
     use chrono::{TimeZone, Utc};
 
@@ -236,8 +240,8 @@ mod tests {
     fn test_game() {
         let mut game = DropFourGame::default();
         let dummy_timestamp = Utc.timestamp_millis(0);
-        let player1 = PlayerID(1);
-        let player2 = PlayerID(2);
+        let player1: ClientId = 1.into();
+        let player2: ClientId = 2.into();
 
         assert_eq!(
             Waiting {
@@ -245,7 +249,8 @@ mod tests {
             },
             *game.state()
         );
-        game.apply(TransitionEvent::new(Some(player1), dummy_timestamp, Join));
+        game.apply(TransitionEvent::new(Some(player1), dummy_timestamp, Join))
+            .unwrap();
         assert_eq!(
             Waiting {
                 waiting_player: Some(player1)
@@ -253,7 +258,8 @@ mod tests {
             *game.state()
         );
 
-        game.apply(TransitionEvent::new(Some(player2), dummy_timestamp, Join));
+        game.apply(TransitionEvent::new(Some(player2), dummy_timestamp, Join))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -267,7 +273,8 @@ mod tests {
             Some(player1),
             dummy_timestamp,
             Drop(4),
-        ));
+        ))
+        .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -290,7 +297,8 @@ mod tests {
             Some(player2),
             dummy_timestamp,
             Drop(4),
-        ));
+        ))
+        .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -313,7 +321,8 @@ mod tests {
             Some(player1),
             dummy_timestamp,
             Drop(3),
-        ));
+        ))
+        .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -336,7 +345,8 @@ mod tests {
             Some(player2),
             dummy_timestamp,
             Drop(5),
-        ));
+        ))
+        .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -359,7 +369,8 @@ mod tests {
             Some(player1),
             dummy_timestamp,
             Drop(2),
-        ));
+        ))
+        .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -382,7 +393,8 @@ mod tests {
             Some(player2),
             dummy_timestamp,
             Drop(2),
-        ));
+        ))
+        .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -405,7 +417,8 @@ mod tests {
             Some(player1),
             dummy_timestamp,
             Drop(1),
-        ));
+        ))
+        .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -424,7 +437,8 @@ mod tests {
         // ..B.B..
         // .TTTTB.
 
-        game.apply(TransitionEvent::new(Some(player1), dummy_timestamp, Reset));
+        game.apply(TransitionEvent::new(Some(player1), dummy_timestamp, Reset))
+            .unwrap();
         assert!(matches!(
             game.state(),
             Playing {

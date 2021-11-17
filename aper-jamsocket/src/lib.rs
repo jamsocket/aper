@@ -7,7 +7,7 @@ use jamsocket::{
     WrappedJamsocketService,
 };
 use serde::{Deserialize, Serialize};
-pub use state_program::StateProgram;
+pub use state_program::{StateProgram, StateMachineContainerProgram};
 use std::convert::Infallible;
 use std::marker::PhantomData;
 
