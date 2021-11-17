@@ -58,45 +58,6 @@
 //! }
 //! ```
 //!
-//! ## State Programs
-//!
-//! [StateMachine]s can take whatever transition types they want, but in order to interface with
-//! the Aper client/server infrastructure, a [StateMachine] must have a [TransitionEvent] transition
-//! type. This wraps up a regular [Transition] with metadata that the client produces (namely, the
-//! ID of the player who initiated the event and the timestamp of the event).
-//!
-//! In order to tell the Rust typesystem that a [StateMachine] is compatible, it must also implement
-//! the [StateProgram] trait. This also gives you a way to implement *suspended events*.
-//!
-//! Typically, a program in Aper will have only one trait that implements [StateProgram], but may
-//! have multiple traits that implement [StateMachine] used in the underlying representation of
-//! [StateProgram].
-//!
-//! If you just want to serve a [StateMachine] data structure and don't need transition metadata,
-//! you can construct a [StateMachineContainerProgram] which simply strips the metadata and passes
-//! the raw transition into the state machine, i.e.:
-//!
-//! ```rust
-//! # use aper::{StateMachine, Transition};
-//! # use serde::{Serialize, Deserialize};
-//! # #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-//! # struct Counter;
-//! #
-//! # #[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
-//! # struct CounterTransition;
-//! #
-//! # impl StateMachine for Counter {
-//! #     type Transition = CounterTransition;
-//! #
-//! #     fn apply(&mut self, event: CounterTransition) { unimplemented!() }
-//! # }
-//! #
-//! # pub fn main() {
-//! use aper::StateMachineContainerProgram;
-//! let state_program = StateMachineContainerProgram(Counter::default());
-//! # }
-//! ```
-//!
 //! ## How it works
 //!
 //! When a client first connects to the server, the server sends back a complete serialized
@@ -141,71 +102,7 @@
 //!   do not impact the state in another, much like messages in one chat room do not appear in
 //!   another.
 
-use chrono::serde::ts_milliseconds;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 pub use state_machine::{StateMachine, Transition};
-pub use state_program::{StateMachineContainerProgram, StateProgram};
-use std::fmt::{Display, Formatter};
 
 pub mod data_structures;
 mod state_machine;
-mod state_program;
-
-/// An opaque identifier for a single connected user.
-#[derive(Clone, Hash, Debug, PartialEq, Ord, PartialOrd, Eq, Serialize, Deserialize, Copy)]
-pub struct PlayerID(pub usize);
-
-impl Display for PlayerID {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-pub type Timestamp = DateTime<Utc>;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct TransitionEvent<T>
-where
-    T: Transition + Clone,
-{
-    #[serde(with = "ts_milliseconds")]
-    pub timestamp: Timestamp,
-    pub player: Option<PlayerID>,
-    #[serde(bound = "")]
-    pub transition: T,
-}
-
-impl<T: Transition> TransitionEvent<T> {
-    pub fn new(
-        player: Option<PlayerID>,
-        timestamp: Timestamp,
-        transition: T,
-    ) -> TransitionEvent<T> {
-        TransitionEvent {
-            timestamp,
-            player,
-            transition,
-        }
-    }
-}
-
-impl<T: Transition> Transition for TransitionEvent<T> {}
-
-/// A message from the server to a client that tells it to update its state.
-#[derive(Serialize, Deserialize, Debug)]
-pub enum StateUpdateMessage<State: StateProgram> {
-    /// Instructs the client to completely discard its existing state and replace it
-    /// with the provided one. This is currently only used to set the initial state
-    /// when a client first connects.
-    ReplaceState(
-        #[serde(bound = "")] State,
-        #[serde(with = "ts_milliseconds")] Timestamp,
-        PlayerID,
-    ),
-
-    /// Instructs the client to apply the given [TransitionEvent] to its copy of
-    /// the state to synchronize it with the server. All state updates
-    /// after the initial state is sent are sent through [StateUpdateMessage::TransitionState].
-    TransitionState(#[serde(bound = "")] TransitionEvent<State::T>),
-}

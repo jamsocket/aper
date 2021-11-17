@@ -154,14 +154,14 @@ impl<T: StateMachine + PartialEq> List<T> {
             ListPosition::AbsolutePosition(p) => p,
             ListPosition::Before(uuid, fallback_location) => {
                 if let Some(location) = self.items_inv.get(&uuid) {
-                    ZenoIndex::new_before(&location)
+                    ZenoIndex::new_before(location)
                 } else {
                     ZenoIndex::new_before(&fallback_location)
                 }
             }
             ListPosition::After(uuid, fallback_location) => {
                 if let Some(location) = self.items_inv.get(&uuid) {
-                    ZenoIndex::new_after(&location)
+                    ZenoIndex::new_after(location)
                 } else {
                     ZenoIndex::new_after(&fallback_location)
                 }

@@ -1,5 +1,4 @@
-use aper::StateProgram;
-use aper_jamsocket::AperJamsocketServiceBuilder;
+use aper_jamsocket::{AperJamsocketServiceBuilder, StateProgram};
 use env_logger::Builder;
 use jamsocket_server::{Server, ServiceActorContext};
 
@@ -12,7 +11,7 @@ pub fn serve<F: StateProgram>() -> std::io::Result<()> {
     let host_factory: AperJamsocketServiceBuilder<F, ServiceActorContext> =
         AperJamsocketServiceBuilder::default();
 
-    let server = Server::new().with_shutdown_policy(jamsocket_server::ServiceShutdownPolicy::Never);
+    let server = Server::new();
 
     server.serve(host_factory)
 }

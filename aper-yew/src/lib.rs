@@ -17,7 +17,7 @@
 //! contain stateful components by embedding them in the resulting [yew::Html]
 //! just as they would in a regular Yew component.
 
-use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
+use aper_jamsocket::{ClientId, StateProgram, StateUpdateMessage, TransitionEvent};
 use std::fmt::Debug;
 use yew::format::{Bincode, Json};
 use yew::services::websocket::{WebSocketStatus, WebSocketTask};
@@ -65,7 +65,7 @@ pub enum Status<State: StateProgram> {
     WaitingForInitialState,
     /// The component has connected to the server and is assumed to contain an up-to-date
     /// copy of the state.
-    Connected(StateManager<State>, PlayerID),
+    Connected(StateManager<State>, ClientId),
     /// There was some error during the `WaitingToConnect` or `WaitingForInitialState`
     /// phase. The component's `onerror()` callback should have triggered, so the owner
     /// of this component may use this callback to take over rendering from this component
@@ -240,12 +240,12 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
         match &self.status {
             Status::WaitingToConnect => html! {{"Waiting to connect."}},
             Status::WaitingForInitialState => html! {{"Waiting for initial state."}},
-            Status::Connected(state_manager, player_id) => {
+            Status::Connected(state_manager, client_id) => {
                 let view_context = ViewContext {
                     callback: self.link.callback(Msg::StateTransition),
                     redraw: self.link.callback(|()| Msg::Redraw),
                     time: state_manager.get_estimated_server_time(),
-                    player: *player_id,
+                    client: *client_id,
                 };
                 self.props
                     .view

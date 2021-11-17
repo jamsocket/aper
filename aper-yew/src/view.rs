@@ -1,4 +1,4 @@
-use aper::{PlayerID, Timestamp};
+use aper_jamsocket::{ClientId, Timestamp};
 use yew::{Callback, Html};
 
 /// Context passed to a [View].
@@ -10,7 +10,7 @@ pub struct ViewContext<T> {
     pub redraw: Callback<()>,
 
     /// The ID of the current player.
-    pub player: PlayerID,
+    pub client: ClientId,
 
     /// An estimate of the server's time as of the call to `view`.
     pub time: Timestamp,

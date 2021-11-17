@@ -1,5 +1,7 @@
-use crate::{StateMachine, Transition, TransitionEvent};
+use aper::{StateMachine, Transition};
 use serde::{Deserialize, Serialize};
+
+use crate::TransitionEvent;
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with

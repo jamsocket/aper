@@ -1,5 +1,5 @@
 use crate::{StateProgramComponent, StateProgramComponentProps, View};
-use aper::StateProgram;
+use aper_jamsocket::StateProgram;
 use yew::prelude::*;
 
 /// WebSocket URLs must be absolute, not relative, paths. For ergonomics, we

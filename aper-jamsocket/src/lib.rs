@@ -1,13 +1,18 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::marker::PhantomData;
+use std::convert::Infallible;
+use aper::Transition;
+use chrono::{DateTime, Utc};
+use jamsocket::{JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService, WrappedJamsocketService};
+pub use jamsocket::ClientId;
+pub use state_program::StateProgram;
+use serde::{Serialize, Deserialize};
+use chrono::serde::ts_milliseconds;
 
-use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
-use chrono::Utc;
-use jamsocket::{ClientId, JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService, WrappedJamsocketService};
+mod state_program;
 
 pub struct AperJamsocketService<P: StateProgram> {
     state: P,
     suspended_event: Option<TransitionEvent<P::T>>,
-    client_to_player: HashMap<ClientId, PlayerID>,
 }
 
 impl<P: StateProgram> AperJamsocketService<P> {
@@ -38,17 +43,11 @@ impl<P: StateProgram> AperJamsocketService<P> {
     }
 
     fn check_and_process_transition(&mut self, client_id: ClientId, transition: TransitionEvent<P::T>, ctx: &impl JamsocketContext) {
-        let user = if let Some(user) = self.client_to_player.get(&client_id) {
-            user
-        } else {
-            return
-        };
-
-        if transition.player != Some(*user) {
+        if transition.player != Some(client_id) {
             log::warn!(
-                "Received a transition from a client with an invalid player ID. {:?} != {}",
+                "Received a transition from a client with an invalid player ID. {:?} != {:?}",
                 transition.player,
-                user
+                client_id
             );
             return;
         }
@@ -61,7 +60,6 @@ impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
         let mut serv = AperJamsocketService {
             state: P::new(room_id),
             suspended_event: None,
-            client_to_player: HashMap::default(),
         };
 
         serv.update_suspended_event(ctx);
@@ -70,15 +68,12 @@ impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P> {
     }
 
     fn connect(&mut self, client_id: ClientId, ctx: &impl JamsocketContext) {
-        let player_id = PlayerID(self.client_to_player.len());
-        self.client_to_player.insert(client_id, player_id);
-
         ctx.send_message(
             MessageRecipient::Client(client_id),
             serde_json::to_string(&StateUpdateMessage::ReplaceState::<P>(
                 self.state.clone(),
                 Utc::now(),
-                player_id,
+                client_id,
             ))
             .unwrap()
             .as_str(),
@@ -127,9 +122,58 @@ impl<
 
 impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C> for AperJamsocketServiceBuilder<K, C> {
     type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
+    type Error = Infallible;
 
-    fn build(&self, room_id: &str, context: C) -> Option<Self::Service> {
+    fn build(&self, room_id: &str, context: C) -> Result<Self::Service, Infallible> {
         let service = AperJamsocketService::new(room_id, &context);
-        Some(WrappedJamsocketService::new(service, context))
+        Ok(WrappedJamsocketService::new(service, context))
     }
 }
+
+/// A message from the server to a client that tells it to update its state.
+#[derive(Serialize, Deserialize, Debug)]
+pub enum StateUpdateMessage<State: StateProgram> {
+    /// Instructs the client to completely discard its existing state and replace it
+    /// with the provided one. This is currently only used to set the initial state
+    /// when a client first connects.
+    ReplaceState(
+        #[serde(bound = "")] State,
+        #[serde(with = "ts_milliseconds")] Timestamp,
+        ClientId,
+    ),
+
+    /// Instructs the client to apply the given [TransitionEvent] to its copy of
+    /// the state to synchronize it with the server. All state updates
+    /// after the initial state is sent are sent through [StateUpdateMessage::TransitionState].
+    TransitionState(#[serde(bound = "")] TransitionEvent<State::T>),
+}
+
+pub type Timestamp = DateTime<Utc>;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct TransitionEvent<T>
+where
+    T: Transition + Clone,
+{
+    #[serde(with = "ts_milliseconds")]
+    pub timestamp: Timestamp,
+    pub player: Option<ClientId>,
+    #[serde(bound = "")]
+    pub transition: T,
+}
+
+impl<T: Transition> TransitionEvent<T> {
+    pub fn new(
+        player: Option<ClientId>,
+        timestamp: Timestamp,
+        transition: T,
+    ) -> TransitionEvent<T> {
+        TransitionEvent {
+            timestamp,
+            player,
+            transition,
+        }
+    }
+}
+
+impl<T: Transition> Transition for TransitionEvent<T> {}
