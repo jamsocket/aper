@@ -302,6 +302,19 @@ mod tests {
     use crate::data_structures::Atom;
 
     #[test]
+    fn test_conflict() {
+        let mut my_list: List<Atom<u32>> = List::new();
+
+        let id = Uuid::new_v4();
+        let transition = my_list.move_item(id, ZenoIndex::default());
+
+        assert_eq!(
+            Err(ListConflict::ItemDoesNotExist(id)),
+            my_list.apply(transition)
+        );
+    }
+
+    #[test]
     fn test_get_location() {
         let mut my_list: List<Atom<u32>> = List::new();
         let mut ids: Vec<Uuid> = vec![];
