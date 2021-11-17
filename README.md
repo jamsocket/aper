@@ -31,13 +31,13 @@ implements `StateMachine` and has the following properties:
 Here's an example `StateMachine` implementing a counter:
 
 ```rust
-use aper::{StateMachine, Transition, NeverConflict};
+use aper::{StateMachine, NeverConflict};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 struct Counter { value: i64 };
 
-#[derive(Transition, Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 enum CounterTransition {
     Reset,
     Increment(i64),
