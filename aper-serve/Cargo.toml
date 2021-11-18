@@ -2,6 +2,7 @@
 name = "aper-serve"
 version = "0.1.0"
 edition = "2018"
+repository = "https://github.com/drifting-in-space/aper"
 
 [dependencies]
 aper = {path = "../aper"}

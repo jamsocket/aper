@@ -2,6 +2,7 @@
 name = "aper-jamsocket"
 version = "0.1.0"
 edition = "2018"
+repository = "https://github.com/drifting-in-space/aper"
 
 [dependencies]
 jamsocket = { git = "https://github.com/jamsocket/jamsocket", version="0.1.5", features=["serde"] }

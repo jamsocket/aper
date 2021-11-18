@@ -1,9 +1,9 @@
 # [Aper](https://aper.dev)
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/aper-dev/aper?style=social)](https://github.com/aper-dev/aper)
+[![GitHub Repo stars](https://img.shields.io/github/stars/drifting-in-space/aper?style=social)](https://github.com/drifting-in-space/aper)
 [![crates.io](https://img.shields.io/crates/v/aper.svg)](https://crates.io/crates/aper)
 [![docs.rs](https://img.shields.io/badge/docs-release-brightgreen)](https://docs.rs/aper/)
-[![wokflow state](https://github.com/aper-dev/aper/workflows/build/badge.svg)](https://github.com/aper-dev/aper/actions/workflows/rust.yml)
+[![wokflow state](https://github.com/drifting-in-space/aper/workflows/build/badge.svg)](https://github.com/drifting-in-space/aper/actions/workflows/rust.yml)
 
 <img src="https://aper.dev/ape.svg" alt="Cartoonized face of an ape." width="200px" />
 
@@ -72,9 +72,9 @@ of a value between two data structures, or the rules of a board game.
 
 ---
 
-**Aper is rapidly evolving. Consider this a technology preview.** See the [list of issues outstanding for version 1.0](https://github.com/aper-dev/aper/labels/v1-milestone)
+**Aper is rapidly evolving. Consider this a technology preview.** See the [list of issues outstanding for version 1.0](https://github.com/drifting-in-space/aper/labels/v1-milestone)
 
 - [Documentation](https://docs.rs/aper/)
 - [Getting Started with Aper guide](https://aper.dev/guide/)
-- [Examples](https://github.com/aper-dev/aper/tree/main/examples)
+- [Examples](https://github.com/drifting-in-space-in-space/aper/tree/main/examples)
 - [Talk on Aper for Rust Berlin (20 minute video)](https://www.youtube.com/watch?v=HNzeouj0eKc&t=1852s)
