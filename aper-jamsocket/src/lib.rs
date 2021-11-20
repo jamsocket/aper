@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::{collections::HashMap, convert::Infallible, marker::PhantomData};
 
 use aper::{PlayerID, StateProgram, StateUpdateMessage, TransitionEvent};
 use chrono::Utc;
@@ -127,9 +127,10 @@ impl<
 
 impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C> for AperJamsocketServiceBuilder<K, C> {
     type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
+    type Error = Infallible;
 
-    fn build(&self, room_id: &str, context: C) -> Option<Self::Service> {
+    fn build(&self, room_id: &str, context: C) -> Result<Self::Service, Self::Error> {
         let service = AperJamsocketService::new(room_id, &context);
-        Some(WrappedJamsocketService::new(service, context))
+        Ok(WrappedJamsocketService::new(service, context))
     }
 }

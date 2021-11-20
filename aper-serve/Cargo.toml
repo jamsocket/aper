@@ -3,11 +3,9 @@ name = "aper-serve"
 version = "0.1.0"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 aper = {path = "../aper"}
 aper-jamsocket = {path = "../aper-jamsocket"}
 env_logger = "0.9.0"
-jamsocket-server = { version="0.1.3" }
+jamsocket-server = { version="0.1.3", path="../../jamsocket/jamsocket-server" }
 log = "0.4.14"
