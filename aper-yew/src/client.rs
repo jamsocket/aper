@@ -7,13 +7,14 @@ use yew::prelude::*;
 fn get_full_ws_url(path: &str) -> String {
     let location = web_sys::window().unwrap().location();
     let host = location.host().unwrap();
+    let path_prefix = location.pathname().unwrap();
     let ws_protocol = match location.protocol().unwrap().as_str() {
         "http:" => "ws",
         "https:" => "wss",
         scheme => panic!("Unknown scheme: {}", scheme),
     };
 
-    format!("{}://{}/{}", ws_protocol, &host, &path)
+    format!("{}://{}{}{}", ws_protocol, &host, &path_prefix, &path)
 }
 
 pub struct ClientBuilder<

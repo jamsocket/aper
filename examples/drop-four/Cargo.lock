@@ -337,8 +337,8 @@ checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
 name = "jamsocket"
-version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b25f74832b91384a704b907cb023e10ee4738fb9"
+version = "0.1.6"
+source = "git+https://github.com/jamsocket/jamsocket#049dc72c94c7c08aa2a9ce46f7b1457a09868267"
 dependencies = [
  "serde",
 ]
@@ -346,7 +346,7 @@ dependencies = [
 [[package]]
 name = "jamsocket-wasm"
 version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b25f74832b91384a704b907cb023e10ee4738fb9"
+source = "git+https://github.com/jamsocket/jamsocket#049dc72c94c7c08aa2a9ce46f7b1457a09868267"
 dependencies = [
  "jamsocket",
  "jamsocket-wasm-macro",
@@ -355,7 +355,7 @@ dependencies = [
 [[package]]
 name = "jamsocket-wasm-macro"
 version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b25f74832b91384a704b907cb023e10ee4738fb9"
+source = "git+https://github.com/jamsocket/jamsocket#049dc72c94c7c08aa2a9ce46f7b1457a09868267"
 dependencies = [
  "proc-macro2",
  "quote",
