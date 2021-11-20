@@ -265,9 +265,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.45"
+version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee10e43ae4a853c0a3591d4e2ada1719e553be18199d9da9d4a83f5927c2f5c7"
+checksum = "38d9ff5d688f1c13395289f67db01d4826b46dd694e7580accdc3e8430f2d98e"
 
 [[package]]
 name = "anymap"
@@ -856,8 +856,8 @@ checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
 name = "jamsocket"
-version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b638ca149162673fc8918d5ec41eea8670a9bcd4"
+version = "0.1.6"
+source = "git+https://github.com/jamsocket/jamsocket#1adb053827f45569bea25e7fc2977192df7cc158"
 dependencies = [
  "serde",
 ]
@@ -865,7 +865,7 @@ dependencies = [
 [[package]]
 name = "jamsocket-server"
 version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b638ca149162673fc8918d5ec41eea8670a9bcd4"
+source = "git+https://github.com/jamsocket/jamsocket#1adb053827f45569bea25e7fc2977192df7cc158"
 dependencies = [
  "actix",
  "actix-web",
