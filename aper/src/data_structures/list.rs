@@ -1,13 +1,13 @@
-use std::collections::{BTreeMap, HashMap};
-use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::ops::Bound::{Excluded, Unbounded};
+use crate::StateMachine;
 use fractional_index::ZenoIndex;
 use serde::de::Visitor;
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::fmt::Debug;
+use std::marker::PhantomData;
+use std::ops::Bound::{Excluded, Unbounded};
 use uuid::Uuid;
-use crate::{StateMachine, Transition};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ListPosition {
@@ -21,18 +21,11 @@ pub enum ListPosition {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(bound = "")]
 pub enum ListOperation<T: StateMachine + PartialEq> {
-    // TODO: implement this new operation
     Insert(ListPosition, Uuid, T),
-    // TODO: delete the following operations
-    //Insert(ZenoIndex, Uuid, T),
-    //Append(Uuid, T),
-    //Prepend(Uuid, T),
     Delete(Uuid),
     Move(Uuid, ZenoIndex),
     Apply(Uuid, <T as StateMachine>::Transition),
 }
-
-impl<T: StateMachine + PartialEq> Transition for ListOperation<T> {}
 
 /// Represents a view of an entry in a list during iteration. Each
 /// item contains a borrow of its `value`; its `location` as a [ZenoIndex],
@@ -108,19 +101,31 @@ impl<T: StateMachine + PartialEq> Default for List<T> {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub enum ListConflict<T: StateMachine> {
+    /// No item exists with the given UUID. It may have been deleted
+    /// after the transition was created.
+    ItemDoesNotExist(Uuid),
+    ChildConflict(T::Conflict),
+}
+
 impl<T: StateMachine + PartialEq> StateMachine for List<T> {
     type Transition = ListOperation<T>;
+    type Conflict = ListConflict<T>;
 
-    fn apply(&mut self, transition_event: Self::Transition) {
+    fn apply(&mut self, transition_event: Self::Transition) -> Result<(), ListConflict<T>> {
         match transition_event {
             ListOperation::Insert(location, id, value) => self.do_insert(location, id, value),
             ListOperation::Delete(id) => self.do_delete(id),
             ListOperation::Move(id, location) => self.do_move(id, location),
             ListOperation::Apply(id, transition) => {
                 if let Some(v) = self.pool.get_mut(&id) {
-                    v.apply(transition)
+                    match v.apply(transition) {
+                        Ok(()) => Ok(()),
+                        Err(e) => Err(ListConflict::ChildConflict(e)),
+                    }
                 } else {
-                    // TODO: resolve conflict.
+                    Err(ListConflict::ItemDoesNotExist(id))
                 }
             }
         }
@@ -154,14 +159,14 @@ impl<T: StateMachine + PartialEq> List<T> {
             ListPosition::AbsolutePosition(p) => p,
             ListPosition::Before(uuid, fallback_location) => {
                 if let Some(location) = self.items_inv.get(&uuid) {
-                    ZenoIndex::new_before(&location)
+                    ZenoIndex::new_before(location)
                 } else {
                     ZenoIndex::new_before(&fallback_location)
                 }
             }
             ListPosition::After(uuid, fallback_location) => {
                 if let Some(location) = self.items_inv.get(&uuid) {
-                    ZenoIndex::new_after(&location)
+                    ZenoIndex::new_after(location)
                 } else {
                     ZenoIndex::new_after(&fallback_location)
                 }
@@ -172,7 +177,8 @@ impl<T: StateMachine + PartialEq> List<T> {
             if let Some((next_location, _)) =
                 self.items.range((Excluded(&location), Unbounded)).next()
             {
-                ZenoIndex::new_between(&location, next_location).expect("Should always be able to find a zeno index between adjacent keys.")
+                ZenoIndex::new_between(&location, next_location)
+                    .expect("Should always be able to find a zeno index between adjacent keys.")
             } else {
                 ZenoIndex::new_after(&location)
             }
@@ -181,36 +187,45 @@ impl<T: StateMachine + PartialEq> List<T> {
         }
     }
 
-    fn do_insert(&mut self, position: ListPosition, id: Uuid, value: T) {
+    fn do_insert(
+        &mut self,
+        position: ListPosition,
+        id: Uuid,
+        value: T,
+    ) -> Result<(), ListConflict<T>> {
         let location = self.get_location(position);
         self.items.insert(location.clone(), id);
         self.items_inv.insert(id, location);
         self.pool.insert(id, value);
+        Ok(())
     }
 
-    fn do_move(&mut self, id: Uuid, location: ZenoIndex) {
+    fn do_move(&mut self, id: Uuid, location: ZenoIndex) -> Result<(), ListConflict<T>> {
         if let Some(old_location) = self.items_inv.remove(&id) {
             self.items.remove(&old_location);
             self.items.insert(location.clone(), id);
             self.items_inv.insert(id, location);
+            Ok(())
         } else {
-            // TODO: if the item is not in the pool, we have a conflict.
-            // For now, we ignore it.
+            Err(ListConflict::ItemDoesNotExist(id))
         }
     }
 
-    fn do_delete(&mut self, id: Uuid) {
+    fn do_delete(&mut self, id: Uuid) -> Result<(), ListConflict<T>> {
         if let Some(location) = self.items_inv.remove(&id) {
             self.items.remove(&location);
         }
         self.pool.remove(&id);
+
+        Ok(())
     }
 
     pub fn insert_between(&self, id1: &Uuid, id2: &Uuid, value: T) -> OperationWithId<T> {
         let id = Uuid::new_v4();
         let loc1 = self.items_inv.get(id1).unwrap();
         let loc2 = self.items_inv.get(id2).unwrap();
-        let new_loc = ZenoIndex::new_between(loc1, loc2).expect("Should be able to insert between two items in list.");
+        let new_loc = ZenoIndex::new_between(loc1, loc2)
+            .expect("Should be able to insert between two items in list.");
         (
             id,
             ListOperation::Insert(ListPosition::AbsolutePosition(new_loc), id, value),
@@ -285,6 +300,19 @@ mod tests {
     use crate::data_structures::Atom;
 
     #[test]
+    fn test_conflict() {
+        let mut my_list: List<Atom<u32>> = List::new();
+
+        let id = Uuid::new_v4();
+        let transition = my_list.move_item(id, ZenoIndex::default());
+
+        assert_eq!(
+            Err(ListConflict::ItemDoesNotExist(id)),
+            my_list.apply(transition)
+        );
+    }
+
+    #[test]
     fn test_get_location() {
         let mut my_list: List<Atom<u32>> = List::new();
         let mut ids: Vec<Uuid> = vec![];
@@ -293,7 +321,7 @@ mod tests {
             let (id, transition) = my_list.append(Atom::new(i));
             ids.push(id);
 
-            my_list.apply(transition);
+            my_list.apply(transition).unwrap();
         }
 
         // Beginning
@@ -342,14 +370,14 @@ mod tests {
         let (id1, transition1) = my_list.append(Atom::new(1));
         let (id2, transition2) = my_list.append(Atom::new(2));
 
-        my_list.apply(transition2); // my_list = [2]
-        my_list.apply(transition1); // my_list = [2, 1]
+        my_list.apply(transition2).unwrap(); // my_list = [2]
+        my_list.apply(transition1).unwrap(); // my_list = [2, 1]
 
         let (_id3, transition3) = my_list.insert_between(&id2, &id1, Atom::new(3));
 
         let (_id4, transition4) = my_list.insert_between(&id2, &id1, Atom::new(4));
 
-        my_list.apply(transition4);
+        my_list.apply(transition4).unwrap();
         assert_eq!(
             vec![2, 4, 1],
             my_list
@@ -357,7 +385,7 @@ mod tests {
                 .map(|d| *d.value.value())
                 .collect::<Vec<u32>>()
         );
-        my_list.apply(transition3);
+        my_list.apply(transition3).unwrap();
         assert_eq!(
             vec![2, 4, 3, 1],
             my_list
@@ -373,15 +401,15 @@ mod tests {
 
         // Test Append.
 
-        list.apply(list.append(Atom::new(5)).1);
+        list.apply(list.append(Atom::new(5)).1).unwrap();
 
-        list.apply(list.append(Atom::new(3)).1);
+        list.apply(list.append(Atom::new(3)).1).unwrap();
 
-        list.apply(list.append(Atom::new(143)).1);
+        list.apply(list.append(Atom::new(143)).1).unwrap();
 
         // Test Prepend.
 
-        list.apply(list.prepend(Atom::new(99)).1);
+        list.apply(list.prepend(Atom::new(99)).1).unwrap();
 
         {
             let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -398,7 +426,8 @@ mod tests {
                     Atom::new(44),
                 )
                 .1,
-            );
+            )
+            .unwrap();
 
             list.apply(
                 list.insert(
@@ -406,7 +435,8 @@ mod tests {
                     Atom::new(23),
                 )
                 .1,
-            );
+            )
+            .unwrap();
 
             list.apply(
                 list.insert(
@@ -414,7 +444,8 @@ mod tests {
                     Atom::new(84),
                 )
                 .1,
-            );
+            )
+            .unwrap();
 
             {
                 let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -426,9 +457,9 @@ mod tests {
         {
             let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
 
-            list.apply(list.delete(uuids[2]));
+            list.apply(list.delete(uuids[2])).unwrap();
 
-            list.apply(list.delete(uuids[3]));
+            list.apply(list.delete(uuids[3])).unwrap();
 
             {
                 let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -444,9 +475,11 @@ mod tests {
             list.apply(list.move_item(
                 uuids[0],
                 ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
-            ));
+            ))
+            .unwrap();
 
-            list.apply(list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])));
+            list.apply(list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])))
+                .unwrap();
 
             {
                 let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -461,7 +494,7 @@ mod tests {
         // because serde-json requires map keys to be strings.
 
         let mut list: List<Atom<i64>> = List::default();
-        list.apply(list.append(Atom::new(5)).1);
+        list.apply(list.append(Atom::new(5)).1).unwrap();
 
         let result = serde_json::to_string(&list).unwrap();
 

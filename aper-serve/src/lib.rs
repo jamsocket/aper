@@ -1,5 +1,4 @@
-use aper::StateProgram;
-use aper_jamsocket::AperJamsocketServiceBuilder;
+use aper_jamsocket::{AperJamsocketServiceBuilder, StateProgram};
 use env_logger::Builder;
 use jamsocket_server::{Server, ServiceActorContext};
 

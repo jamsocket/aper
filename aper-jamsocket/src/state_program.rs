@@ -1,11 +1,19 @@
-use crate::{StateMachine, Transition, TransitionEvent};
+use std::fmt::Debug;
+
+use aper::{StateMachine};
 use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
+
+
+use crate::TransitionEvent;
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
-pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> {
-    type T: Transition;
+pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> 
+where <Self as StateProgram>::T: Unpin + Send + Sync
+{
+    type T: Debug + Serialize + DeserializeOwned + Clone + PartialEq;
 
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
@@ -37,17 +45,18 @@ pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> {
 /// are stripped of their metadata and passed down to the underlying state machine.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(bound = "")]
-pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM);
+pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM) where <SM as StateMachine>::Transition: Send;
 
-impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> {
+impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> where <SM as StateMachine>::Transition: Send + Unpin + Sync {
     type Transition = TransitionEvent<SM::Transition>;
+    type Conflict = SM::Conflict;
 
-    fn apply(&mut self, transition: Self::Transition) {
-        self.0.apply(transition.transition);
+    fn apply(&mut self, transition: Self::Transition) -> Result<(), Self::Conflict> {
+        self.0.apply(transition.transition)
     }
 }
 
-impl<SM: StateMachine + Default> StateProgram for StateMachineContainerProgram<SM> {
+impl<SM: StateMachine + Default> StateProgram for StateMachineContainerProgram<SM> where <SM as StateMachine>::Transition: Send + Unpin + Sync {
     type T = SM::Transition;
 
     fn new(_init_value: &str) -> Self {

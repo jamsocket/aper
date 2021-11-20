@@ -1,4 +1,4 @@
-use crate::{StateMachine, Transition};
+use crate::{NeverConflict, StateMachine};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -30,8 +30,9 @@ where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
     type Transition = InvalidTransition;
+    type Conflict = NeverConflict;
 
-    fn apply(&mut self, _transition_event: InvalidTransition) {
+    fn apply(&mut self, _transition_event: InvalidTransition) -> Result<(), NeverConflict> {
         panic!("Constant should never receive transition event.");
     }
 }
@@ -39,8 +40,6 @@ where
 /// A type representing
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct InvalidTransition;
-
-impl Transition for InvalidTransition {}
 
 #[cfg(test)]
 mod tests {

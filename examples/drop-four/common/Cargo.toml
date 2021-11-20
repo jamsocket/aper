@@ -3,8 +3,10 @@ name = "drop-four-common"
 version = "0.1.0"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 aper = {path="../../../aper"}
+aper-jamsocket = {path="../../../aper-jamsocket"}
 serde = { version = "1.0.127", features = ["derive"] }
+
+[dev-dependencies]
+chrono = "0.4.19"

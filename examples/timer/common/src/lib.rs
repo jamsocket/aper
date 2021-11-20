@@ -1,4 +1,5 @@
-use aper::{StateMachine, StateProgram, Transition, TransitionEvent};
+use aper::{StateMachine, NeverConflict};
+use aper_jamsocket::{StateProgram, TransitionEvent};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -8,17 +9,17 @@ pub struct Timer {
     pub last_increment: DateTime<Utc>,
 }
 
-#[derive(Transition, Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum TimerEvent {
     Reset,
     Increment,
 }
 
-
 impl StateMachine for Timer {
     type Transition = TransitionEvent<TimerEvent>;
+    type Conflict = NeverConflict;
 
-    fn apply(&mut self, event: Self::Transition) {
+    fn apply(&mut self, event: Self::Transition) -> Result<(), NeverConflict> {
         match event.transition {
             TimerEvent::Reset => self.value = 0,
             TimerEvent::Increment => {
@@ -26,6 +27,8 @@ impl StateMachine for Timer {
                 self.last_increment = event.timestamp;
             }
         }
+
+        Ok(())
     }
 }
 

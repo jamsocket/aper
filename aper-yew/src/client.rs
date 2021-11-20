@@ -1,5 +1,5 @@
 use crate::{StateProgramComponent, StateProgramComponentProps, View};
-use aper::StateProgram;
+use aper_jamsocket::StateProgram;
 use yew::prelude::*;
 
 /// WebSocket URLs must be absolute, not relative, paths. For ergonomics, we
@@ -13,7 +13,7 @@ fn get_full_ws_url(path: &str) -> String {
         scheme => panic!("Unknown scheme: {}", scheme),
     };
 
-    format!("{}://{}/ws/{}", ws_protocol, &host, &path)
+    format!("{}://{}/{}", ws_protocol, &host, &path)
 }
 
 pub struct ClientBuilder<

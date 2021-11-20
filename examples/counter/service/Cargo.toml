@@ -9,5 +9,5 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 aper-jamsocket = { path="../../../aper-jamsocket" }
 aper = { path="../../../aper" }
-jamsocket-wasm = { git = "https://github.com/jamsocket/jamsocket", version="0.1.0" }
+jamsocket-wasm = { git = "https://github.com/jamsocket/jamsocket", version="0.1.5" }
 counter-common = { path="../common" }

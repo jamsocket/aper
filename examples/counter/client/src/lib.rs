@@ -1,7 +1,6 @@
+use aper_yew::{ClientBuilder, StateMachineContainerProgram, View, ViewContext};
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-use aper_yew::{View, ViewContext, ClientBuilder};
-use aper::{StateMachineContainerProgram};
 
 pub use counter_common::{Counter, CounterTransition};
 
@@ -28,7 +27,7 @@ impl View for CounterView {
                     {"Reset"}
                 </button>
             </div>
-        }
+        };
     }
 }
 

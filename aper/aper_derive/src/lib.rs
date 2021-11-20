@@ -1,39 +1,22 @@
 extern crate proc_macro;
 
-use proc_macro2::{Ident, TokenStream};
-use quote::quote;
-use syn::{Item, ItemStruct, Type, Visibility};
-
-#[proc_macro_derive(Transition)]
-pub fn transition_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast: Item = syn::parse(input).expect("Should decorate a struct.");
-
-    impl_transition_derive(&ast).into()
-}
-
+/// Automatic implementation of `StateMachine` for a record struct where every field
+/// is also a `StateMachine`.
 #[proc_macro_derive(StateMachine)]
 pub fn state_machine_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast: ItemStruct = syn::parse(input).expect("Should decorate a struct.");
-
-    impl_state_machine_derive(&ast).into()
+    impl_state_machine_derive(input.into()).into()
 }
 
-fn impl_transition_derive(ast: &Item) -> TokenStream {
-    let name = match ast {
-        Item::Enum(it) => &it.ident,
-        Item::Struct(it) => &it.ident,
-        _ => panic!("Can only derive Transition for an enum or struct."),
-    };
-
-    quote! {
-        impl aper::Transition for #name {}
-    }
-}
+use proc_macro2::{Ident, TokenStream};
+use quote::quote;
+use syn::{ItemStruct, Type, Visibility};
 
 struct Field<'a> {
     name: &'a Ident,
     ty: &'a Type,
     apply_variant: Ident,
+    conflict_variant: Ident,
+
     transition_ty: TokenStream,
     map_fn_name: Ident,
 }
@@ -43,6 +26,7 @@ impl<'a> Field<'a> {
         let name_str =
             inflections::case::to_pascal_case(&field.ident.as_ref().unwrap().to_string());
         let apply_variant = quote::format_ident!("Apply{}", name_str);
+        let conflict_variant = quote::format_ident!("{}Conflict", name_str);
         let ty = &field.ty;
         let transition_ty = quote! {
             <#ty as StateMachine>::Transition
@@ -54,6 +38,7 @@ impl<'a> Field<'a> {
             name,
             ty: &field.ty,
             apply_variant,
+            conflict_variant,
             transition_ty,
             map_fn_name,
         }
@@ -66,6 +51,7 @@ impl<'a> Field<'a> {
             map_fn_name,
             apply_variant,
             transition_ty,
+            ..
         } = self;
 
         quote! {
@@ -88,35 +74,81 @@ impl<'a> Field<'a> {
         }
     }
 
-    fn generate_transition_case(&self, enum_name: &Ident) -> TokenStream {
+    fn generate_conflict_variant(&self) -> TokenStream {
         let Field {
-            name,
-            apply_variant,
+            conflict_variant,
+            ty,
             ..
         } = self;
         quote! {
-            #enum_name::#apply_variant(val) => self.#name.apply(val),
+            #conflict_variant(<#ty as StateMachine>::Conflict),
+        }
+    }
+
+    fn generate_transition_case(
+        &self,
+        transition_name: &Ident,
+        conflict_name: &Ident,
+    ) -> TokenStream {
+        let Field {
+            name,
+            apply_variant,
+            conflict_variant,
+            ..
+        } = self;
+        quote! {
+            #transition_name::#apply_variant(val) => {
+                match self.#name.apply(val) {
+                    Ok(()) => Ok(()),
+                    Err(e) => Err(#conflict_name::#conflict_variant(e))
+                }
+            },
         }
     }
 }
 
-fn generate_transform(enum_name: &Ident, fields: &[Field], visibility: &Visibility) -> TokenStream {
+fn generate_transform(
+    enum_name: &Ident,
+    fields: &[Field],
+    visibility: &Visibility,
+) -> TokenStream {
     let variants: TokenStream = fields
         .iter()
         .flat_map(Field::generate_enum_variant)
         .collect();
 
     quote! {
-        #[derive(aper::Transition, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+        #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
         #visibility enum #enum_name {
             #variants
         }
     }
 }
 
-fn impl_state_machine_derive(ast: &ItemStruct) -> TokenStream {
+fn generate_conflicts(
+    enum_name: &Ident,
+    fields: &[Field],
+    visibility: &Visibility,
+) -> TokenStream {
+    let variants: TokenStream = fields
+        .iter()
+        .flat_map(Field::generate_conflict_variant)
+        .collect();
+
+    quote! {
+        #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+        #visibility enum #enum_name {
+            #variants
+        }
+    }
+}
+
+fn impl_state_machine_derive(input: TokenStream) -> TokenStream {
+    let ast: ItemStruct = syn::parse2(input).expect("Should decorate a struct.");
+
     let name = &ast.ident;
-    let enum_name = quote::format_ident!("{}Transform", name.to_string());
+    let transform_name = quote::format_ident!("{}Transform", name.to_string());
+    let conflict_name = quote::format_ident!("{}Conflict", name.to_string());
 
     let fields: Vec<Field> = match &ast.fields {
         syn::Fields::Named(fields) => fields.named.iter().map(Field::new).collect(),
@@ -125,25 +157,27 @@ fn impl_state_machine_derive(ast: &ItemStruct) -> TokenStream {
 
     let accessors: TokenStream = fields
         .iter()
-        .flat_map(|e| Field::generate_accessor(e, &enum_name))
+        .flat_map(|e| Field::generate_accessor(e, &transform_name))
         .collect();
 
     let transition_cases: TokenStream = fields
         .iter()
-        .flat_map(|e| Field::generate_transition_case(e, &enum_name))
+        .flat_map(|e| Field::generate_transition_case(e, &transform_name, &conflict_name))
         .collect();
 
     let visibility = &ast.vis;
-    let transform_enum = generate_transform(&enum_name, &fields, visibility);
+    let transform_enum = generate_transform(&transform_name, &fields, visibility);
+    let conflict_enum = generate_conflicts(&conflict_name, &fields, visibility);
 
     quote! {
         impl aper::StateMachine for #name {
-            type Transition = #enum_name;
+            type Transition = #transform_name;
+            type Conflict = #conflict_name;
 
-            fn apply(&mut self, transition: Self::Transition) {
+            fn apply(&mut self, transition: Self::Transition) -> Result<(), Self::Conflict> {
                 match transition {
                     #transition_cases
-                };
+                }
             }
         }
 
@@ -152,5 +186,7 @@ fn impl_state_machine_derive(ast: &ItemStruct) -> TokenStream {
         }
 
         #transform_enum
+
+        #conflict_enum
     }
 }

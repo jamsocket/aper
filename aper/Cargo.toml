@@ -1,21 +1,20 @@
 [package]
 name = "aper"
-version = "0.0.2"
+version = "0.1.3"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 homepage = "https://aper.dev"
 description = "Synchronized state machines over WebSockets"
-repository = "https://github.com/aper-dev/aper"
+repository = "https://github.com/drifting-in-space/aper"
 license = "MIT"
 readme = "../README.md"
 keywords = ["webassembly"]
 categories = ["data-structures", "web-programming::websocket", "wasm"]
 
 [dependencies]
-chrono = { version = "0.4.19", features = ["serde"] }
 serde = { version = "1.0.126", features = ["derive"] }
 uuid = { version = "0.8.2", features = ["serde", "v4", "wasm-bindgen"] }
-aper_derive = { version="0.0.2", path="./aper_derive" }
+aper_derive = { version="0.1.3", path="./aper_derive" }
 fractional_index = "0.1.0"
 
 [dev-dependencies]

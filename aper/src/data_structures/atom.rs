@@ -1,4 +1,4 @@
-use crate::{StateMachine, Transition};
+use crate::{NeverConflict, StateMachine};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -37,10 +37,12 @@ where
     T: 'static + Serialize + DeserializeOwned + Unpin + Send + Clone + PartialEq + Debug,
 {
     type Transition = ReplaceAtom<T>;
+    type Conflict = NeverConflict;
 
-    fn apply(&mut self, transition_event: Self::Transition) {
+    fn apply(&mut self, transition_event: Self::Transition) -> Result<(), NeverConflict> {
         let ReplaceAtom(v) = transition_event;
         self.value = v;
+        Ok(())
     }
 }
 
@@ -57,11 +59,6 @@ where
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ReplaceAtom<T: Clone + PartialEq + Debug + Unpin>(T);
 
-impl<T: Send + Sync> Transition for ReplaceAtom<T> where
-    T: 'static + Clone + PartialEq + Debug + Unpin + Serialize + DeserializeOwned + Send
-{
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -71,7 +68,7 @@ mod tests {
         let mut atom = Atom::new(5);
         assert_eq!(5, *atom.value());
 
-        atom.apply(atom.replace(8));
+        atom.apply(atom.replace(8)).unwrap();
 
         assert_eq!(8, *atom.value());
     }
