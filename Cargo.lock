@@ -312,9 +312,13 @@ version = "0.1.0"
 dependencies = [
  "aper",
  "aper-jamsocket",
+ "bincode",
  "chrono",
  "console_error_panic_hook",
+ "js-sys",
  "serde",
+ "serde_json",
+ "wasm-bindgen",
  "web-sys",
  "yew",
 ]

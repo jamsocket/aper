@@ -22,20 +22,68 @@ pub use aper_jamsocket::{
     ClientId, StateMachineContainerProgram, StateProgram, StateUpdateMessage, TransitionEvent,
 };
 pub use client::ClientBuilder;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use state_manager::StateManager;
 use std::fmt::Debug;
+use std::marker::PhantomData;
 pub use update_interval::UpdateInterval;
-use wire_wrapped::WireWrapped;
-use yew::format::{Bincode, Json};
-use yew::services::websocket::{WebSocketStatus, WebSocketTask};
-use yew::services::WebSocketService;
+use wasm_bindgen::prelude::Closure;
+use wasm_bindgen::JsCast;
+use web_sys::{MessageEvent, WebSocket};
 use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
 
 mod client;
 mod state_manager;
 mod update_interval;
 mod view;
-mod wire_wrapped;
+
+struct WebSocketTask<T: DeserializeOwned + 'static, F: Serialize> {
+    _ph: PhantomData<T>,
+    _ph1: PhantomData<F>,
+    ws: WebSocket,
+    #[allow(unused)]
+    onmessage_callback: Closure<dyn FnMut(MessageEvent)>,
+}
+
+impl<T: DeserializeOwned + 'static, F: Serialize> WebSocketTask<T, F> {
+    pub fn send(&self, value: &F) {
+        self.ws
+            .send_with_str(&serde_json::to_string(value).unwrap())
+            .unwrap();
+    }
+
+    pub fn new(url: &str, callback: Callback<T>) -> Self {
+        let ws = WebSocket::new(url).unwrap();
+
+        // Based on:
+        // https://rustwasm.github.io/wasm-bindgen/examples/websockets.html
+
+        ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
+        let onmessage_callback = Closure::wrap(Box::new(move |e: MessageEvent| {
+            if let Ok(abuf) = e.data().dyn_into::<js_sys::ArrayBuffer>() {
+                let array = js_sys::Uint8Array::new(&abuf);
+                let result: T = bincode::deserialize(&array.to_vec()).unwrap();
+
+                callback.emit(result);
+            } else if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
+                let result: T = serde_json::from_str(&txt.as_string().unwrap()).unwrap();
+
+                callback.emit(result);
+            } else {
+                panic!("message event, received Unknown: {:?}", e.data());
+            }
+        }) as Box<dyn FnMut(MessageEvent)>);
+        ws.set_onmessage(Some(onmessage_callback.as_ref().unchecked_ref()));
+
+        WebSocketTask {
+            _ph: PhantomData::default(),
+            _ph1: PhantomData::default(),
+            ws,
+            onmessage_callback,
+        }
+    }
+}
 
 /// Properties for [StateProgramComponent].
 #[derive(Properties, Clone)]
@@ -82,7 +130,7 @@ pub enum Msg<State: StateProgram> {
     /// user interaction.
     StateTransition(Option<State::T>),
     /// A [StateUpdateMessage] was received from the server.
-    ServerMessage(WireWrapped<StateUpdateMessage<State>>),
+    ServerMessage(StateUpdateMessage<State>),
     /// The status of the connection with the remote server has changed.
     UpdateStatus(Box<Status<State>>),
     /// Trigger a redraw of this View. Redraws are automatically triggered after a
@@ -104,14 +152,10 @@ pub struct StateProgramComponent<
     props: StateProgramComponentProps<V>,
 
     /// Websocket connection to the server.
-    wss_task: Option<WebSocketTask>,
+    wss_task: Option<WebSocketTask<StateUpdateMessage<Program>, TransitionEvent<Program::T>>>,
 
     /// Status of connection with the server.
     status: Status<Program>,
-
-    /// Whether or not to use binary (bincode) to communicate with the server.
-    /// This is set to whichever the server chose to send as its first message.
-    binary: bool,
 }
 
 impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>>
@@ -119,21 +163,11 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>>
 {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
-        self.status = Status::WaitingToConnect;
-        let wss_task = WebSocketService::connect(
+        self.status = Status::WaitingForInitialState;
+        let wss_task = WebSocketTask::new(
             &self.props.websocket_url,
             self.link.callback(Msg::ServerMessage),
-            self.link
-                .callback(move |result: WebSocketStatus| match result {
-                    WebSocketStatus::Opened => {
-                        Msg::UpdateStatus(Box::new(Status::WaitingForInitialState))
-                    }
-                    WebSocketStatus::Closed => Msg::NoOp,
-                    WebSocketStatus::Error => Msg::UpdateStatus(Box::new(Status::ErrorConnecting)),
-                }),
-        )
-        .unwrap(); // TODO: handle failure here.
-
+        );
         self.wss_task = Some(wss_task);
     }
 }
@@ -152,7 +186,6 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
             wss_task: None,
             props,
             status: Status::WaitingToConnect,
-            binary: false,
         };
 
         result.do_connect();
@@ -174,12 +207,7 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
 
                             let state_changed = state_manager.process_local_event(event.clone());
 
-                            if self.binary {
-                                self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
-                            } else {
-                                self.wss_task.as_mut().unwrap().send(Json(&event));
-                            }
-
+                            self.wss_task.as_mut().unwrap().send(&event);
                             state_changed
                         }
                         _ => panic!("Shouldn't receive StateTransition before connected."),
@@ -188,10 +216,8 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
                     false
                 }
             }
-            Msg::ServerMessage(c) => {
-                let WireWrapped { value, binary } = c;
-                self.binary = binary;
-                match value {
+            Msg::ServerMessage(message) => {
+                match message {
                     StateUpdateMessage::ReplaceState(state, timestamp, own_player_id) => {
                         if let Status::WaitingForInitialState = self.status {
                         } else {

@@ -43,9 +43,13 @@ version = "0.1.0"
 dependencies = [
  "aper",
  "aper-jamsocket",
+ "bincode",
  "chrono",
  "console_error_panic_hook",
+ "js-sys",
  "serde",
+ "serde_json",
+ "wasm-bindgen",
  "web-sys",
  "yew",
 ]
@@ -309,7 +313,7 @@ checksum = "1323096b05d41827dadeaee54c9981958c0f94e670bc94ed80037d1a7b8b186b"
 dependencies = [
  "bytes",
  "fnv",
- "itoa",
+ "itoa 0.4.8",
 ]
 
 [[package]]
@@ -335,9 +339,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
+name = "itoa"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
+
+[[package]]
 name = "jamsocket"
-version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b25f74832b91384a704b907cb023e10ee4738fb9"
+version = "0.1.6"
+source = "git+https://github.com/jamsocket/jamsocket#b9f85b5fb56b0038e17ee79051593017fa66c7cd"
 dependencies = [
  "serde",
 ]
@@ -345,7 +355,7 @@ dependencies = [
 [[package]]
 name = "jamsocket-wasm"
 version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b25f74832b91384a704b907cb023e10ee4738fb9"
+source = "git+https://github.com/jamsocket/jamsocket#b9f85b5fb56b0038e17ee79051593017fa66c7cd"
 dependencies = [
  "jamsocket",
  "jamsocket-wasm-macro",
@@ -354,7 +364,7 @@ dependencies = [
 [[package]]
 name = "jamsocket-wasm-macro"
 version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b25f74832b91384a704b907cb023e10ee4738fb9"
+source = "git+https://github.com/jamsocket/jamsocket#b9f85b5fb56b0038e17ee79051593017fa66c7cd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -433,9 +443,9 @@ checksum = "ed0cfbc8191465bed66e1718596ee0b0b35d5ee1f41c5df2189d0fe8bde535ba"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.32"
+version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba508cc11742c0dc5c1659771673afbab7a0efab23aa17e854cbab0837ed0b43"
+checksum = "c7342d5883fbccae1cc37a2353b09c87c9b0f3afd73f5fb9bba687a1f733b029"
 dependencies = [
  "unicode-xid",
 ]
@@ -453,9 +463,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.10"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38bc8cc6a5f2e3655e0899c1b848643b2562f853f114bfec7be120678e3ace05"
+checksum = "47aa80447ce4daf1717500037052af176af5d38cc3e571d9ec1c7353fc10c87d"
 dependencies = [
  "proc-macro2",
 ]
@@ -554,18 +564,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.130"
+version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f12d06de37cf59146fbdecab66aa99f9fe4f78722e3607577a5375d66bd0c913"
+checksum = "97565067517b60e2d1ea8b268e59ce036de907ac523ad83a0475da04e818989a"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.130"
+version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7bc1a1ab1961464eae040d96713baa5a724a8152c1222492465b54322ec508b"
+checksum = "ed201699328568d8d08208fdd080e3ff594e6c422e438b6705905da01005d537"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -574,11 +584,11 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.70"
+version = "1.0.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e277c495ac6cd1a01a58d0a0c574568b4d1ddf14f59965c6a58b8d96400b54f3"
+checksum = "ee2bb9cd061c5865d345bb02ca49fcef1391741b672b54a0bf7b679badec3142"
 dependencies = [
- "itoa",
+ "itoa 1.0.1",
  "ryu",
  "serde",
 ]
@@ -606,9 +616,9 @@ checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
 
 [[package]]
 name = "syn"
-version = "1.0.81"
+version = "1.0.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2afee18b8beb5a596ecb4a2dce128c719b4ba399d34126b9e4396e3f9860966"
+checksum = "ecb2e6da8ee5eb9a61068762a32fa9619cc591ceb055b3687f4cd4051ec2e06b"
 dependencies = [
  "proc-macro2",
  "quote",
