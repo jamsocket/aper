@@ -1,6 +1,5 @@
 use crate::{StateProgramComponent, StateProgramComponentProps, View};
 use aper_jamsocket::StateProgram;
-use yew::prelude::*;
 
 /// WebSocket URLs must be absolute, not relative, paths. For ergonomics, we
 /// allow a relative path and expand it.
@@ -54,6 +53,6 @@ impl<Program: StateProgram, V: 'static + View<State = Program, Callback = Progra
             view: self.view,
         };
 
-        App::<StateProgramComponent<Program, V>>::new().mount_to_body_with_props(props);
+        yew::start_app_with_props::<StateProgramComponent<Program, V>>(props);
     }
 }

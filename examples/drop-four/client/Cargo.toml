@@ -12,6 +12,6 @@ aper-jamsocket = {path="../../../aper-jamsocket"}
 aper-yew = {path="../../../aper-yew"}
 serde = { version = "1.0.127", features = ["derive"] }
 wasm-bindgen = "0.2.75"
-yew = "0.18.0"
+yew = "0.19.3"
 jamsocket-wasm = {git = "https://github.com/jamsocket/jamsocket"}
 drop-four-common = {path="../common"}

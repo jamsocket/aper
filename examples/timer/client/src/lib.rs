@@ -3,7 +3,7 @@ use yew::prelude::*;
 use aper_yew::{View, ViewContext, ClientBuilder};
 use timer_common::{Timer, TimerEvent};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 struct CounterView;
 
 
@@ -15,7 +15,7 @@ impl View for CounterView {
         return html! {
             <div>
                 <p>{&format!("Timer: {}", state.value)}</p>
-                <button onclick=context.callback.reform(|_| Some(TimerEvent::Reset))>
+                <button onclick={context.callback.reform(|_| Some(TimerEvent::Reset))}>
                     {"Reset"}
                 </button>
             </div>

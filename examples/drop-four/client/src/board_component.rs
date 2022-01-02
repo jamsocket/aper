@@ -19,8 +19,6 @@ const PADDING_BOTTOM: u32 = 10;
 
 pub struct BoardComponent {
     hover_col: Option<u32>,
-    props: BoardProps,
-    link: ComponentLink<Self>,
 }
 
 pub struct SetHoverCol(Option<u32>);
@@ -44,7 +42,7 @@ impl BoardComponent {
             <g>
                 <circle
                     r={(CELL_INNER_SIZE/2).to_string()}
-                    fill=color cy=offset.to_string() />
+                    fill={color} cy={offset.to_string()} />
                 <circle
                     r={(CELL_INNER_SIZE/2).to_string()}
                     fill="black"
@@ -67,18 +65,18 @@ impl BoardComponent {
         })
     }
 
-    fn view_hover_zones(&self) -> Html {
-        let set_hover_col = self.link.callback(SetHoverCol);
-        let drop_tile = self.props.callback.reform(GameTransition::Drop);
+    fn view_hover_zones(&self, context: &yew::Context<Self>) -> Html {
+        let set_hover_col = context.link().callback(SetHoverCol);
+        let drop_tile = context.props().callback.reform(GameTransition::Drop);
         let zones = (0..BOARD_COLS as u32).map(move |c| {
             html! {
                 <rect
                     x={(CELL_SIZE * c).to_string()}
-                    width=CELL_SIZE.to_string()
+                    width={CELL_SIZE.to_string()}
                     height={(CELL_SIZE * BOARD_ROWS as u32).to_string()}
                     opacity="0"
-                    onmouseover=set_hover_col.reform(move |_| Some(c))
-                    onclick=drop_tile.reform(move |_| c as usize)
+                    onmouseover={set_hover_col.reform(move |_| Some(c))}
+                    onclick={drop_tile.reform(move |_| c as usize)}
                 />
             }
         });
@@ -90,16 +88,16 @@ impl BoardComponent {
         }
     }
 
-    fn view_tentative_disc(&self) -> Html {
+    fn view_tentative_disc(&self, context: &yew::Context<Self>) -> Html {
         if let Some(disc_col) = self.hover_col {
-            if self.props.interactive {
+            if context.props().interactive {
                 let tx = CELL_SIZE * disc_col + CELL_SIZE / 2;
                 let ty = CELL_SIZE / 2;
                 let style = format!("transform: translate({}px, {}px)", tx, ty);
 
                 return html! {
-                    <g style=style class="tentative" >
-                        { self.view_disc(self.props.player, -(CELL_INNER_SIZE as i32) / 2) }
+                    <g style={style} class="tentative" >
+                        { self.view_disc(context.props().player, -(CELL_INNER_SIZE as i32) / 2) }
                     </g>
                 };
             }
@@ -108,8 +106,8 @@ impl BoardComponent {
         html! {}
     }
 
-    fn view_played_discs(&self) -> Html {
-        let board = self.props.board.0;
+    fn view_played_discs(&self, context: &yew::Context<Self>) -> Html {
+        let board = context.props().board.0;
 
         let col_groups = (0..BOARD_COLS).map(|col| {
             let discs = (0..BOARD_ROWS).rev().flat_map(|row| {
@@ -118,7 +116,7 @@ impl BoardComponent {
                     let style = format!("transform: translate(0, {}px)", ty);
 
                     html! {
-                        <g style=style class="disc">
+                        <g style={style} class="disc">
                             { self.view_disc(p, 0) }
                         </g>
                     }
@@ -129,7 +127,7 @@ impl BoardComponent {
             let transform = format!("translate({} 0)", tx);
 
             html! {
-                <g transform=transform>
+                <g transform={transform}>
                     { for discs }
                 </g>
             }
@@ -147,7 +145,7 @@ impl Component for BoardComponent {
     type Properties = BoardProps;
     type Message = SetHoverCol;
 
-    fn view(&self) -> Html {
+    fn view(&self, context: &yew::Context<Self>) -> Html {
         let height = BOARD_ROWS as u32 * CELL_SIZE;
         let width = BOARD_COLS as u32 * CELL_SIZE;
 
@@ -155,9 +153,9 @@ impl Component for BoardComponent {
         let svg_height = height + PADDING_TOP + PADDING_BOTTOM;
 
         return html! {
-            <svg width=svg_width.to_string() height=svg_height.to_string()>
+            <svg width={svg_width.to_string()} height={svg_height.to_string()}>
                 <mask id="board">
-                    <rect width=width.to_string() height=height.to_string() fill="white" />
+                    <rect width={width.to_string()} height={height.to_string()} fill="white" />
                     { for self.view_holes() }
                 </mask>
                 <mask id="hole_shadow">
@@ -165,24 +163,24 @@ impl Component for BoardComponent {
                     <circle r={(CELL_HOLE_SIZE/2).to_string()} fill="black" cy="4" />
                 </mask>
 
-                <g transform=format!("translate({} {})", PADDING_SIDE, PADDING_TOP) >
+                <g transform={format!("translate({} {})", PADDING_SIDE, PADDING_TOP)} >
                     <g transform="scale(0.98) translate(6 6)">
-                        <rect width=width.to_string() height=height.to_string() fill=BOARD_BG mask="url(#board)" />
+                        <rect width={width.to_string()} height={height.to_string()} fill={BOARD_BG} mask="url(#board)" />
                     </g>
 
-                    { self.view_played_discs() }
+                    { self.view_played_discs(context) }
 
-                    { self.view_tentative_disc() }
+                    { self.view_tentative_disc(context) }
 
-                    <rect width=width.to_string() height=height.to_string() fill=BOARD_FG mask="url(#board)" />
+                    <rect width={width.to_string()} height={height.to_string()} fill={BOARD_FG} mask="url(#board)" />
 
-                    { self.view_hover_zones() }
+                    { self.view_hover_zones(context) }
                 </g>
             </svg>
         };
     }
 
-    fn update(&mut self, msg: SetHoverCol) -> ShouldRender {
+    fn update(&mut self, _context: &yew::Context<Self>, msg: SetHoverCol) -> bool {
         let SetHoverCol(c) = msg;
 
         if c != self.hover_col {
@@ -193,15 +191,8 @@ impl Component for BoardComponent {
         }
     }
 
-    fn change(&mut self, props: BoardProps) -> ShouldRender {
-        self.props = props;
-        true
-    }
-
-    fn create(props: BoardProps, link: ComponentLink<Self>) -> Self {
+    fn create(_context: &yew::Context<Self>) -> Self {
         BoardComponent {
-            props,
-            link,
             hover_col: None,
         }
     }

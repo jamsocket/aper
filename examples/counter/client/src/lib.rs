@@ -4,7 +4,7 @@ use yew::prelude::*;
 
 pub use counter_common::{Counter, CounterTransition};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 struct CounterView;
 
 type CounterProgram = StateMachineContainerProgram<Counter>;
@@ -17,13 +17,13 @@ impl View for CounterView {
         return html! {
             <div>
                 <p>{&format!("Counter: {}", state.0.value())}</p>
-                <button onclick=context.callback.reform(|_| Some(CounterTransition::Add(1)))>
+                <button onclick={context.callback.reform(|_| Some(CounterTransition::Add(1)))}>
                     {"+1"}
                 </button>
-                <button onclick=context.callback.reform(|_| Some(CounterTransition::Subtract(1)))>
+                <button onclick={context.callback.reform(|_| Some(CounterTransition::Subtract(1)))}>
                     {"-1"}
                 </button>
-                <button onclick=context.callback.reform(|_| Some(CounterTransition::Reset))>
+                <button onclick={context.callback.reform(|_| Some(CounterTransition::Reset))}>
                     {"Reset"}
                 </button>
             </div>

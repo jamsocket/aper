@@ -31,7 +31,7 @@ pub use update_interval::UpdateInterval;
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::JsCast;
 use web_sys::{MessageEvent, WebSocket};
-use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
+use yew::{html, Callback, Component, Html, Properties};
 
 mod client;
 mod state_manager;
@@ -86,13 +86,12 @@ impl<T: DeserializeOwned + 'static, F: Serialize> WebSocketTask<T, F> {
 }
 
 /// Properties for [StateProgramComponent].
-#[derive(Properties, Clone)]
+#[derive(Properties, Clone, PartialEq)]
 pub struct StateProgramComponentProps<V: View> {
     /// The websocket URL (beginning ws:// or wss://) of the server to connect to.
     pub websocket_url: String,
 
     /// A no-argument callback that is invoked if there is a connection-related error.
-    #[prop_or_default]
     pub onerror: Callback<()>,
 
     /// An object implementing [View]. From the moment that [StateProgramComponent]
@@ -132,7 +131,7 @@ pub enum Msg<State: StateProgram> {
     /// A [StateUpdateMessage] was received from the server.
     ServerMessage(StateUpdateMessage<State>),
     /// The status of the connection with the remote server has changed.
-    UpdateStatus(Box<Status<State>>),
+    UpdateStatus(Status<State>),
     /// Trigger a redraw of this View. Redraws are automatically triggered after a
     /// [Msg::ServerMessage] is received, so this is used to trigger a redraw that
     /// is _not_ tied to a state change. The only difference between these redraws will
@@ -148,25 +147,24 @@ pub struct StateProgramComponent<
     Program: StateProgram,
     V: 'static + View<State = Program, Callback = Program::T>,
 > {
-    link: ComponentLink<Self>,
-    props: StateProgramComponentProps<V>,
-
     /// Websocket connection to the server.
     wss_task: Option<WebSocketTask<StateUpdateMessage<Program>, TransitionEvent<Program::T>>>,
 
     /// Status of connection with the server.
     status: Status<Program>,
+
+    _ph: PhantomData<V>,
 }
 
 impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>>
     StateProgramComponent<Program, V>
 {
     /// Initiate a connection to the remote server.
-    fn do_connect(&mut self) {
+    fn do_connect(&mut self, context: &yew::Context<Self>) {
         self.status = Status::WaitingForInitialState;
         let wss_task = WebSocketTask::new(
-            &self.props.websocket_url,
-            self.link.callback(Msg::ServerMessage),
+            &context.props().websocket_url,
+            context.link().callback(Msg::ServerMessage),
         );
         self.wss_task = Some(wss_task);
     }
@@ -180,20 +178,19 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
 
     /// On creation, we initialize the connection, which starts the process of
     /// obtaining a copy of the server's current state.
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(context: &yew::Context<Self>) -> Self {
         let mut result = Self {
-            link,
             wss_task: None,
-            props,
             status: Status::WaitingToConnect,
+            _ph: PhantomData::default(),
         };
 
-        result.do_connect();
+        result.do_connect(context);
 
         result
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, context: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::StateTransition(transition) => {
                 if let Some(transition) = transition {
@@ -242,10 +239,10 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
                 true
             }
             Msg::UpdateStatus(st) => {
-                if let Status::ErrorConnecting = *st {
-                    self.props.onerror.emit(())
+                if let Status::ErrorConnecting = st {
+                    context.props().onerror.emit(())
                 }
-                self.status = *st;
+                self.status = st;
                 true
             }
             Msg::Redraw => true,
@@ -253,28 +250,19 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
         }
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props.websocket_url != props.websocket_url {
-            self.props = props;
-            self.do_connect();
-            true
-        } else {
-            false
-        }
-    }
-
-    fn view(&self) -> Html {
+    fn view(&self, context: &yew::Context<Self>) -> Html {
         match &self.status {
             Status::WaitingToConnect => html! {{"Waiting to connect."}},
             Status::WaitingForInitialState => html! {{"Waiting for initial state."}},
             Status::Connected(state_manager, client_id) => {
                 let view_context = ViewContext {
-                    callback: self.link.callback(Msg::StateTransition),
-                    redraw: self.link.callback(|()| Msg::Redraw),
+                    callback: context.link().callback(Msg::StateTransition),
+                    redraw: context.link().callback(|()| Msg::Redraw),
                     time: state_manager.get_estimated_server_time(),
                     client: *client_id,
                 };
-                self.props
+                context
+                    .props()
                     .view
                     .view(state_manager.get_state(), &view_context)
             }

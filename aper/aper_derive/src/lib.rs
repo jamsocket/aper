@@ -107,11 +107,7 @@ impl<'a> Field<'a> {
     }
 }
 
-fn generate_transform(
-    enum_name: &Ident,
-    fields: &[Field],
-    visibility: &Visibility,
-) -> TokenStream {
+fn generate_transform(enum_name: &Ident, fields: &[Field], visibility: &Visibility) -> TokenStream {
     let variants: TokenStream = fields
         .iter()
         .flat_map(Field::generate_enum_variant)
@@ -125,11 +121,7 @@ fn generate_transform(
     }
 }
 
-fn generate_conflicts(
-    enum_name: &Ident,
-    fields: &[Field],
-    visibility: &Visibility,
-) -> TokenStream {
+fn generate_conflicts(enum_name: &Ident, fields: &[Field], visibility: &Visibility) -> TokenStream {
     let variants: TokenStream = fields
         .iter()
         .flat_map(Field::generate_conflict_variant)

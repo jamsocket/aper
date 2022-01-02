@@ -67,7 +67,8 @@ impl<P: StateProgram> AperJamsocketService<P> {
 }
 
 impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P>
-    where P::T: Unpin + Send + Sync + 'static
+where
+    P::T: Unpin + Send + Sync + 'static,
 {
     fn new(room_id: &str, ctx: &impl JamsocketContext) -> Self {
         let mut serv = AperJamsocketService {
@@ -129,7 +130,8 @@ impl<K: StateProgram, C: JamsocketContext> Default for AperJamsocketServiceBuild
 
 impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C>
     for AperJamsocketServiceBuilder<K, C>
-    where K::T: Unpin + Send + Sync + 'static
+where
+    K::T: Unpin + Send + Sync + 'static,
 {
     type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
     type Error = Infallible;
@@ -142,8 +144,9 @@ impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C>
 
 /// A message from the server to a client that tells it to update its state.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum StateUpdateMessage<State: StateProgram> 
-where State::T: Unpin + Send + Sync + 'static + Clone
+pub enum StateUpdateMessage<State: StateProgram>
+where
+    State::T: Unpin + Send + Sync + 'static + Clone,
 {
     /// Instructs the client to completely discard its existing state and replace it
     /// with the provided one. This is currently only used to set the initial state
@@ -164,7 +167,8 @@ pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct TransitionEvent<T>
-where T: Unpin + Send + Sync + 'static + Clone
+where
+    T: Unpin + Send + Sync + 'static + Clone,
 {
     #[serde(with = "ts_milliseconds")]
     pub timestamp: Timestamp,
@@ -173,7 +177,8 @@ where T: Unpin + Send + Sync + 'static + Clone
 }
 
 impl<T> TransitionEvent<T>
-where T: Unpin + Send + Sync + 'static + Clone
+where
+    T: Unpin + Send + Sync + 'static + Clone,
 {
     pub fn new(
         player: Option<ClientId>,

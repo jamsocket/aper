@@ -11,7 +11,7 @@ use yew::prelude::*;
 
 mod board_component;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 struct GameView;
 
 impl GameView {
@@ -20,26 +20,24 @@ impl GameView {
         waiting_player: Option<ClientId>,
         context: &ViewContext<GameTransition>,
     ) -> Html {
-        return html! {
-            if Some(context.client) == waiting_player {
-                html! {
-                    <p>{"Waiting for another player."}</p>
-                }
+        if Some(context.client) == waiting_player {
+            return html! {
+                <p>{"Waiting for another player."}</p>
+            };
+        } else {
+            let message = if waiting_player.is_some() {
+                "One player is waiting to play."
             } else {
-                let message = if waiting_player.is_some() {
-                    "One player is waiting to play."
-                } else {
-                    "Nobody is waiting to play."
-                };
+                "Nobody is waiting to play."
+            };
 
-                html! {
-                    <div>
-                        <button onclick=context.callback.reform(|_| Some(GameTransition::Join))>{"Join"}</button>
-                        <p>{message}</p>
-                    </div>
-                }
-            }
-        };
+            return html! {
+                <div>
+                    <button onclick={context.callback.reform(|_| Some(GameTransition::Join))}>{"Join"}</button>
+                    <p>{message}</p>
+                </div>
+            };
+        }
     }
 
     fn view_playing(
@@ -70,14 +68,16 @@ impl GameView {
             <div>
                 <p>{status_message}</p>
                 <BoardComponent
-                    board=board.clone()
-                    player=next_player
+                    board={board.clone()}
+                    player={next_player}
                     interactive={Some(next_player)==own_color}
-                    callback=context.callback.reform(Some).clone() />
+                    callback={context.callback.reform(Some).clone()} />
                 {
                     if winner.is_some() {
                         html! {
-                            <button onclick=context.callback.reform(|_| Some(GameTransition::Reset))>{"New Game"}</button>
+                            <button onclick={context.callback.reform(|_| Some(GameTransition::Reset))}>
+                                {"New Game"}
+                            </button>
                         }
                     } else {
                         html! {}

@@ -1,17 +1,17 @@
 use std::fmt::Debug;
 
-use aper::{StateMachine};
-use serde::{Deserialize, Serialize};
+use aper::StateMachine;
 use serde::de::DeserializeOwned;
-
+use serde::{Deserialize, Serialize};
 
 use crate::TransitionEvent;
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
-pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> 
-where <Self as StateProgram>::T: Unpin + Send + Sync
+pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>>
+where
+    <Self as StateProgram>::T: Unpin + Send + Sync,
 {
     type T: Debug + Serialize + DeserializeOwned + Clone + PartialEq;
 
@@ -45,9 +45,14 @@ where <Self as StateProgram>::T: Unpin + Send + Sync
 /// are stripped of their metadata and passed down to the underlying state machine.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(bound = "")]
-pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM) where <SM as StateMachine>::Transition: Send;
+pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM)
+where
+    <SM as StateMachine>::Transition: Send;
 
-impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> where <SM as StateMachine>::Transition: Send + Unpin + Sync {
+impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM>
+where
+    <SM as StateMachine>::Transition: Send + Unpin + Sync,
+{
     type Transition = TransitionEvent<SM::Transition>;
     type Conflict = SM::Conflict;
 
@@ -56,7 +61,10 @@ impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM> where <
     }
 }
 
-impl<SM: StateMachine + Default> StateProgram for StateMachineContainerProgram<SM> where <SM as StateMachine>::Transition: Send + Unpin + Sync {
+impl<SM: StateMachine + Default> StateProgram for StateMachineContainerProgram<SM>
+where
+    <SM as StateMachine>::Transition: Send + Unpin + Sync,
+{
     type T = SM::Transition;
 
     fn new(_init_value: &str) -> Self {
