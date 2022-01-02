@@ -26,10 +26,7 @@ use state_manager::StateManager;
 use std::fmt::Debug;
 pub use update_interval::UpdateInterval;
 use wire_wrapped::WireWrapped;
-use yew::format::{Bincode, Json};
-use yew::services::websocket::{WebSocketStatus, WebSocketTask};
-use yew::services::WebSocketService;
-use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
+use yew::{html, Callback, Component, Html, Properties};
 
 mod client;
 mod state_manager;
@@ -38,7 +35,7 @@ mod view;
 mod wire_wrapped;
 
 /// Properties for [StateProgramComponent].
-#[derive(Properties, Clone)]
+#[derive(Properties, Clone, PartialEq)]
 pub struct StateProgramComponentProps<V: View> {
     /// The websocket URL (beginning ws:// or wss://) of the server to connect to.
     pub websocket_url: String,
@@ -100,11 +97,10 @@ pub struct StateProgramComponent<
     Program: StateProgram,
     V: 'static + View<State = Program, Callback = Program::T>,
 > {
-    link: ComponentLink<Self>,
     props: StateProgramComponentProps<V>,
 
     /// Websocket connection to the server.
-    wss_task: Option<WebSocketTask>,
+    wss_task: Option<()>,
 
     /// Status of connection with the server.
     status: Status<Program>,
@@ -120,21 +116,21 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>>
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self) {
         self.status = Status::WaitingToConnect;
-        let wss_task = WebSocketService::connect(
-            &self.props.websocket_url,
-            self.link.callback(Msg::ServerMessage),
-            self.link
-                .callback(move |result: WebSocketStatus| match result {
-                    WebSocketStatus::Opened => {
-                        Msg::UpdateStatus(Box::new(Status::WaitingForInitialState))
-                    }
-                    WebSocketStatus::Closed => Msg::NoOp,
-                    WebSocketStatus::Error => Msg::UpdateStatus(Box::new(Status::ErrorConnecting)),
-                }),
-        )
-        .unwrap(); // TODO: handle failure here.
+        // let wss_task = WebSocketService::connect(
+        //     &self.props.websocket_url,
+        //     self.link.callback(Msg::ServerMessage),
+        //     self.link
+        //         .callback(move |result: WebSocketStatus| match result {
+        //             WebSocketStatus::Opened => {
+        //                 Msg::UpdateStatus(Box::new(Status::WaitingForInitialState))
+        //             }
+        //             WebSocketStatus::Closed => Msg::NoOp,
+        //             WebSocketStatus::Error => Msg::UpdateStatus(Box::new(Status::ErrorConnecting)),
+        //         }),
+        // )
+        // .unwrap(); // TODO: handle failure here.
 
-        self.wss_task = Some(wss_task);
+        // self.wss_task = Some(wss_task);
     }
 }
 
@@ -146,9 +142,8 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
 
     /// On creation, we initialize the connection, which starts the process of
     /// obtaining a copy of the server's current state.
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties) -> Self {
         let mut result = Self {
-            link,
             wss_task: None,
             props,
             status: Status::WaitingToConnect,
@@ -160,7 +155,7 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
         result
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> bool {
         match msg {
             Msg::StateTransition(transition) => {
                 if let Some(transition) = transition {
@@ -175,9 +170,9 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
                             let state_changed = state_manager.process_local_event(event.clone());
 
                             if self.binary {
-                                self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
+                                //self.wss_task.as_mut().unwrap().send_binary(Bincode(&event));
                             } else {
-                                self.wss_task.as_mut().unwrap().send(Json(&event));
+                                //self.wss_task.as_mut().unwrap().send(Json(&event));
                             }
 
                             state_changed
@@ -227,15 +222,15 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
         }
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props.websocket_url != props.websocket_url {
-            self.props = props;
-            self.do_connect();
-            true
-        } else {
-            false
-        }
-    }
+    // fn change(&mut self, props: Self::Properties) -> ShouldRender {
+    //     if self.props.websocket_url != props.websocket_url {
+    //         self.props = props;
+    //         self.do_connect();
+    //         true
+    //     } else {
+    //         false
+    //     }
+    // }
 
     fn view(&self) -> Html {
         match &self.status {

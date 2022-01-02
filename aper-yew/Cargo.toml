@@ -12,4 +12,4 @@ chrono = { version = "0.4.19", features = ["serde", "wasmbind"] }
 console_error_panic_hook = "0.1.7"
 serde = "1.0.126"
 web-sys = "0.3.55"
-yew = "0.18.0"
+yew = "0.19.3"

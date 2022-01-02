@@ -8,5 +8,5 @@ repository = "https://github.com/drifting-in-space/aper"
 aper = {path = "../aper"}
 aper-jamsocket = {path = "../aper-jamsocket"}
 env_logger = "0.9.0"
-jamsocket-server = { git = "https://github.com/jamsocket/jamsocket", version="0.1.5" }
+jamsocket-server = { git = "https://github.com/jamsocket/jamsocket", version="0.1.6" }
 log = "0.4.14"

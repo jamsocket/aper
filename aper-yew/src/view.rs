@@ -18,7 +18,7 @@ pub struct ViewContext<T> {
 
 /// Applies to a struct that can turn a value of the associated `State` type into `yew::Html`.
 /// The resulting view can emit events of type `Option<Callback>`.
-pub trait View: Clone {
+pub trait View: Clone + PartialEq {
     type State;
     type Callback;
 
