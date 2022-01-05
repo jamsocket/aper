@@ -76,5 +76,5 @@ of a value between two data structures, or the rules of a board game.
 
 - [Documentation](https://docs.rs/aper/)
 - [Getting Started with Aper guide](https://aper.dev/guide/)
-- [Examples](https://github.com/drifting-in-space-in-space/aper/tree/main/examples)
+- [Examples](https://github.com/drifting-in-space/aper/tree/main/examples)
 - [Talk on Aper for Rust Berlin (20 minute video)](https://www.youtube.com/watch?v=HNzeouj0eKc&t=1852s)
