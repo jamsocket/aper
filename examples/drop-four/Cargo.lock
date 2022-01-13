@@ -19,7 +19,7 @@ dependencies = [
  "aper",
  "bincode",
  "chrono",
- "jamsocket",
+ "jamsocket 0.1.7",
  "log",
  "serde",
  "serde_json",
@@ -120,7 +120,7 @@ dependencies = [
  "aper-jamsocket",
  "aper-yew",
  "drop-four-common",
- "jamsocket-wasm",
+ "jamsocket-wasm 0.1.5",
  "serde",
  "wasm-bindgen",
  "yew",
@@ -142,7 +142,7 @@ version = "0.1.0"
 dependencies = [
  "aper-jamsocket",
  "drop-four-common",
- "jamsocket-wasm",
+ "jamsocket-wasm 0.1.7",
 ]
 
 [[package]]
@@ -306,6 +306,12 @@ checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
 name = "jamsocket"
 version = "0.1.6"
 source = "git+https://github.com/jamsocket/jamsocket#049dc72c94c7c08aa2a9ce46f7b1457a09868267"
+
+[[package]]
+name = "jamsocket"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11bb104e420f08a842ac5f7e921e529f7fb6132ff0bcab96c69b94fdb89bef8d"
 dependencies = [
  "serde",
 ]
@@ -315,14 +321,35 @@ name = "jamsocket-wasm"
 version = "0.1.5"
 source = "git+https://github.com/jamsocket/jamsocket#049dc72c94c7c08aa2a9ce46f7b1457a09868267"
 dependencies = [
- "jamsocket",
- "jamsocket-wasm-macro",
+ "jamsocket 0.1.6",
+ "jamsocket-wasm-macro 0.1.5",
+]
+
+[[package]]
+name = "jamsocket-wasm"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58af2488fc0c696ccf1f7c7551ca0c979ba4752f59823960ee489dcdd95f8152"
+dependencies = [
+ "jamsocket 0.1.7",
+ "jamsocket-wasm-macro 0.1.7",
 ]
 
 [[package]]
 name = "jamsocket-wasm-macro"
 version = "0.1.5"
 source = "git+https://github.com/jamsocket/jamsocket#049dc72c94c7c08aa2a9ce46f7b1457a09868267"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "jamsocket-wasm-macro"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63e2409b9125240fb010d080dd6649531e26dbbffa4d4915b152dbc6cd4c6763"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -404,18 +431,18 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.32"
+version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba508cc11742c0dc5c1659771673afbab7a0efab23aa17e854cbab0837ed0b43"
+checksum = "c7342d5883fbccae1cc37a2353b09c87c9b0f3afd73f5fb9bba687a1f733b029"
 dependencies = [
  "unicode-xid",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.10"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38bc8cc6a5f2e3655e0899c1b848643b2562f853f114bfec7be120678e3ace05"
+checksum = "47aa80447ce4daf1717500037052af176af5d38cc3e571d9ec1c7353fc10c87d"
 dependencies = [
  "proc-macro2",
 ]
@@ -434,18 +461,18 @@ checksum = "c2e9d7eaddb227e8fbaaa71136ae0e1e913ca159b86c7da82f3e8f0044ad3a63"
 
 [[package]]
 name = "serde"
-version = "1.0.130"
+version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f12d06de37cf59146fbdecab66aa99f9fe4f78722e3607577a5375d66bd0c913"
+checksum = "97565067517b60e2d1ea8b268e59ce036de907ac523ad83a0475da04e818989a"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.130"
+version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7bc1a1ab1961464eae040d96713baa5a724a8152c1222492465b54322ec508b"
+checksum = "ed201699328568d8d08208fdd080e3ff594e6c422e438b6705905da01005d537"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -471,9 +498,9 @@ checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
 
 [[package]]
 name = "syn"
-version = "1.0.81"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2afee18b8beb5a596ecb4a2dce128c719b4ba399d34126b9e4396e3f9860966"
+checksum = "a684ac3dcd8913827e18cd09a68384ee66c1de24157e3c556c9ab16d85695fb7"
 dependencies = [
  "proc-macro2",
  "quote",

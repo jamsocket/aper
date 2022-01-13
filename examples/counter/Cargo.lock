@@ -76,9 +76,9 @@ checksum = "cfa8873f51c92e232f9bac4065cddef41b714152812bfc5f7672ba16d6ef8cd9"
 
 [[package]]
 name = "bumpalo"
-version = "3.8.0"
+version = "3.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f1e260c3a9040a7c19a12468758f4c16f31a81a1fe087482be9570ec864bb6c"
+checksum = "a4a45a46ab1f2412e53d3a0ade76ffad2025804294569aae387231a0cd6e0899"
 
 [[package]]
 name = "cfg-if"
@@ -264,9 +264,9 @@ dependencies = [
 
 [[package]]
 name = "gloo-utils"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d77d28d9a6f7c384d9e40293fa11f05558bf928a993208e12528ee6633cb415"
+checksum = "05c77af6f96a4f9e27c8ac23a88407381a31f4a74c3fb985c85aa79b8d898136"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -281,9 +281,9 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
 name = "indexmap"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc633605454125dec4b66843673f01c7df2b89479b32e0ed634e43a91cff62a5"
+checksum = "282a6247722caba404c065016bbfa522806e51714c34f5dfc3e4a3a46fcb4223"
 dependencies = [
  "autocfg",
  "hashbrown",
@@ -303,16 +303,18 @@ checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
 
 [[package]]
 name = "jamsocket"
-version = "0.1.6"
-source = "git+https://github.com/jamsocket/jamsocket#b9f85b5fb56b0038e17ee79051593017fa66c7cd"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11bb104e420f08a842ac5f7e921e529f7fb6132ff0bcab96c69b94fdb89bef8d"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "jamsocket-wasm"
-version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b9f85b5fb56b0038e17ee79051593017fa66c7cd"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58af2488fc0c696ccf1f7c7551ca0c979ba4752f59823960ee489dcdd95f8152"
 dependencies = [
  "jamsocket",
  "jamsocket-wasm-macro",
@@ -320,8 +322,9 @@ dependencies = [
 
 [[package]]
 name = "jamsocket-wasm-macro"
-version = "0.1.5"
-source = "git+https://github.com/jamsocket/jamsocket#b9f85b5fb56b0038e17ee79051593017fa66c7cd"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63e2409b9125240fb010d080dd6649531e26dbbffa4d4915b152dbc6cd4c6763"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -470,9 +473,9 @@ checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
 
 [[package]]
 name = "syn"
-version = "1.0.84"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecb2e6da8ee5eb9a61068762a32fa9619cc591ceb055b3687f4cd4051ec2e06b"
+checksum = "a684ac3dcd8913827e18cd09a68384ee66c1de24157e3c556c9ab16d85695fb7"
 dependencies = [
  "proc-macro2",
  "quote",
