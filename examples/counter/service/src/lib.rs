@@ -1,6 +1,6 @@
-use aper_jamsocket::{AperJamsocketService, StateMachineContainerProgram};
+use aper_stateroom::{AperStateroomService, StateMachineContainerProgram};
 use counter_common::Counter;
-use jamsocket_wasm::prelude::jamsocket_wasm;
+use stateroom_wasm::prelude::stateroom_wasm;
 
-#[jamsocket_wasm]
-type DropFourService = AperJamsocketService<StateMachineContainerProgram<Counter>>;
+#[stateroom_wasm]
+type DropFourService = AperStateroomService<StateMachineContainerProgram<Counter>>;

@@ -1,5 +1,5 @@
 use aper::{NeverConflict, StateMachine};
-use aper_jamsocket::{ClientId, StateProgram, TransitionEvent};
+use aper_stateroom::{ClientId, StateProgram, TransitionEvent};
 use serde::{Deserialize, Serialize};
 
 pub const BOARD_ROWS: usize = 6;
@@ -217,7 +217,7 @@ impl StateProgram for DropFourGame {
 
 #[cfg(test)]
 mod tests {
-    use aper_jamsocket::ClientId;
+    use aper_stateroom::ClientId;
 
     use chrono::{TimeZone, Utc};
 

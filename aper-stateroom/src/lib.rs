@@ -1,9 +1,9 @@
 use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
-pub use jamsocket::ClientId;
-use jamsocket::{
-    JamsocketContext, JamsocketServiceFactory, MessageRecipient, SimpleJamsocketService,
-    WrappedJamsocketService,
+pub use stateroom::ClientId;
+use stateroom::{
+    StateroomContext, StateroomServiceFactory, MessageRecipient, SimpleStateroomService,
+    WrappedStateroomService,
 };
 use serde::{Deserialize, Serialize};
 pub use state_program::{StateMachineContainerProgram, StateProgram};
@@ -12,13 +12,13 @@ use std::marker::PhantomData;
 
 mod state_program;
 
-pub struct AperJamsocketService<P: StateProgram> {
+pub struct AperStateroomService<P: StateProgram> {
     state: P,
     suspended_event: Option<TransitionEvent<P::T>>,
 }
 
-impl<P: StateProgram> AperJamsocketService<P> {
-    fn update_suspended_event(&mut self, ctx: &impl JamsocketContext) {
+impl<P: StateProgram> AperStateroomService<P> {
+    fn update_suspended_event(&mut self, ctx: &impl StateroomContext) {
         let susp = self.state.suspended_event();
         if susp == self.suspended_event {
             return;
@@ -36,7 +36,7 @@ impl<P: StateProgram> AperJamsocketService<P> {
     fn process_transition(
         &mut self,
         transition: TransitionEvent<P::T>,
-        ctx: &impl JamsocketContext,
+        ctx: &impl StateroomContext,
     ) {
         self.state.apply(transition.clone()).unwrap();
         ctx.send_message(
@@ -52,7 +52,7 @@ impl<P: StateProgram> AperJamsocketService<P> {
         &mut self,
         client_id: ClientId,
         transition: TransitionEvent<P::T>,
-        ctx: &impl JamsocketContext,
+        ctx: &impl StateroomContext,
     ) {
         if transition.player != Some(client_id) {
             log::warn!(
@@ -66,12 +66,12 @@ impl<P: StateProgram> AperJamsocketService<P> {
     }
 }
 
-impl<P: StateProgram> SimpleJamsocketService for AperJamsocketService<P>
+impl<P: StateProgram> SimpleStateroomService for AperStateroomService<P>
 where
     P::T: Unpin + Send + Sync + 'static,
 {
-    fn new(room_id: &str, ctx: &impl JamsocketContext) -> Self {
-        let mut serv = AperJamsocketService {
+    fn new(room_id: &str, ctx: &impl StateroomContext) -> Self {
+        let mut serv = AperStateroomService {
             state: P::new(room_id),
             suspended_event: None,
         };
@@ -81,7 +81,7 @@ where
         serv
     }
 
-    fn connect(&mut self, client_id: ClientId, ctx: &impl JamsocketContext) {
+    fn connect(&mut self, client_id: ClientId, ctx: &impl StateroomContext) {
         ctx.send_message(
             MessageRecipient::Client(client_id),
             serde_json::to_string(&StateUpdateMessage::ReplaceState::<P>(
@@ -94,19 +94,19 @@ where
         );
     }
 
-    fn disconnect(&mut self, _user: ClientId, _ctx: &impl JamsocketContext) {}
+    fn disconnect(&mut self, _user: ClientId, _ctx: &impl StateroomContext) {}
 
-    fn message(&mut self, user: ClientId, message: &str, ctx: &impl JamsocketContext) {
+    fn message(&mut self, user: ClientId, message: &str, ctx: &impl StateroomContext) {
         let transition: TransitionEvent<P::T> = serde_json::from_str(message).unwrap();
         self.check_and_process_transition(user, transition, ctx);
     }
 
-    fn binary(&mut self, user: ClientId, message: &[u8], ctx: &impl JamsocketContext) {
+    fn binary(&mut self, user: ClientId, message: &[u8], ctx: &impl StateroomContext) {
         let transition: TransitionEvent<P::T> = bincode::deserialize(message).unwrap();
         self.check_and_process_transition(user, transition, ctx);
     }
 
-    fn timer(&mut self, ctx: &impl JamsocketContext) {
+    fn timer(&mut self, ctx: &impl StateroomContext) {
         if let Some(event) = self.suspended_event.take() {
             self.process_transition(event, ctx);
             self.update_suspended_event(ctx);
@@ -114,31 +114,31 @@ where
     }
 }
 
-pub struct AperJamsocketServiceBuilder<K: StateProgram, C: JamsocketContext> {
+pub struct AperStateroomServiceBuilder<K: StateProgram, C: StateroomContext> {
     ph_k: PhantomData<K>,
     ph_c: PhantomData<C>,
 }
 
-impl<K: StateProgram, C: JamsocketContext> Default for AperJamsocketServiceBuilder<K, C> {
+impl<K: StateProgram, C: StateroomContext> Default for AperStateroomServiceBuilder<K, C> {
     fn default() -> Self {
-        AperJamsocketServiceBuilder {
+        AperStateroomServiceBuilder {
             ph_k: Default::default(),
             ph_c: Default::default(),
         }
     }
 }
 
-impl<K: StateProgram, C: JamsocketContext> JamsocketServiceFactory<C>
-    for AperJamsocketServiceBuilder<K, C>
+impl<K: StateProgram, C: StateroomContext> StateroomServiceFactory<C>
+    for AperStateroomServiceBuilder<K, C>
 where
     K::T: Unpin + Send + Sync + 'static,
 {
-    type Service = WrappedJamsocketService<AperJamsocketService<K>, C>;
+    type Service = WrappedStateroomService<AperStateroomService<K>, C>;
     type Error = Infallible;
 
     fn build(&self, room_id: &str, context: C) -> Result<Self::Service, Infallible> {
-        let service = AperJamsocketService::new(room_id, &context);
-        Ok(WrappedJamsocketService::new(service, context))
+        let service = AperStateroomService::new(room_id, &context);
+        Ok(WrappedStateroomService::new(service, context))
     }
 }
 

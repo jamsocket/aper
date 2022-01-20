@@ -1,8 +1,8 @@
-use aper_jamsocket::AperJamsocketService;
+use aper_stateroom::AperStateroomService;
 pub use drop_four_common::{
     Board, DropFourGame, GameTransition, PlayState, PlayerColor, BOARD_COLS, BOARD_ROWS,
 };
-use jamsocket_wasm::jamsocket_wasm;
+use stateroom_wasm::stateroom_wasm;
 
-#[jamsocket_wasm]
-type DropFourService = AperJamsocketService<DropFourGame>;
+#[stateroom_wasm]
+type DropFourService = AperStateroomService<DropFourGame>;

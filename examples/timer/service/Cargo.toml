@@ -8,6 +8,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 aper = { path="../../../aper" }
-aper-jamsocket = { path="../../../aper-jamsocket" }
-jamsocket-wasm = { version="0.1.7" }
+aper-stateroom = { path="../../../aper-stateroom" }
+stateroom-wasm = { version="0.2.0" }
 timer-common = { path="../common" }

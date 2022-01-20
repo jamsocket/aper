@@ -1,6 +1,6 @@
-use aper_jamsocket::AperJamsocketService;
+use aper_stateroom::AperStateroomService;
 use timer_common::Timer;
-use jamsocket_wasm::jamsocket_wasm;
+use stateroom_wasm::stateroom_wasm;
 
-#[jamsocket_wasm]
-type DropFourService = AperJamsocketService<Timer>;
+#[stateroom_wasm]
+type DropFourService = AperStateroomService<Timer>;

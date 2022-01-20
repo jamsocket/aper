@@ -5,7 +5,7 @@ edition = "2018"
 
 [dependencies]
 aper = {path="../../../aper"}
-aper-jamsocket = {path="../../../aper-jamsocket"}
+aper-stateroom = {path="../../../aper-stateroom"}
 serde = { version = "1.0.127", features = ["derive"] }
 
 [dev-dependencies]

@@ -1,5 +1,5 @@
 use aper::{StateMachine, NeverConflict};
-use aper_jamsocket::{StateProgram, TransitionEvent};
+use aper_stateroom::{StateProgram, TransitionEvent};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 

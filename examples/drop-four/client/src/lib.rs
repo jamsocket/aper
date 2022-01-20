@@ -1,6 +1,6 @@
 #![recursion_limit = "1024"]
 
-use aper_jamsocket::ClientId;
+use aper_stateroom::ClientId;
 use aper_yew::{ClientBuilder, View, ViewContext};
 use board_component::BoardComponent;
 use drop_four_common::{

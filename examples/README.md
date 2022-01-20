@@ -1,3 +1,3 @@
-Examples use [Jamsocket](https://github.com/drifting-in-space/jamsocket), which builds and serves both the client and server components of the code.
+Examples use [Stateroom](https://github.com/drifting-in-space/stateroom), which builds and serves both the client and server components of the code.
 
-Install Jamsocket by running `cargo install jamsocket`, and then run `jamsocket dev` in the base of any of the examples.
+Install Stateroom by running `cargo install stateroom`, and then run `stateroom dev` in the base of any of the examples.

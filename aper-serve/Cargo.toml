@@ -6,7 +6,7 @@ repository = "https://github.com/drifting-in-space/aper"
 
 [dependencies]
 aper = {path = "../aper"}
-aper-jamsocket = {path = "../aper-jamsocket"}
+aper-stateroom = {path = "../aper-stateroom"}
 env_logger = "0.9.0"
-jamsocket-server = { version="0.1.7" }
+stateroom-server = { version="0.2.0" }
 log = "0.4.14"

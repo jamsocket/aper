@@ -1,4 +1,4 @@
-use aper_jamsocket::{ClientId, Timestamp};
+use aper_stateroom::{ClientId, Timestamp};
 use yew::{Callback, Html};
 
 /// Context passed to a [View].

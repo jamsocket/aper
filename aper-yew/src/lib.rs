@@ -18,7 +18,7 @@
 //! just as they would in a regular Yew component.
 
 pub use crate::view::{View, ViewContext};
-pub use aper_jamsocket::{
+pub use aper_stateroom::{
     ClientId, StateMachineContainerProgram, StateProgram, StateUpdateMessage, TransitionEvent,
 };
 pub use client::ClientBuilder;

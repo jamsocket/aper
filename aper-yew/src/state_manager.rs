@@ -1,4 +1,4 @@
-use aper_jamsocket::{StateProgram, Timestamp, TransitionEvent};
+use aper_stateroom::{StateProgram, Timestamp, TransitionEvent};
 use chrono::Utc;
 use std::fmt::Debug;
 
