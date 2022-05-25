@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "aper"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "aper_derive",
  "fractional_index",
@@ -14,7 +14,7 @@ dependencies = [
 
 [[package]]
 name = "aper-stateroom"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "aper",
  "bincode",
@@ -27,7 +27,7 @@ dependencies = [
 
 [[package]]
 name = "aper-yew"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "aper",
  "aper-stateroom",
@@ -45,7 +45,7 @@ dependencies = [
 
 [[package]]
 name = "aper_derive"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "inflections",
  "proc-macro2",
