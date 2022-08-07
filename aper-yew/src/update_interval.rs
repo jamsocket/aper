@@ -1,4 +1,4 @@
-use gloo_timers::callback::Timeout;
+use gloo_timers::callback::Interval;
 use yew::prelude::*;
 
 /// Props of [UpdateInterval].
@@ -16,7 +16,7 @@ pub struct Props {
 /// state view itself cannot own an [IntervalTask].
 pub struct UpdateInterval {
     #[allow(unused)]
-    interval_task: Timeout,
+    interval_task: Interval,
 }
 
 impl Component for UpdateInterval {
@@ -24,13 +24,8 @@ impl Component for UpdateInterval {
     type Properties = Props;
 
     fn create(context: &yew::Context<Self>) -> Self {
-        // let interval_task = IntervalService::spawn(
-        //     Duration::from_millis(props.interval_ms),
-        //     context.link().callback.clone(),
-        // );
-
         let callback = context.props().callback.clone();
-        let interval_task = Timeout::new(context.props().interval_ms, move || callback.emit(()));
+        let interval_task = Interval::new(context.props().interval_ms, move || callback.emit(()));
 
         Self { interval_task }
     }

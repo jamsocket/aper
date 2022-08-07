@@ -1,12 +1,12 @@
 use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
-pub use stateroom::ClientId;
-use stateroom::{
-    StateroomContext, StateroomServiceFactory, MessageRecipient, SimpleStateroomService,
-    WrappedStateroomService,
-};
 use serde::{Deserialize, Serialize};
 pub use state_program::{StateMachineContainerProgram, StateProgram};
+pub use stateroom::ClientId;
+use stateroom::{
+    MessageRecipient, SimpleStateroomService, StateroomContext, StateroomServiceFactory,
+    WrappedStateroomService,
+};
 use std::convert::Infallible;
 use std::marker::PhantomData;
 
