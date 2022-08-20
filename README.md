@@ -47,14 +47,12 @@ impl StateMachine for Counter {
     type Transition = CounterTransition;
     type Conflict = NeverConflict;
 
-    fn apply(&mut self, event: CounterTransition) -> Result<(), NeverConflict> {
+    fn apply(&self, event: CounterTransition) -> Result<Counter, NeverConflict> {
         match event {
-            CounterTransition::Reset => { self.value = 0 }
-            CounterTransition::Increment(amount) => { self.value += amount }
-            CounterTransition::Decrement(amount) => { self.value -= amount }
+            CounterTransition::Reset => Ok(Counter {value: 0}),
+            CounterTransition::Increment(amount) => Ok(Counter {value: self.value + amount}),
+            CounterTransition::Decrement(amount) => Ok(Counter {value: self.value - amount}),
         }
-
-        Ok(())
     }
 }
 ```

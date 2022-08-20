@@ -67,7 +67,7 @@ mod tests {
         let atom = Atom::new(5);
         assert_eq!(5, *atom.value());
 
-        atom.apply(atom.replace(8)).unwrap();
+        let atom = atom.apply(atom.replace(8)).unwrap();
 
         assert_eq!(8, *atom.value());
     }

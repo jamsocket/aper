@@ -323,14 +323,14 @@ mod tests {
 
     #[test]
     fn test_get_location() {
-        let my_list: List<Atom<u32>> = List::new();
+        let mut my_list: List<Atom<u32>> = List::new();
         let mut ids: Vec<Uuid> = vec![];
 
         for i in 0..10 {
             let (id, transition) = my_list.append(Atom::new(i));
             ids.push(id);
 
-            my_list.apply(transition).unwrap();
+            my_list = my_list.apply(transition).unwrap();
         }
 
         // Beginning
@@ -374,19 +374,19 @@ mod tests {
 
     #[test]
     fn test_insert_between_merge() {
-        let my_list: List<Atom<u32>> = List::new();
+        let mut my_list: List<Atom<u32>> = List::new();
 
         let (id1, transition1) = my_list.append(Atom::new(1));
         let (id2, transition2) = my_list.append(Atom::new(2));
 
-        my_list.apply(transition2).unwrap(); // my_list = [2]
-        my_list.apply(transition1).unwrap(); // my_list = [2, 1]
+        my_list = my_list.apply(transition2).unwrap(); // my_list = [2]
+        my_list = my_list.apply(transition1).unwrap(); // my_list = [2, 1]
 
         let (_id3, transition3) = my_list.insert_between(&id2, &id1, Atom::new(3));
 
         let (_id4, transition4) = my_list.insert_between(&id2, &id1, Atom::new(4));
 
-        my_list.apply(transition4).unwrap();
+        my_list = my_list.apply(transition4).unwrap();
         assert_eq!(
             vec![2, 4, 1],
             my_list
@@ -394,7 +394,7 @@ mod tests {
                 .map(|d| *d.value.value())
                 .collect::<Vec<u32>>()
         );
-        my_list.apply(transition3).unwrap();
+        my_list = my_list.apply(transition3).unwrap();
         assert_eq!(
             vec![2, 4, 3, 1],
             my_list
@@ -406,19 +406,19 @@ mod tests {
 
     #[test]
     fn test_list() {
-        let list: List<Atom<i64>> = List::default();
+        let mut list: List<Atom<i64>> = List::default();
 
         // Test Append.
 
-        list.apply(list.append(Atom::new(5)).1).unwrap();
+        list = list.apply(list.append(Atom::new(5)).1).unwrap();
 
-        list.apply(list.append(Atom::new(3)).1).unwrap();
+        list = list.apply(list.append(Atom::new(3)).1).unwrap();
 
-        list.apply(list.append(Atom::new(143)).1).unwrap();
+        list = list.apply(list.append(Atom::new(143)).1).unwrap();
 
         // Test Prepend.
 
-        list.apply(list.prepend(Atom::new(99)).1).unwrap();
+        list = list.apply(list.prepend(Atom::new(99)).1).unwrap();
 
         {
             let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -429,7 +429,7 @@ mod tests {
         {
             let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-            list.apply(
+            list = list.apply(
                 list.insert(
                     ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
                     Atom::new(44),
@@ -438,7 +438,7 @@ mod tests {
             )
             .unwrap();
 
-            list.apply(
+            list = list.apply(
                 list.insert(
                     ZenoIndex::new_between(&locations[0], &locations[1]).unwrap(),
                     Atom::new(23),
@@ -447,7 +447,7 @@ mod tests {
             )
             .unwrap();
 
-            list.apply(
+            list = list.apply(
                 list.insert(
                     ZenoIndex::new_between(&locations[1], &locations[2]).unwrap(),
                     Atom::new(84),
@@ -466,9 +466,9 @@ mod tests {
         {
             let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
 
-            list.apply(list.delete(uuids[2])).unwrap();
+            list = list.apply(list.delete(uuids[2])).unwrap();
 
-            list.apply(list.delete(uuids[3])).unwrap();
+            list = list.apply(list.delete(uuids[3])).unwrap();
 
             {
                 let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -481,13 +481,13 @@ mod tests {
             let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
             let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-            list.apply(list.move_item(
+            list = list.apply(list.move_item(
                 uuids[0],
                 ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
             ))
             .unwrap();
 
-            list.apply(list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])))
+            list = list.apply(list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])))
                 .unwrap();
 
             {

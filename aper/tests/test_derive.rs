@@ -10,13 +10,13 @@ struct MyRecordStruct {
 
 #[test]
 fn test_derive() {
-    let r = MyRecordStruct {
+    let mut r = MyRecordStruct {
         left: Atom::new(30),
         right: Atom::new("blah".to_string()),
     };
 
-    r.apply(r.map_left(|d| d.replace(4))).unwrap();
-    r.apply(r.map_right(|d| d.replace("foo".to_string())))
+    r = r.apply(r.map_left(|d| d.replace(4))).unwrap();
+    r = r.apply(r.map_right(|d| d.replace("foo".to_string())))
         .unwrap();
 
     assert_eq!(&4, r.left.value());
