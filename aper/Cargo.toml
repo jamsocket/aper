@@ -12,10 +12,11 @@ keywords = ["webassembly"]
 categories = ["data-structures", "web-programming::websocket", "wasm"]
 
 [dependencies]
-serde = { version = "1.0.142", features = ["derive"] }
+serde = { version = "1.0.143", features = ["derive"] }
 uuid = { version = "1.1.2", features = ["serde", "v4", "js"] }
 aper_derive = { version="0.1.4", path="./aper_derive" }
 fractional_index = "1.0.0"
+im-rc = { version = "15.1.0", features = ["serde"] }
 
 [dev-dependencies]
 serde_json = "1.0.83"

@@ -32,7 +32,7 @@ where
     type Transition = InvalidTransition;
     type Conflict = NeverConflict;
 
-    fn apply(&mut self, _transition_event: InvalidTransition) -> Result<(), NeverConflict> {
+    fn apply(&self, _transition_event: InvalidTransition) -> Result<Self, NeverConflict> {
         panic!("Constant should never receive transition event.");
     }
 }

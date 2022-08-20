@@ -140,26 +140,27 @@ impl StateMachine for DropFourGame {
     type Transition = TransitionEvent<GameTransition>;
     type Conflict = NeverConflict;
 
-    fn apply(&mut self, event: Self::Transition) -> Result<(), NeverConflict> {
+    fn apply(&self, event: Self::Transition) -> Result<Self, NeverConflict> {
+        let mut new_self = self.clone();
         match event.transition {
             GameTransition::Join => {
                 if let PlayState::Waiting {
                     waiting_player: Some(waiting_player),
-                } = self.0
+                } = new_self.0
                 {
                     let player_map = PlayerMap {
                         teal_player: waiting_player,
                         brown_player: event.player.unwrap(),
                     };
 
-                    self.0 = PlayState::Playing {
+                    new_self.0 = PlayState::Playing {
                         next_player: PlayerColor::Teal,
                         board: Default::default(),
                         player_map,
                         winner: None,
                     }
                 } else if let PlayState::Waiting { .. } = self.0 {
-                    self.0 = PlayState::Waiting {
+                    new_self.0 = PlayState::Waiting {
                         waiting_player: event.player,
                     }
                 }
@@ -170,13 +171,13 @@ impl StateMachine for DropFourGame {
                     next_player,
                     player_map,
                     winner,
-                } = &mut self.0
+                } = &mut new_self.0
                 {
                     if winner.is_some() {
-                        return Ok(());
+                        return Ok(new_self);
                     } // Someone has already won.
                     if player_map.id_of_color(*next_player) != event.player.unwrap() {
-                        return Ok(());
+                        return Ok(new_self);
                     } // Play out of turn.
 
                     if let Some(insert_row) = board.lowest_open_row(c) {
@@ -191,9 +192,9 @@ impl StateMachine for DropFourGame {
                     winner: Some(winner),
                     player_map,
                     ..
-                } = self.0
+                } = new_self.0
                 {
-                    self.0 = PlayState::Playing {
+                    new_self.0 = PlayState::Playing {
                         next_player: winner.other(),
                         board: Default::default(),
                         player_map,
@@ -203,7 +204,7 @@ impl StateMachine for DropFourGame {
             }
         }
 
-        Ok(())
+        Ok(new_self)
     }
 }
 

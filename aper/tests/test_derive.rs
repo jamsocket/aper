@@ -10,7 +10,7 @@ struct MyRecordStruct {
 
 #[test]
 fn test_derive() {
-    let mut r = MyRecordStruct {
+    let r = MyRecordStruct {
         left: Atom::new(30),
         right: Atom::new("blah".to_string()),
     };

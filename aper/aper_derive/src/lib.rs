@@ -99,7 +99,11 @@ impl<'a> Field<'a> {
         quote! {
             #transition_name::#apply_variant(val) => {
                 match self.#name.apply(val) {
-                    Ok(()) => Ok(()),
+                    Ok(v) => {
+                        let mut new_self = self.clone();
+                        new_self.#name = v;
+                        Ok(new_self)
+                    },
                     Err(e) => Err(#conflict_name::#conflict_variant(e))
                 }
             },
@@ -166,7 +170,7 @@ fn impl_state_machine_derive(input: TokenStream) -> TokenStream {
             type Transition = #transform_name;
             type Conflict = #conflict_name;
 
-            fn apply(&mut self, transition: Self::Transition) -> Result<(), Self::Conflict> {
+            fn apply(&self, transition: Self::Transition) -> Result<Self, Self::Conflict> {
                 match transition {
                     #transition_cases
                 }
