@@ -14,6 +14,10 @@ pub enum CounterTransition {
 }
 
 impl Counter {
+    pub fn new(value: i64) -> Self {
+        Counter { value }
+    }
+
     pub fn increment(by: i64) -> CounterTransition {
         CounterTransition::Increment(by)
     }

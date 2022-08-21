@@ -41,9 +41,11 @@ impl<P: StateProgram> AperStateroomService<P> {
         self.state = self.state.apply(transition).unwrap();
         ctx.send_message(
             MessageRecipient::Broadcast,
-            serde_json::to_string(&StateUpdateMessage::TransitionState::<P>(transition.clone()))
-                .unwrap()
-                .as_str(),
+            serde_json::to_string(&StateUpdateMessage::TransitionState::<P>(
+                transition.clone(),
+            ))
+            .unwrap()
+            .as_str(),
         );
         self.update_suspended_event(ctx);
     }

@@ -116,7 +116,9 @@ impl<T: StateMachine + PartialEq> StateMachine for List<T> {
 
     fn apply(&self, transition_event: &Self::Transition) -> Result<Self, ListConflict<T>> {
         match transition_event {
-            ListOperation::Insert(location, id, value) => self.do_insert(location, id, value.clone()),
+            ListOperation::Insert(location, id, value) => {
+                self.do_insert(location, id, value.clone())
+            }
             ListOperation::Delete(id) => self.do_delete(id),
             ListOperation::Move(id, location) => self.do_move(id, location),
             ListOperation::Apply(id, transition) => {
@@ -429,32 +431,38 @@ mod tests {
         {
             let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-            list = list.apply(
-                &list.insert(
-                    ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
-                    Atom::new(44),
+            list = list
+                .apply(
+                    &list
+                        .insert(
+                            ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
+                            Atom::new(44),
+                        )
+                        .1,
                 )
-                .1,
-            )
-            .unwrap();
+                .unwrap();
 
-            list = list.apply(
-                &list.insert(
-                    ZenoIndex::new_between(&locations[0], &locations[1]).unwrap(),
-                    Atom::new(23),
+            list = list
+                .apply(
+                    &list
+                        .insert(
+                            ZenoIndex::new_between(&locations[0], &locations[1]).unwrap(),
+                            Atom::new(23),
+                        )
+                        .1,
                 )
-                .1,
-            )
-            .unwrap();
+                .unwrap();
 
-            list = list.apply(
-                &list.insert(
-                    ZenoIndex::new_between(&locations[1], &locations[2]).unwrap(),
-                    Atom::new(84),
+            list = list
+                .apply(
+                    &list
+                        .insert(
+                            ZenoIndex::new_between(&locations[1], &locations[2]).unwrap(),
+                            Atom::new(84),
+                        )
+                        .1,
                 )
-                .1,
-            )
-            .unwrap();
+                .unwrap();
 
             {
                 let result: Vec<i64> = list.iter().map(|d| *d.value.value()).collect();
@@ -481,13 +489,15 @@ mod tests {
             let uuids: Vec<Uuid> = list.iter().map(|d| d.id).collect();
             let locations: Vec<ZenoIndex> = list.iter().map(|d| d.location).collect();
 
-            list = list.apply(&list.move_item(
-                uuids[0],
-                ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
-            ))
-            .unwrap();
+            list = list
+                .apply(&list.move_item(
+                    uuids[0],
+                    ZenoIndex::new_between(&locations[2], &locations[3]).unwrap(),
+                ))
+                .unwrap();
 
-            list = list.apply(&list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])))
+            list = list
+                .apply(&list.move_item(uuids[4], ZenoIndex::new_before(&locations[0])))
                 .unwrap();
 
             {
