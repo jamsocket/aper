@@ -36,17 +36,17 @@ impl<State: StateProgram> StateManager<State> {
 
     /// Process an event that originated at this client.
     /// Returns `true` if the transition resulted in an optimistic state change.
-    pub fn process_local_event(&mut self, event: TransitionEvent<State::T>) -> bool {
+    pub fn process_local_event(&mut self, event: &TransitionEvent<State::T>) -> bool {
         // if sent_transition is Some(_), do nothing.
         // otherwise
         // - apply event to optimistic_state
         // - store event in sent_transition
         if self.sent_transition.is_none() {
-            let new_state = self.optimistic_state.apply(event.clone());
+            let new_state = self.optimistic_state.apply(event);
             if new_state.is_err() {
                 return false;
             }
-            self.sent_transition = Some(event);
+            self.sent_transition = Some(event.clone());
             self.optimistic_state = Box::new(new_state.unwrap());
             true
         } else {
@@ -55,7 +55,7 @@ impl<State: StateProgram> StateManager<State> {
     }
 
     /// Process an event that came from the server
-    pub fn process_remote_event(&mut self, event: TransitionEvent<State::T>) {
+    pub fn process_remote_event(&mut self, event: &TransitionEvent<State::T>) {
         // if sent_transition is None, same behavior as before
         // otherwise:
         // - if sent_transition is NOT the same as event:
@@ -67,13 +67,13 @@ impl<State: StateProgram> StateManager<State> {
         self.last_server_time = event.timestamp;
         self.golden_state = Box::new(
             self.golden_state
-                .apply(event.clone())
+                .apply(event)
                 .expect("Message from server caused conflict."),
         );
 
         match &self.sent_transition {
             Some(transition) => {
-                if *transition != event {
+                if transition != event {
                     self.optimistic_state = self.golden_state.clone();
                 }
 

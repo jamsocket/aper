@@ -6,6 +6,8 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
+pub mod sync;
+
 /// An unconstructable type, meant to serve as the `Conflict` type of a [`StateMachine`]
 /// for which a conflict can never arise.
 ///
@@ -32,5 +34,5 @@ pub trait StateMachine:
     /// deterministic: calling it on a clone of the state with a clone of the [`Transition`]
     /// must result in the same state, even at a different time and on a different machine. This
     /// is the requirement that allows Aper to keep the state in sync across multiple machines.
-    fn apply(&self, transition: Self::Transition) -> Result<Self, Self::Conflict>;
+    fn apply(&self, transition: &Self::Transition) -> Result<Self, Self::Conflict>;
 }

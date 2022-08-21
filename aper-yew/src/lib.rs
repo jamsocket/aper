@@ -202,7 +202,7 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
                                 transition,
                             );
 
-                            let state_changed = state_manager.process_local_event(event.clone());
+                            let state_changed = state_manager.process_local_event(&event);
 
                             self.wss_task.as_mut().unwrap().send(&event);
                             state_changed
@@ -228,7 +228,7 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
                     }
                     StateUpdateMessage::TransitionState(msg) => match &mut self.status {
                         Status::Connected(state_manager, _) => {
-                            state_manager.process_remote_event(msg);
+                            state_manager.process_remote_event(&msg);
                         }
                         _ => panic!(
                             "Received GameStateTransition while in state {:?}",

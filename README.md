@@ -34,7 +34,7 @@ use aper::{StateMachine, NeverConflict};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-struct Counter { value: i64 };
+struct Counter { value: i64 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 enum CounterTransition {
@@ -47,7 +47,7 @@ impl StateMachine for Counter {
     type Transition = CounterTransition;
     type Conflict = NeverConflict;
 
-    fn apply(&self, event: CounterTransition) -> Result<Counter, NeverConflict> {
+    fn apply(&self, event: &CounterTransition) -> Result<Counter, NeverConflict> {
         match event {
             CounterTransition::Reset => Ok(Counter {value: 0}),
             CounterTransition::Increment(amount) => Ok(Counter {value: self.value + amount}),

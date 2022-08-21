@@ -35,13 +35,13 @@ impl<P: StateProgram> AperStateroomService<P> {
 
     fn process_transition(
         &mut self,
-        transition: TransitionEvent<P::T>,
+        transition: &TransitionEvent<P::T>,
         ctx: &impl StateroomContext,
     ) {
-        self.state = self.state.apply(transition.clone()).unwrap();
+        self.state = self.state.apply(transition).unwrap();
         ctx.send_message(
             MessageRecipient::Broadcast,
-            serde_json::to_string(&StateUpdateMessage::TransitionState::<P>(transition))
+            serde_json::to_string(&StateUpdateMessage::TransitionState::<P>(transition.clone()))
                 .unwrap()
                 .as_str(),
         );
@@ -51,7 +51,7 @@ impl<P: StateProgram> AperStateroomService<P> {
     fn check_and_process_transition(
         &mut self,
         client_id: ClientId,
-        transition: TransitionEvent<P::T>,
+        transition: &TransitionEvent<P::T>,
         ctx: &impl StateroomContext,
     ) {
         if transition.player != Some(client_id) {
@@ -98,17 +98,17 @@ where
 
     fn message(&mut self, user: ClientId, message: &str, ctx: &impl StateroomContext) {
         let transition: TransitionEvent<P::T> = serde_json::from_str(message).unwrap();
-        self.check_and_process_transition(user, transition, ctx);
+        self.check_and_process_transition(user, &transition, ctx);
     }
 
     fn binary(&mut self, user: ClientId, message: &[u8], ctx: &impl StateroomContext) {
         let transition: TransitionEvent<P::T> = bincode::deserialize(message).unwrap();
-        self.check_and_process_transition(user, transition, ctx);
+        self.check_and_process_transition(user, &transition, ctx);
     }
 
     fn timer(&mut self, ctx: &impl StateroomContext) {
         if let Some(event) = self.suspended_event.take() {
-            self.process_transition(event, ctx);
+            self.process_transition(&event, ctx);
             self.update_suspended_event(ctx);
         }
     }
