@@ -38,7 +38,7 @@ impl<P: StateProgram> AperStateroomService<P> {
         transition: TransitionEvent<P::T>,
         ctx: &impl StateroomContext,
     ) {
-        self.state.apply(transition.clone()).unwrap();
+        self.state = self.state.apply(transition.clone()).unwrap();
         ctx.send_message(
             MessageRecipient::Broadcast,
             serde_json::to_string(&StateUpdateMessage::TransitionState::<P>(transition))

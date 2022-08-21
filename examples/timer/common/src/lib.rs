@@ -19,16 +19,17 @@ impl StateMachine for Timer {
     type Transition = TransitionEvent<TimerEvent>;
     type Conflict = NeverConflict;
 
-    fn apply(&mut self, event: Self::Transition) -> Result<(), NeverConflict> {
+    fn apply(&self, event: Self::Transition) -> Result<Self, NeverConflict> {
+        let mut new_self = self.clone();
         match event.transition {
-            TimerEvent::Reset => self.value = 0,
+            TimerEvent::Reset => new_self.value = 0,
             TimerEvent::Increment => {
-                self.value += 1;
-                self.last_increment = event.timestamp;
+                new_self.value += 1;
+                new_self.last_increment = event.timestamp;
             }
         }
 
-        Ok(())
+        Ok(new_self)
     }
 }
 

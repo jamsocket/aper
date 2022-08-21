@@ -16,6 +16,6 @@ proc-macro = true
 
 [dependencies]
 inflections = "1.1.1"
-proc-macro2 = "1.0.39"
-quote = "1.0.18"
-syn = { version = "1.0.95", features = ["full"] }
+proc-macro2 = "1.0.43"
+quote = "1.0.21"
+syn = { version = "1.0.99", features = ["full"] }

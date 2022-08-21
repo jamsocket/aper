@@ -9,5 +9,5 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 aper-stateroom = { path="../../../aper-stateroom" }
 aper = { path="../../../aper" }
-stateroom-wasm = { version="0.2.2" }
+stateroom-wasm = { version="0.2.3" }
 counter-common = { path="../common" }

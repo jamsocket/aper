@@ -56,8 +56,10 @@ where
     type Transition = TransitionEvent<SM::Transition>;
     type Conflict = SM::Conflict;
 
-    fn apply(&mut self, transition: Self::Transition) -> Result<(), Self::Conflict> {
-        self.0.apply(transition.transition)
+    fn apply(&self, transition: Self::Transition) -> Result<Self, Self::Conflict> {
+        Ok(StateMachineContainerProgram(
+            self.0.apply(transition.transition)?,
+        ))
     }
 }
 

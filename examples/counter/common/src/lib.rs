@@ -23,19 +23,20 @@ impl StateMachine for Counter {
     type Transition = CounterTransition;
     type Conflict = NeverConflict;
 
-    fn apply(&mut self, event: CounterTransition) -> Result<(), NeverConflict> {
+    fn apply(&self, event: CounterTransition) -> Result<Self, NeverConflict> {
+        let mut new_self = self.clone();
         match event {
             CounterTransition::Add(i) => {
-                self.value += i;
+                new_self.value += i;
             }
             CounterTransition::Subtract(i) => {
-                self.value -= i;
+                new_self.value -= i;
             }
             CounterTransition::Reset => {
-                self.value = 0;
+                new_self.value = 0;
             }
         }
 
-        Ok(())
+        Ok(new_self)
     }
 }

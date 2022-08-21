@@ -39,10 +39,9 @@ where
     type Transition = ReplaceAtom<T>;
     type Conflict = NeverConflict;
 
-    fn apply(&mut self, transition_event: Self::Transition) -> Result<(), NeverConflict> {
+    fn apply(&self, transition_event: Self::Transition) -> Result<Self, NeverConflict> {
         let ReplaceAtom(v) = transition_event;
-        self.value = v;
-        Ok(())
+        Ok(Atom::new(v))
     }
 }
 
@@ -65,10 +64,10 @@ mod tests {
 
     #[test]
     fn test_replace() {
-        let mut atom = Atom::new(5);
+        let atom = Atom::new(5);
         assert_eq!(5, *atom.value());
 
-        atom.apply(atom.replace(8)).unwrap();
+        let atom = atom.apply(atom.replace(8)).unwrap();
 
         assert_eq!(8, *atom.value());
     }
