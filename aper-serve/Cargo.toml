@@ -8,5 +8,5 @@ repository = "https://github.com/drifting-in-space/aper"
 aper = {path = "../aper"}
 aper-stateroom = {path = "../aper-stateroom"}
 env_logger = "0.9.0"
-stateroom-server = { version="0.2.3" }
+stateroom-server = { git="https://github.com/drifting-in-space/stateroom.git" }
 log = "0.4.17"

@@ -3,7 +3,7 @@ use crate::StateMachine;
 
 #[derive(Default)]
 pub struct StateServer<S: StateMachine> {
-    version: StateVersionNumber,
+    pub version: StateVersionNumber,
     state: S,
 }
 
@@ -18,6 +18,10 @@ impl<S: StateMachine> StateServer<S> {
             version: StateVersionNumber::default(),
             state,
         }
+    }
+
+    pub fn state(&self) -> &S {
+        &self.state
     }
 
     pub fn receive_message(

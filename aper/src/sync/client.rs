@@ -1,14 +1,17 @@
-use super::messages::{ClientTransitionNumber, MessageToClient, StateVersionNumber};
+use super::messages::{
+    ClientTransitionNumber, MessageToClient, MessageToServer, StateVersionNumber,
+};
 use crate::StateMachine;
 use std::collections::VecDeque;
 
+#[derive(Debug, Clone)]
 struct OptimisticState<S: StateMachine> {
     transition_number: ClientTransitionNumber,
     transition: S::Transition,
     state: S,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct StateClient<S: StateMachine> {
     golden_state: S,
     optimistic_states: VecDeque<OptimisticState<S>>,
@@ -17,24 +20,36 @@ pub struct StateClient<S: StateMachine> {
 }
 
 impl<S: StateMachine> StateClient<S> {
-    pub fn push_optimistic_transition(
+    pub fn new(state: S, version: StateVersionNumber) -> Self {
+        StateClient {
+            golden_state: state,
+            optimistic_states: VecDeque::new(),
+            version,
+            next_transition: ClientTransitionNumber::default(),
+        }
+    }
+
+    pub fn push_transition(
         &mut self,
         transition: S::Transition,
-    ) -> Result<ClientTransitionNumber, S::Conflict> {
-        let current_state = self.borrow();
+    ) -> Result<MessageToServer<S>, S::Conflict> {
+        let current_state = self.state();
         let state = current_state.apply(&transition)?;
 
         let transition_number = self.next_transition();
 
         let optimistic_state = OptimisticState {
-            transition,
+            transition: transition.clone(),
             state,
             transition_number,
         };
 
         self.optimistic_states.push_back(optimistic_state);
 
-        Ok(transition_number)
+        Ok(MessageToServer::DoTransition {
+            transition_number,
+            transition,
+        })
     }
 
     pub fn next_transition(&mut self) -> ClientTransitionNumber {
@@ -126,6 +141,7 @@ impl<S: StateMachine> StateClient<S> {
                     version.prior_version()
                 );
                 self.golden_state = self.golden_state.apply(&transition).unwrap();
+                self.version = version;
 
                 let mut state = &self.golden_state;
                 for optimistic_state in self.optimistic_states.iter_mut() {
@@ -140,7 +156,7 @@ impl<S: StateMachine> StateClient<S> {
         }
     }
 
-    pub fn borrow(&self) -> &S {
+    pub fn state(&self) -> &S {
         if let Some(v) = self.optimistic_states.back() {
             &v.state
         } else {
@@ -165,11 +181,10 @@ mod test {
         })
         .unwrap();
 
-        assert_eq!(0, m1.borrow().value());
+        assert_eq!(0, m1.state().value());
 
-        m1.push_optimistic_transition(Counter::increment(4))
-            .unwrap();
+        m1.push_transition(Counter::increment(4)).unwrap();
 
-        assert_eq!(4, m1.borrow().value());
+        assert_eq!(4, m1.state().value());
     }
 }
