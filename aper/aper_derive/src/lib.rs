@@ -170,7 +170,7 @@ fn impl_state_machine_derive(input: TokenStream) -> TokenStream {
             type Transition = #transform_name;
             type Conflict = #conflict_name;
 
-            fn apply(&self, transition: Self::Transition) -> Result<Self, Self::Conflict> {
+            fn apply(&self, transition: &Self::Transition) -> Result<Self, Self::Conflict> {
                 match transition {
                     #transition_cases
                 }

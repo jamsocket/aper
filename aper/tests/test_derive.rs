@@ -15,8 +15,9 @@ fn test_derive() {
         right: Atom::new("blah".to_string()),
     };
 
-    r = r.apply(r.map_left(|d| d.replace(4))).unwrap();
-    r = r.apply(r.map_right(|d| d.replace("foo".to_string())))
+    r = r.apply(&r.map_left(|d| d.replace(4))).unwrap();
+    r = r
+        .apply(&r.map_right(|d| d.replace("foo".to_string())))
         .unwrap();
 
     assert_eq!(&4, r.left.value());

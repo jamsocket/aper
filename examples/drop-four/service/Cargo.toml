@@ -7,6 +7,6 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-aper-stateroom = { path="../../../aper-stateroom" }
-stateroom-wasm = { version="0.2.2" }
+aper-stateroom = {path="../../../aper-stateroom"}
+stateroom-wasm = { version="0.2.4" }
 drop-four-common = { path="../common" }

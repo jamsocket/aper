@@ -18,13 +18,13 @@
 //! just as they would in a regular Yew component.
 
 pub use crate::view::{View, ViewContext};
-pub use aper_stateroom::{
-    ClientId, StateMachineContainerProgram, StateProgram, StateUpdateMessage, TransitionEvent,
-};
+use aper::sync::{client::StateClient, messages::MessageToServer};
+use aper_stateroom::StateProgramMessage;
+pub use aper_stateroom::{ClientId, StateMachineContainerProgram, StateProgram, TransitionEvent};
+use chrono::{Duration, Utc};
 pub use client::ClientBuilder;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use state_manager::StateManager;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 pub use update_interval::UpdateInterval;
@@ -34,7 +34,6 @@ use web_sys::{MessageEvent, WebSocket};
 use yew::{html, Callback, Component, Html, Properties};
 
 mod client;
-mod state_manager;
 mod update_interval;
 mod view;
 
@@ -113,7 +112,17 @@ pub enum Status<State: StateProgram> {
     WaitingForInitialState,
     /// The component has connected to the server and is assumed to contain an up-to-date
     /// copy of the state.
-    Connected(StateManager<State>, ClientId),
+    Connected {
+        /// A client for the current version of the state.
+        state: StateClient<State>,
+
+        /// The ID of the local client.
+        client_id: ClientId,
+
+        /// The estimated drift between the local UTC representation of the current time
+        /// and the server's.
+        server_time_delta: Duration,
+    },
     /// There was some error during the `WaitingToConnect` or `WaitingForInitialState`
     /// phase. The component's `onerror()` callback should have triggered, so the owner
     /// of this component may use this callback to take over rendering from this component
@@ -129,7 +138,7 @@ pub enum Msg<State: StateProgram> {
     /// user interaction.
     StateTransition(Option<State::T>),
     /// A [StateUpdateMessage] was received from the server.
-    ServerMessage(StateUpdateMessage<State>),
+    ServerMessage(StateProgramMessage<State>),
     /// The status of the connection with the remote server has changed.
     UpdateStatus(Status<State>),
     /// Trigger a redraw of this View. Redraws are automatically triggered after a
@@ -148,7 +157,7 @@ pub struct StateProgramComponent<
     V: 'static + View<State = Program, Callback = Program::T>,
 > {
     /// Websocket connection to the server.
-    wss_task: Option<WebSocketTask<StateUpdateMessage<Program>, TransitionEvent<Program::T>>>,
+    wss_task: Option<WebSocketTask<StateProgramMessage<Program>, MessageToServer<Program>>>,
 
     /// Status of connection with the server.
     status: Status<Program>,
@@ -195,48 +204,70 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
             Msg::StateTransition(transition) => {
                 if let Some(transition) = transition {
                     match &mut self.status {
-                        Status::Connected(state_manager, player_id) => {
+                        Status::Connected {
+                            client_id,
+                            server_time_delta,
+                            state,
+                        } => {
+                            let estimated_server_time =
+                                Utc::now().checked_add_signed(*server_time_delta).unwrap();
+
                             let event = TransitionEvent::new(
-                                Some(*player_id),
-                                state_manager.get_estimated_server_time(),
+                                Some(*client_id),
+                                estimated_server_time,
                                 transition,
                             );
 
-                            let state_changed = state_manager.process_local_event(event.clone());
+                            let message_to_server = state.push_transition(event).unwrap();
 
-                            self.wss_task.as_mut().unwrap().send(&event);
-                            state_changed
+                            self.wss_task.as_mut().unwrap().send(&message_to_server);
+                            true
                         }
-                        _ => panic!("Shouldn't receive StateTransition before connected."),
+                        _ => panic!("Shouldn't receive ServerMessage before connected."),
                     }
                 } else {
                     false
                 }
             }
-            Msg::ServerMessage(message) => {
-                match message {
-                    StateUpdateMessage::ReplaceState(state, timestamp, own_player_id) => {
-                        if let Status::WaitingForInitialState = self.status {
-                        } else {
-                            panic!(
-                                "Received game state unexpectedly; was in state {:?}",
-                                &self.status
-                            )
-                        }
-                        self.status =
-                            Status::Connected(StateManager::new(state, timestamp), own_player_id);
-                    }
-                    StateUpdateMessage::TransitionState(msg) => match &mut self.status {
-                        Status::Connected(state_manager, _) => {
-                            state_manager.process_remote_event(msg);
-                        }
-                        _ => panic!(
-                            "Received GameStateTransition while in state {:?}",
-                            &self.status
-                        ),
-                    },
+            Msg::ServerMessage(StateProgramMessage::InitialState {
+                timestamp,
+                client_id,
+                state,
+                version,
+            }) => {
+                if let Status::WaitingForInitialState = &self.status {
+                    let server_time_delta = Utc::now().signed_duration_since(timestamp);
+                    let state = StateClient::new(state, version);
+                    self.status = Status::Connected {
+                        state,
+                        client_id,
+                        server_time_delta,
+                    };
+                    true
+                } else {
+                    panic!(
+                        "Received StateProgramMessage::InitialState while in state {:?}",
+                        self.status
+                    );
                 }
-                true
+            }
+            Msg::ServerMessage(StateProgramMessage::Message { message, timestamp }) => {
+                if let Status::Connected {
+                    state,
+                    server_time_delta,
+                    ..
+                } = &mut self.status
+                {
+                    *server_time_delta = Utc::now().signed_duration_since(timestamp);
+                    state.receive_message_from_golden(message).unwrap();
+
+                    true
+                } else {
+                    panic!(
+                        "Received StateProgramMessage::Message while in state {:?}",
+                        self.status
+                    );
+                }
             }
             Msg::UpdateStatus(st) => {
                 if let Status::ErrorConnecting = st {
@@ -254,17 +285,21 @@ impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Com
         match &self.status {
             Status::WaitingToConnect => html! {{"Waiting to connect."}},
             Status::WaitingForInitialState => html! {{"Waiting for initial state."}},
-            Status::Connected(state_manager, client_id) => {
+            Status::Connected {
+                state,
+                client_id,
+                server_time_delta,
+            } => {
+                let estimated_server_time =
+                    Utc::now().checked_add_signed(*server_time_delta).unwrap();
+
                 let view_context = ViewContext {
                     callback: context.link().callback(Msg::StateTransition),
                     redraw: context.link().callback(|()| Msg::Redraw),
-                    time: state_manager.get_estimated_server_time(),
+                    time: estimated_server_time,
                     client: *client_id,
                 };
-                context
-                    .props()
-                    .view
-                    .view(state_manager.get_state(), &view_context)
+                context.props().view.view(state.state(), &view_context)
             }
             Status::ErrorConnecting => html! {{"Error connecting."}},
         }

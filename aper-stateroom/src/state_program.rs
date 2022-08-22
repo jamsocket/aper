@@ -1,10 +1,8 @@
-use std::fmt::Debug;
-
+use crate::TransitionEvent;
 use aper::StateMachine;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-
-use crate::TransitionEvent;
+use std::fmt::Debug;
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
@@ -38,7 +36,7 @@ where
         None
     }
 
-    fn new(init_value: &str) -> Self;
+    fn new() -> Self;
 }
 
 /// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
@@ -56,9 +54,9 @@ where
     type Transition = TransitionEvent<SM::Transition>;
     type Conflict = SM::Conflict;
 
-    fn apply(&self, transition: Self::Transition) -> Result<Self, Self::Conflict> {
+    fn apply(&self, transition: &Self::Transition) -> Result<Self, Self::Conflict> {
         Ok(StateMachineContainerProgram(
-            self.0.apply(transition.transition)?,
+            self.0.apply(&transition.transition)?,
         ))
     }
 }
@@ -69,7 +67,7 @@ where
 {
     type T = SM::Transition;
 
-    fn new(_init_value: &str) -> Self {
+    fn new() -> Self {
         Self::default()
     }
 }

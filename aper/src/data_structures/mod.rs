@@ -2,8 +2,10 @@
 
 mod atom;
 mod constant;
+mod counter;
 mod list;
 
 pub use atom::{Atom, ReplaceAtom};
 pub use constant::Constant;
+pub use counter::Counter;
 pub use list::{List, ListItem, ListOperation, OperationWithId};
