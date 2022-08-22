@@ -49,6 +49,7 @@ impl<P: StateProgram> AperStateroomService<P> {
 
         if let Some(ev) = &susp {
             if let Ok(dur) = ev.timestamp.signed_duration_since(Utc::now()).to_std() {
+                
                 ctx.set_timer(dur.as_millis() as u32);
             }
         }
@@ -111,11 +112,13 @@ impl<P: StateProgram + Default> SimpleStateroomService for AperStateroomService<
 where
     P::T: Unpin + Send + Sync + 'static,
 {
-    fn new(_name: &str, _ctx: &impl StateroomContext) -> Self {
-        let serv = AperStateroomService {
-            state: StateServer::default(),
+    fn new(_name: &str, ctx: &impl StateroomContext) -> Self {
+        let state: StateServer<P> = StateServer::default();
+        let mut serv = AperStateroomService {
+            state,
             suspended_event: None,
         };
+        serv.update_suspended_event(ctx);
 
         serv
     }
@@ -158,7 +161,6 @@ where
                 None,
                 ctx,
             );
-            self.update_suspended_event(ctx);
         }
     }
 }

@@ -36,7 +36,7 @@ where
         None
     }
 
-    fn new(init_value: &str) -> Self;
+    fn new() -> Self;
 }
 
 /// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
@@ -67,7 +67,7 @@ where
 {
     type T = SM::Transition;
 
-    fn new(_init_value: &str) -> Self {
+    fn new() -> Self {
         Self::default()
     }
 }

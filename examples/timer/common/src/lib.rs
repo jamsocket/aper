@@ -15,11 +15,20 @@ pub enum TimerEvent {
     Increment,
 }
 
+impl Default for Timer {
+    fn default() -> Self {
+        Timer {
+            value: 0,
+            last_increment: Utc::now(),
+        }
+    }
+}
+
 impl StateMachine for Timer {
     type Transition = TransitionEvent<TimerEvent>;
     type Conflict = NeverConflict;
 
-    fn apply(&self, event: Self::Transition) -> Result<Self, NeverConflict> {
+    fn apply(&self, event: &Self::Transition) -> Result<Self, NeverConflict> {
         let mut new_self = self.clone();
         match event.transition {
             TimerEvent::Reset => new_self.value = 0,
@@ -36,11 +45,8 @@ impl StateMachine for Timer {
 impl StateProgram for Timer {
     type T = TimerEvent;
 
-    fn new(_: &str) -> Self {
-        Timer {
-            value: 0,
-            last_increment: Utc::now(),
-        }
+    fn new() -> Self {
+        Timer::default()
     }
 
     fn suspended_event(&self) -> Option<TransitionEvent<Self::T>> {

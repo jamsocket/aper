@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "aper"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "aper_derive",
  "fractional_index",
@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "aper-stateroom"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "aper",
  "bincode",
@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "aper-yew"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "aper",
  "aper-stateroom",
@@ -55,7 +55,7 @@ dependencies = [
 
 [[package]]
 name = "aper_derive"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "inflections",
  "proc-macro2",
@@ -527,17 +527,15 @@ checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
 [[package]]
 name = "stateroom"
 version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a6686168c2980428be55f6a73deca77d43509e3082fee158739e375ef86ee80"
+source = "git+https://github.com/drifting-in-space/stateroom.git#ba17366d650e1e96a20dd432374a8b46da8996ff"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "stateroom-wasm"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dfe43305d235cb1415598e3f561b7ccec500be27efba5cad43e72ebfc8c3ca1"
+version = "0.2.3"
+source = "git+https://github.com/drifting-in-space/stateroom.git#ba17366d650e1e96a20dd432374a8b46da8996ff"
 dependencies = [
  "stateroom",
  "stateroom-wasm-macro",
@@ -545,9 +543,8 @@ dependencies = [
 
 [[package]]
 name = "stateroom-wasm-macro"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bed20b7f68fa32311db10467a507e836118262b6206493b1c6eb57e7f6a4bc3b"
+version = "0.2.3"
+source = "git+https://github.com/drifting-in-space/stateroom.git#ba17366d650e1e96a20dd432374a8b46da8996ff"
 dependencies = [
  "proc-macro2",
  "quote",
