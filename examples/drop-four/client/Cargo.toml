@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 aper = {path="../../../aper"}
-aper-stateroom = {version="0.2.4"}
+aper-stateroom = {path="../../../aper-stateroom"}
 aper-yew = {path="../../../aper-yew"}
 serde = { version = "1.0.127", features = ["derive"] }
 wasm-bindgen = "0.2.79"

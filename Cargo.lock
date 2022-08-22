@@ -285,7 +285,7 @@ dependencies = [
 
 [[package]]
 name = "aper"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aper_derive",
  "fractional_index",
@@ -297,7 +297,7 @@ dependencies = [
 
 [[package]]
 name = "aper-serve"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aper",
  "aper-stateroom",
@@ -308,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "aper-stateroom"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aper",
  "bincode",
@@ -321,7 +321,7 @@ dependencies = [
 
 [[package]]
 name = "aper-yew"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aper",
  "aper-stateroom",
@@ -339,7 +339,7 @@ dependencies = [
 
 [[package]]
 name = "aper_derive"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "inflections",
  "proc-macro2",

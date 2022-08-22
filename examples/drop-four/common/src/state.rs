@@ -211,7 +211,7 @@ impl StateMachine for DropFourGame {
 impl StateProgram for DropFourGame {
     type T = GameTransition;
 
-    fn new(_: &str) -> Self {
+    fn new() -> Self {
         Default::default()
     }
 }
