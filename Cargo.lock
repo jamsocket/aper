@@ -1384,16 +1384,18 @@ dependencies = [
 
 [[package]]
 name = "stateroom"
-version = "0.2.3"
-source = "git+https://github.com/drifting-in-space/stateroom.git#2c719e95642705f5006668c09a57ee65c1174651"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc0b52d6f56b54e7a6595ae439c108ab6f151882167a40a29d593586ddeb0f26"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "stateroom-server"
-version = "0.2.3"
-source = "git+https://github.com/drifting-in-space/stateroom.git#2c719e95642705f5006668c09a57ee65c1174651"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3214d12431b31a494ad71c4d18301b4a22a05c208c00566913b0c188d111533b"
 dependencies = [
  "actix",
  "actix-web",

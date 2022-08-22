@@ -8,5 +8,5 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 aper-stateroom = { path="../../../aper-stateroom" }
-stateroom-wasm = { git="https://github.com/drifting-in-space/stateroom.git" }
+stateroom-wasm = { version="0.2.4" }
 drop-four-common = { path="../common" }

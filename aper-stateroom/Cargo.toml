@@ -5,7 +5,7 @@ edition = "2018"
 repository = "https://github.com/drifting-in-space/aper"
 
 [dependencies]
-stateroom = { git="https://github.com/drifting-in-space/stateroom.git", features=["serde"] }
+stateroom = { version="0.2.4", features=["serde"] }
 aper = { version="0.2.0", path = "../aper" }
 serde = "1.0.143"
 serde_json = "1.0.75"
