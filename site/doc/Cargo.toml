@@ -1,0 +1,11 @@
+[package]
+name = "aper-doc"
+version = "0.1.0"
+authors = ["Paul Butler <paulgb@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+aper = { git = "https://github.com/aper-dev/aper" }
+aper-jamsocket = { git = "https://github.com/aper-dev/aper" }
+aper-serve = { git = "https://github.com/aper-dev/aper" }
+aper-yew = { git = "https://github.com/aper-dev/aper" }

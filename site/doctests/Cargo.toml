@@ -1,0 +1,11 @@
+[package]
+name = "aper-book"
+version = "0.1.0"
+authors = ["Paul Butler <paulgb@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+aper = { path = "../../aper" }
+doc-comment = "0.3.3"
+serde = { version = "1.0.123", features = ["derive"] }
+

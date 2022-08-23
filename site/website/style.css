@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro&display=swap');
+
+body {
+    font-family: Montserrat;
+}
+
+#main {
+    max-width: 900px;
+    margin: 30px auto 50px auto;
+}
+
+/* Header */
+
+#header #image {
+    margin-top: 30px;
+    text-align: center;
+}
+
+#header h1 {
+    font-size: 40pt;
+    margin-top: 30px;
+}
+
+@media only screen and (min-width: 900px) {
+    #header {
+        display: flex;
+    }
+    
+    #header #text {
+        max-width: 500px;
+    }
+    
+    #header #image {
+        text-align: right;
+        flex: 1;
+    }
+}
+
+/* Components */
+
+pre {
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 120%;
+    overflow-x: auto;
+    border: 1px solid rgb(222, 222, 222);
+    background: #f6f9f9 !important;
+}
+
+@media only screen and (min-width: 900px) {
+    pre {
+        float: right;
+        width: 600px;
+    }    
+
+    .code-caption {
+        float: left;
+        width: 240px;
+    }
+
+    #header h1 {
+        max-width: 450px;
+    }
+}
+
+.code-caption {
+    color: #888;
+    line-height: 150%;
+}
+
+.code-caption p:first-child {
+    font-size: 150%;
+    line-height: 130%;
+    color: black;
+}
+
+.icons a {
+    text-decoration: none;
+    opacity: 0.4;
+}
+
+.icons a:hover {
+    opacity: 1;
+}
+
+.button {
+    display: inline-block;
+    background-color: #8D776D;
+    border-radius: 5px;
+    padding: 10px 15px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: #fff;
+    border-bottom: 1px solid #555;
+    border-right: 1px solid #555;
+}
+
+.button.primary {
+    background-color: #223947;
+}
+
+.button svg {
+    margin-right: 6px;
+}
+
+.button:hover {
+    background-color: #3786b5;
+}
+
+.button.primary:hover {
+    background-color: #224f6a;
+}
+
+.buttons {
+    margin-bottom: 20px;
+}
+
+a {
+    color: #3786b5;
+}
+
+.explanation {
+    margin-bottom: 30px;
+    color: #888;
+}

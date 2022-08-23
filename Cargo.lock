@@ -296,6 +296,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aper-book"
+version = "0.1.0"
+dependencies = [
+ "aper",
+ "doc-comment",
+ "serde",
+]
+
+[[package]]
 name = "aper-serve"
 version = "0.2.1"
 dependencies = [
@@ -585,6 +594,12 @@ dependencies = [
  "block-buffer",
  "crypto-common",
 ]
+
+[[package]]
+name = "doc-comment"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "encoding_rs"

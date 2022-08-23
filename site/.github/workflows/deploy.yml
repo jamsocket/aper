@@ -1,0 +1,35 @@
+name: deploy
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Install Cobalt
+      run: cargo install cobalt-bin
+    - name: Build website
+      working-directory: website
+      run: cobalt build
+    - name: Install mdbook
+      run: cargo install mdbook
+    - name: Build book
+      run: mdbook build book
+    - name: Combine site files
+      run: |
+        mv website/_site site
+        mv book/book site/guide
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@4.0.0
+      with:
+        branch: gh-pages
+        folder: site
