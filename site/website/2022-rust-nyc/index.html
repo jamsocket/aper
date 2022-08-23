@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Program state synchronization in Rust</title>
+
+        <link rel="stylesheet" href="dist/reset.css">
+        <link rel="stylesheet" href="dist/reveal.css">
+        <link rel="stylesheet" href="dist/theme/solarized.css" id="theme">
+
+        <!-- Theme used for syntax highlighted code -->
+        <link rel="stylesheet" href="plugin/highlight/monokai.css" id="highlight-theme">
+
+        <style>
+            * {text-transform: none !important;}
+
+            strong {
+                color: #ab1768;
+            }
+
+            .hljs-ln-numbers {
+                display: none;
+            }
+
+            .reveal pre code {
+                max-height: 650px;
+            }
+
+            code {
+                color: #15298c;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section data-markdown>
+                    ## Program state synchronization in Rust
+
+                    Paul Butler ([@paulgb](https://twitter.com/paulgb)) / [Rust NYC](https://www.meetup.com/Rust-NYC/events/285925838/) / May 2022
+                </section>
+                <section data-markdown>
+                    ## Outline
+
+                    1. Synchronized state machines with **Aper**
+                    2. Serializable program state with **WasmBox**
+                </section>
+                <section data-markdown>
+                    ## Goal
+                    
+                    **Shared program state** between **multiple instances** of an application, in **real time**.
+                </section>
+                <section>
+                    <video data-autoplay src="media/demo.mov" muted="muted"></video>
+                </section>
+                <section>
+                    <h1>Aper</h1>
+                    <img src="media/ape.svg" style="width: 400px;" />
+                </section>
+                <section data-markdown>
+                    ## Structure
+
+                    1. **Core**
+                        - `aper`: Data structures and `StateMachine` trait.
+                    2. **Network**
+                        - `aper-serve`: [Actix](https://actix.rs/) actor for sync over WebSocket.
+                        - `aper-yew`: [Yew](https://yew.rs/docs/en/) component for shared state.
+                </section>
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="1-6|2|3|5|6">
+pub trait StateMachine {
+    type Transition;
+    type Conflict;
+
+    fn apply(&mut self, transition: Self::Transition) ->
+        Result&lt;(), Self::Conflict&gt;;
+}
+                    </code></pre>
+                </section>
+                <section>
+                    <img src="media/drop-four-state-flow.svg" />
+                </section>
+                <section>
+                    <h2>Two Rules</h2>
+                    
+                    <ol>
+                        <li>Only <code>apply()</code> is allowed to modify state.</li>
+                        <li><code>apply()</code> must be deterministic.</li>
+                        <ol class="fragment" style="list-style-type: lower-alpha;">
+                            <li>If <code>apply()</code> returns an <code>Err</code>, state was not modified.</li>
+                        </ol>
+                    </ol>
+                </section>
+                <section data-markdown>
+                    ## The concurrent edit problem
+                </section>
+                <section>
+                    <img src="media/aper-sketch.svg" style="width: 800px;" />
+                </section>
+                <section data-markdown>
+                    Transitions should **encode user intent**,
+                    not state.
+                </section>
+                <section>
+                    <img src="media/aper-sketch-intent.svg" style="width: 800px;" />
+                </section>
+                <section>
+                    <img src="media/realtime-blogpost.png" />
+                </section>
+                <section>
+                    <h2>WasmBox</h2>
+                </section>
+                <section data-markdown>
+                    Can we turn **arbitrary Rust code** into a deterministic, serializable **state machine**?
+                </section>
+                <section>
+                    <img src="media/wasmbox.png" style="height: 500px;" />
+                </section>
+                <section data-markdown>
+                    ## Requirements
+
+                    - Serializable heap (and call stack?)
+                    - Deterministic execution model
+                </section>
+
+                <section>
+                    <h2>WebAssembly!</h2>
+                    <img src="media/nondeterminism.png" />
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="1-15|4|5|7|8-10|13">
+use wasmbox::prelude::*;
+
+#[wasmbox]
+async fn run(ctx: WasmBoxContext&lt;String, String&gt;) {
+    let mut c = 0;
+    loop {
+        let message = ctx.next().await;
+        match message.as_ref() {
+            "up" => c += 1,
+            "down" => c -= 1,
+            _ => continue,
+        }
+        ctx.send(format!("value={}", c));
+    }
+}
+                    </code></pre>
+                </section>
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="1-15|5|6|8-9|10|11|12|13">
+use wasmbox_host::WasmBoxHost;
+use anyhow::Result;
+
+fn main() -> Result&lt;()&gt; {
+    let mut mybox = WasmBoxHost::from_wasm_file("counter.wasm",
+        |st: String| println!("result: {}", st))?;
+
+    mybox.message("up"); // value = 1
+    mybox.message("up"); // value = 2
+    mybox.snapshot_to_file("snapshot.bin")?;
+    mybox.message("up"); // value = 3
+    mybox.restore_snapshot_from_file("snapshot.bin")?; // value = 2
+    mybox.message("down"); // value = 1
+    Ok(())
+}
+                        
+                    </code></pre>
+                </section>
+                <section>
+                    <h2>Demo</h2>
+                </section>
+                <section>
+                    <h2>Thanks!</h2>
+
+                    <ul style="list-style: none; line-height: 200%;">
+                        <li>Me: Paul Butler (<a href="https://twitter.com/paulgb">@paulgb</a>)</li>
+                        <li><a href="https://driftingin.space">driftingin.space</a> <em>(we're hiring!)</em></li>
+                        <li>Aper: <a href="https://aper.dev/">aper.dev</a></li>
+                        <li>GitHub: <a href="https://github.com/drifting-in-space/">github.com/drifting-in-space/</a></li>
+                        <li>Slides: <a href="https://aper.dev/2022-rust-nyc/">aper.dev/2022-rust-nyc</a></li>
+                    </ul>
+                </section>
+                <section>
+                    <section data-markdown>
+                        ## Appendix: CRDTs
+                    </section>
+                    <section data-markdown>
+                        ## Conflict-free replicated data type (CRDT)
+
+                        - Supports decentralized/peer-to-peer architecture 😊
+                        - Can represent nested types (e.g. arbitrary JSON) 😁
+                        - Quality JS libraries ([yjs](https://github.com/yjs/yjs), [automerge](https://github.com/automerge/automerge)) 😉
+                        - Memory footprint increases monotonically with each edit 😞
+                    </section>
+                    <section data-markdown>
+                        ## CRDTs vs. State Machines
+
+                        - In **CRDTs** the state is a function of an *unordered set* of messages.
+                        - In **state machines**, the state is a function of an *ordered list* of messages.
+                    </section>
+                    <section data-markdown>
+                        <textarea data-template>
+                            ## CRTDs in Practice
+
+                            - Figma “isn't using true CRDTs”[<sup>1</sup>](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/)
+                            - Excalidraw “[doesn't] use an off the shelf crdt because we are willing to lose some mergeable updates in exchange for less surprising ux”[<sup>2</sup>](https://twitter.com/sebastienlorber/status/1244289245923155968)
+                            - Room Service: “CRDTs aren’t the best for multiplayer”[<sup>3</sup>](https://www.roomservice.dev/)
+                        </textarea>
+                    </section>
+                </section>
+            </div>
+        </div>
+
+        <script src="dist/reveal.js"></script>
+        <script src="plugin/notes/notes.js"></script>
+        <script src="plugin/markdown/markdown.js"></script>
+        <script src="plugin/highlight/highlight.js"></script>
+        <script>
+            // More info about initialization & config:
+            // - https://revealjs.com/initialization/
+            // - https://revealjs.com/config/
+            Reveal.initialize({
+                hash: true,
+                progress: true,
+                transition: 'none',
+                controls: false,
+                hash: true,
+
+                // Learn about plugins: https://revealjs.com/plugins/
+                plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+            });
+        </script>
+    </body>
+</html>

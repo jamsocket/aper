@@ -1,0 +1,380 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Building a Multiplayer WebAssembly Game in Rust</title>
+
+        <link rel="stylesheet" href="dist/reset.css">
+        <link rel="stylesheet" href="dist/reveal.css">
+        <link rel="stylesheet" href="dist/theme/solarized.css" id="theme">
+
+        <!-- Theme used for syntax highlighted code -->
+        <link rel="stylesheet" href="plugin/highlight/monokai.css" id="highlight-theme">
+
+        <style>
+            * {text-transform: none !important;}
+
+            strong {
+                color: #ab1768;
+            }
+
+            .hljs-ln-numbers {
+                display: none;
+            }
+
+            .reveal pre code {
+                max-height: 650px;
+            }
+
+            code {
+                color: #15298c;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section data-markdown>
+                    ## Building a Multiplayer WASM Game
+
+                    Paul Butler ([@paulgb](https://twitter.com/paulgb)) / [Rust Berlin](https://berline.rs/2021/03/23/rust-and-tell.html) / March 2021
+                </section>
+                <section>
+                    <video data-autoplay src="media/demo.mov"></video>
+                </section>
+                <section data-markdown>
+                    ## Outline
+
+                    1. Sharing State in Rust
+                    2. Implementing Drop Four
+                </section>
+
+                <section data-markdown>
+                    ## Goal
+                    
+                    **Share state** between **multiple instances** of a web app, in **real time**.
+                </section>
+                <section data-markdown>
+                    ## Use Cases
+
+                    - Collaborative editors (Figma, Google Apps)
+                    - Multiplayer games
+                </section>
+                <section data-markdown>
+                    ## Naive Approach
+
+                    1. Combine every data mutation into a stream.
+                    2. Broadcast it to every client, maintaining order.
+                </section>
+                <section data-markdown>
+                    ## (one big problem)
+                </section>
+                <section>
+                    <img src="media/aper-sketch.svg" style="width: 800px;" />
+                </section>
+                <section data-markdown>
+                    Capture **user intent**, not **data mutations**.
+                </section>
+                <section>
+                    <img src="media/aper-sketch-intent.svg" style="width: 800px;" />
+                </section>
+                <section data-markdown>
+                    What if we had a generic data structure library that could **express user intent**
+                    and **represent it as data**?
+                </section>
+                <section>
+                    <h1>Introducing Aper</h1>
+                    <img src="media/ape.svg" style="width: 400px;" />
+                </section>
+                <section data-markdown>
+                    ## Structure
+
+                    1. Core
+                        - `aper`: Data structures and `StateMachine` trait.
+                    2. WebSocket client/server implementation:
+                        - `aper-actix`: [Actix](https://actix.rs/) service for synchronizing state over WebSocket.
+                        - `aper-yew`: [Yew](https://yew.rs/docs/en/) component that renders a view based on shared state.
+                </section>
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="1-5|2|4|1-5">
+pub trait StateMachine {
+    type Transition;
+
+    fn apply(&mut self, transition: Self::Transition);
+}
+                    </code></pre>
+                </section>
+                <section data-markdown>
+                    ## Two Rules
+                    
+                    1. Only `apply()` is allowed to modify state.
+                    
+                    2. `apply()` must be deterministic.
+                </section>
+                <section data-markdown>
+                    ## Implementing Drop Four
+                </section>
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="2-5|7-9,11-12">
+                        #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+                        pub enum PlayerColor {
+                            Brown,
+                            Teal
+                        }
+                        
+                        pub const ROWS: usize = 6;
+                        pub const COLS: usize = 7;
+
+                        #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+                        pub struct Board([[Option&lt;PlayerColor&gt;; COLS]; ROWS]);
+                    </code></pre>
+                </section>
+
+                <section>
+                    <img src="media/drop-four-state-flow.svg" />
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="2-12|3-5|6-11|15">
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum PlayState {
+    Waiting {
+        waiting_player: Option&lt;PlayerID&gt;,
+    },
+    Playing {
+        next_player: PlayerColor,
+        board: Board,
+        winner: Option&lt;PlayerColor&gt;,
+        player_map: PlayerMap
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct DropFourGame(PlayState);
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust">
+                        #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+                        pub struct PlayerMap {
+                            pub teal_player: PlayerID,
+                            pub brown_player: PlayerID
+                        }
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="2-6,9|11-23">
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
+pub enum GameTransition {
+    Join,
+    Drop(usize),
+    Reset
+}
+
+impl StateMachine for DropFourGame {
+    type Transition = TransitionEvent&lt;GameTransition&gt;;
+
+    fn apply(&mut self, event: Self::Transition) {
+        match event.transition {
+            GameTransition::Join => {
+                // ..
+            }
+            GameTransition::Drop(c) => {
+                // ..
+            }
+            GameTransition::Reset => {
+                // ..
+            }
+        }
+    }
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|17-19|5-15|2-4,16,20">
+                        GameTransition::Join => {
+                            if let PlayState::Waiting {
+                                waiting_player: Some(waiting_player)
+                            } = self.0 {
+                                let player_map = PlayerMap {
+                                    teal_player: waiting_player,
+                                    brown_player: event.player.unwrap()
+                                };
+            
+                                self.0 = PlayState::Playing {
+                                    next_player: PlayerColor::Teal,
+                                    board: Default::default(),
+                                    winner: None,
+                                    player_map
+                                }
+                            } else if let PlayState::Waiting {..} = self.0 {
+                                self.0 = PlayState::Waiting {
+                                    waiting_player: event.player
+                                }
+                            }
+                        }
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|8-10|11-14|16|17|18-19|20">
+                        GameTransition::Drop(c) => {
+                            if let PlayState::Playing {
+                                board,
+                                next_player,
+                                player_map,
+                                winner,
+                            } = &mut self.0 {
+                                if winner.is_some() {
+                                    return; // Someone has already won.
+                                }
+                                if player_map.id_of_color(*next_player)
+                                        != event.player.unwrap() {
+                                    return; // Play out of turn.
+                                }
+            
+                                if let Some(insert_row) = board.lowest_open_row(c) {
+                                    board.0[insert_row][c] = Some(*next_player);
+                                    *winner = board.check_winner_at(
+                                        insert_row as i32, c as i32);
+                                    *next_player = next_player.other();
+                                }
+                            }
+                        }
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|2-6|8|9|10|11">
+                        GameTransition::Reset => {
+                            if let PlayState::Playing {
+                                winner: Some(winner),
+                                player_map,
+                                ..
+                            } = self.0 {
+                                self.0 = PlayState::Playing {
+                                    next_player: winner.other(),
+                                    board: Default::default(),
+                                    player_map,
+                                    winner: None,
+                                }
+                            }
+                        }            
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|1-3|5-7">
+// Recall that DropFourGame implements
+// StateMachine&lt;Transition=TransitionEvent&lt;GameTransition&gt;&gt;
+impl StateProgram&lt;GameTransition&gt; for DropFourGame {}
+
+fn main() -> std::io::Result&lt;()&gt; {
+    ServerBuilder::new(DropFourGame::default()).serve()
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="*|2|3|7-12">
+                        impl View for GameView {
+                            type Callback = GameTransition;
+                            type State = DropFourGame;
+                        
+                            fn view(&self, state: &Self::State,
+                                    context: &ViewContext&lt;Self::Callback&gt;) -&gt; Html {
+                                return html! {
+                                    &lt;div class="main"&gt;
+                                        &lt;h1&gt;{"Drop Four"}&lt;/h1&gt;
+                                        { self.view_inner(&state, context) }
+                                    &lt;/div&gt;
+                                };
+                            }
+                        }
+                    </code></pre>
+                </section>
+
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="1-4|1|3">
+#[wasm_bindgen(start)]
+pub fn entry() {
+    ClientBuilder::new(GameView).mount_to_body();
+}
+                    </code></pre>
+                </section>
+                <section>
+                    <pre><code data-trim class="language-rust" data-line-numbers="*">
+                        fn main() {
+                            aper_build::build_client_wasm();
+                        }                        
+                    </code></pre>
+                </section>
+                <section data-markdown>
+                    # Demo
+                </section>
+                <section data-markdown>
+                    # Thanks!
+
+                    - Me: Paul Butler ([@paulgb](https://twitter.com/paulgb))
+                    - Aper: [aper.dev](https://aper.dev/)
+                    - GitHub: [aper-dev/aper](https://github.com/aper-dev/aper)
+                        - Drop Four: [examples/drop-four](https://github.com/aper-dev/aper/tree/main/examples/drop-four)
+                    - Slides: [aper.dev/2021-rust-and-tell](https://aper.dev/2021-rust-and-tell/)
+                </section>
+                <section>
+                    <section data-markdown>
+                        ## Appendix: CRDTs
+                    </section>
+                    <section data-markdown>
+                        ## Conflict-free replicated data type (CRDT)
+
+                        - Supports decentralized/peer-to-peer architecture 😊
+                        - Can represent nested types (e.g. arbitrary JSON) 😁
+                        - Quality JS libraries ([yjs](https://github.com/yjs/yjs), [automerge](https://github.com/automerge/automerge)) 😉
+                        - Memory footprint increases monotonically with each edit 😞
+                    </section>
+                    <section data-markdown>
+                        ## CRDTs vs. State Machines
+
+                        - In **CRDTs** the state is a function of an *unordered set* of messages.
+                        - In **state machines**, the state is a function of an *ordered list* of messages.
+                    </section>
+                    <section data-markdown>
+                        <textarea data-template>
+                            ## CRTDs in Practice
+
+                            - Figma “isn't using true CRDTs”[<sup>1</sup>](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/)
+                            - Excalidraw “[doesn't] use an off the shelf crdt because we are willing to lose some mergeable updates in exchange for less surprising ux”[<sup>2</sup>](https://twitter.com/sebastienlorber/status/1244289245923155968)
+                            - Room Service: “CRDTs aren’t the best for multiplayer”[<sup>3</sup>](https://www.roomservice.dev/)
+                        </textarea>
+                    </section>
+                </section>
+            </div>
+        </div>
+
+        <script src="dist/reveal.js"></script>
+        <script src="plugin/notes/notes.js"></script>
+        <script src="plugin/markdown/markdown.js"></script>
+        <script src="plugin/highlight/highlight.js"></script>
+        <script>
+            // More info about initialization & config:
+            // - https://revealjs.com/initialization/
+            // - https://revealjs.com/config/
+            Reveal.initialize({
+                hash: true,
+                progress: true,
+                transition: 'none',
+                controls: false,
+                hash: true,
+
+                // Learn about plugins: https://revealjs.com/plugins/
+                plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+            });
+        </script>
+    </body>
+</html>

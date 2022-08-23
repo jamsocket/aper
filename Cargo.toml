@@ -10,4 +10,5 @@ members = [
     "aper-stateroom",
     "aper-serve",
     "aper-yew",
+    "site/doctests",
 ]
