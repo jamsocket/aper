@@ -64,8 +64,11 @@ fn main() {
     let (id1, transition1) = my_list.append(Atom::new(1));
     let (id2, transition2) = my_list.append(Atom::new(2));
 
-    my_list = my_list.apply(&transition2).unwrap(); // my_list = [2]
-    my_list = my_list.apply(&transition1).unwrap(); // my_list = [2, 1]
+    my_list = my_list.apply(&transition2).unwrap();
+    // my_list = [2]
+    
+    my_list = my_list.apply(&transition1).unwrap();
+    // my_list = [2, 1]
 
     let (_id3, transition3) = my_list
         .insert_between(&id2, &id1, Atom::new(3));
@@ -73,8 +76,11 @@ fn main() {
     let (_id4, transition4) = my_list
         .insert_between(&id2, &id1, Atom::new(4));
 
-    my_list = my_list.apply(&transition4).unwrap(); // my_list = [2, 4, 1]
-    my_list = my_list.apply(&transition3).unwrap(); // my_list = [2, 4, 3, 1]
+    my_list = my_list.apply(&transition4).unwrap();
+    // my_list = [2, 4, 1]
+    
+    my_list = my_list.apply(&transition3).unwrap();
+    // my_list = [2, 4, 3, 1]
 }
 ```
 
