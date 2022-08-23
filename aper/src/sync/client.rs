@@ -59,7 +59,7 @@ impl<S: StateMachine> StateClient<S> {
         result
     }
 
-    pub fn receive_message_from_golden(
+    pub fn receive_message_from_server(
         &mut self,
         message: MessageToClient<S>,
     ) -> Result<(), S::Conflict> {
@@ -175,7 +175,7 @@ mod test {
         let counter = Counter::default();
         let mut m1 = StateClient::<Counter>::default();
 
-        m1.receive_message_from_golden(MessageToClient::SetState {
+        m1.receive_message_from_server(MessageToClient::SetState {
             state: counter,
             version: StateVersionNumber(0),
         })

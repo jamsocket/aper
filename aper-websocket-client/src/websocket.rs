@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::JsCast;
 use web_sys::{MessageEvent, WebSocket};
 
+#[derive(Debug)]
 pub struct WebSocketConnection<F> where F: Fn(Message) -> () + 'static {
     socket: WebSocket,
     _message_handler: Closure<dyn FnMut(MessageEvent)>,

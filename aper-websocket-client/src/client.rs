@@ -8,11 +8,11 @@ use aper::{
     },
     StateMachine,
 };
+use core::fmt::Debug;
 
-pub struct AperWebSocketClient<S, F>
+pub struct AperWebSocketClient<S>
 where
     S: StateMachine + Default,
-    F: Fn(&S) -> () + 'static,
 {
     conn: TypedWebsocketConnection<
         MessageToClient<S>,
@@ -20,21 +20,27 @@ where
         Box<dyn Fn(MessageToClient<S>)>,
     >,
     state_client: Rc<Mutex<StateClient<S>>>,
-    callback: Rc<F>,
+    callback: Rc<Box<dyn Fn(&S) -> ()>>,
 }
 
-impl<S, F> AperWebSocketClient<S, F>
+impl<S> Debug for AperWebSocketClient<S> where
+S: StateMachine + Default {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AperWebSocketClient").finish()
+    }
+}
+
+impl<S> AperWebSocketClient<S>
 where
     S: StateMachine + Default,
-    F: Fn(&S) -> () + 'static,
 {
-    pub fn new(url: &str, callback: F) -> Result<Self> {
+    pub fn new<F>(url: &str, callback: F) -> Result<Self> where F: Fn(&S) -> () + 'static {
         let state_client = Rc::new(Mutex::new(StateClient::new(
             S::default(),
             Default::default(),
         )));
         
-        let callback = Rc::new(callback);
+        let callback: Rc<Box<dyn Fn(&S) -> ()>> = Rc::new(Box::new(callback));
 
         let conn = {
             let callback = callback.clone();
@@ -43,7 +49,7 @@ where
     
                 Box::new(move |message: MessageToClient<S>| {
                     let mut lock = state_client.lock().unwrap();
-                    lock.receive_message_from_golden(message).unwrap();
+                    lock.receive_message_from_server(message).unwrap();
                     callback(lock.state());
                 })
             };

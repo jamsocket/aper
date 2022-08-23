@@ -1,7 +1,6 @@
 use aper_yew::{ClientBuilder, StateMachineContainerProgram, View, ViewContext};
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-
 pub use counter_common::{Counter, CounterTransition};
 
 #[derive(Clone, PartialEq)]

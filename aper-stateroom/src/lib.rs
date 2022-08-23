@@ -4,6 +4,7 @@ use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 pub use state_program::{StateMachineContainerProgram, StateProgram};
+pub use state_program_client::{StateProgramClient};
 pub use stateroom::ClientId;
 use stateroom::{
     MessageRecipient, SimpleStateroomService, StateroomContext, StateroomServiceFactory,
@@ -13,6 +14,7 @@ use std::convert::Infallible;
 use std::marker::PhantomData;
 
 mod state_program;
+mod state_program_client;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum StateProgramMessage<S>
