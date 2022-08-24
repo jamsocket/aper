@@ -1,21 +1,27 @@
+use aper_yew::{StateProgramViewComponentProps, StateProgramComponentProps, StateProgramComponent, StateProgramViewComponent};
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-use aper_yew::{View, ViewContext, ClientBuilder};
 use timer_common::{Timer, TimerEvent};
 
 #[derive(Clone, PartialEq)]
-struct CounterView;
+struct TimerView;
 
+impl Component for TimerView {
+    type Message = ();
+    type Properties = StateProgramViewComponentProps<Timer>;
 
-impl View for CounterView {
-    type Callback = TimerEvent;
-    type State = Timer;
+    fn create(_: &Context<Self>) -> Self {
+        Self
+    }
 
-    fn view(&self, state: &Self::State, context: &ViewContext<Self::Callback>) -> Html {
+    fn view(&self, context: &Context<Self>) -> Html {
+        let callback = &context.props().callback;
+        let state = &context.props().state;
+
         return html! {
             <div>
                 <p>{&format!("Timer: {}", state.value)}</p>
-                <button onclick={context.callback.reform(|_| Some(TimerEvent::Reset))}>
+                <button onclick={callback.reform(|_| TimerEvent::Reset)}>
                     {"Reset"}
                 </button>
             </div>
@@ -23,7 +29,12 @@ impl View for CounterView {
     }
 }
 
+impl StateProgramViewComponent for TimerView {
+    type Program = Timer;
+}
+
 #[wasm_bindgen(start)]
 pub fn entry() {
-    ClientBuilder::new(CounterView).mount_to_body();
+    let props = StateProgramComponentProps::new("ws");
+    yew::start_app_with_props::<StateProgramComponent<TimerView>>(props);
 }
