@@ -7,21 +7,21 @@ Let's use the `ToDoListItem` from the last section to create a `ToDoList`
 ```rust,noplaypen
 use aper::data_structures::List;
 # use aper::StateMachine;
-# use aper::data_structures::Atom;
+# use aper::data_structures::{Atom, AtomRc};
 # use serde::{Serialize, Deserialize};
 # use std::default::Default;
 # 
 # #[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 # struct ToDoListItem {
 #     done: Atom<bool>,
-#     label: Atom<String>,
+#     label: AtomRc<String>,
 # }
 # 
 # impl ToDoListItem {
 #     pub fn new(label: String) -> Self {
 #         ToDoListItem {
 #             done: Atom::new(false),
-#             label: Atom::new(label),
+#             label: AtomRc::new(label),
 #         }
 #     }
 # }

@@ -27,15 +27,15 @@ docs</a>
 </div>
 
 ```rust
-use aper::{StateMachine, data_structures::{List, Atom}};
+use aper::{StateMachine, data_structures::{List, AtomRc}};
 // `List` represents an ordered list.
 // `Atom` wraps a value to make it immutable
 // except by replacement.
 
 fn main() {
-    let mut my_list: List<Atom<String>> = List::new();
+    let mut my_list: List<AtomRc<String>> = List::new();
     
-    let (_id, transition) = my_list.append(Atom::new(
+    let (_id, transition) = my_list.append(AtomRc::new(
         "Hello Aper".to_string()));
 
     // `transition` represents the action of adding

@@ -36,20 +36,20 @@ structure. Aper facilitates this with a `derive` macro:
 
 ```rust,noplaypen
 use aper::StateMachine;
-use aper::data_structures::Atom;
+use aper::data_structures::{Atom, AtomRc};
 use serde::{Serialize, Deserialize};
 
 #[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ToDoListItem {
     done: Atom<bool>,
-    label: Atom<String>,
+    label: AtomRc<String>,
 }
 
 impl ToDoListItem {
     pub fn new(label: String) -> Self {
         ToDoListItem {
             done: Atom::new(false),
-            label: Atom::new(label),
+            label: AtomRc::new(label),
         }
     }
 }
@@ -60,20 +60,20 @@ conflict.
 
 ```rust,noplaypen
 # use aper::StateMachine;
-# use aper::data_structures::Atom;
+# use aper::data_structures::{Atom, AtomRc};
 # use serde::{Serialize, Deserialize};
 # 
 # #[derive(StateMachine, Serialize, Deserialize, Debug, Clone, PartialEq)]
 # struct ToDoListItem {
 #     done: Atom<bool>,
-#     label: Atom<String>,
+#     label: AtomRc<String>,
 # }
 # 
 # impl ToDoListItem {
 #     pub fn new(label: String) -> Self {
 #         ToDoListItem {
 #             done: Atom::new(false),
-#             label: Atom::new(label),
+#             label: AtomRc::new(label),
 #         }
 #     }
 # }
