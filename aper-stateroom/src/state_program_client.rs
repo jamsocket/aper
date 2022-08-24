@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use crate::{StateProgram, StateProgramMessage, TransitionEvent};
 use aper::sync::{client::StateClient, messages::MessageToServer};
-use chrono::{Duration, Utc, DateTime};
+use chrono::{DateTime, Duration, Utc};
 use stateroom::ClientId;
 
 #[derive(Debug)]
@@ -17,7 +19,7 @@ impl<S: StateProgram> InnerState<S> {
             .unwrap()
     }
 
-    pub fn state(&self) -> &S {
+    pub fn state(&self) -> Rc<S> {
         self.client.state()
     }
 
@@ -38,9 +40,7 @@ pub struct StateProgramClient<S: StateProgram> {
 
 impl<S: StateProgram> Default for StateProgramClient<S> {
     fn default() -> Self {
-        StateProgramClient {
-            inner_state: None,
-        }
+        StateProgramClient { inner_state: None }
     }
 }
 

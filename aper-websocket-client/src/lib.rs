@@ -1,7 +1,5 @@
-mod websocket;
-mod typed;
 mod client;
-mod state_program_ws_client;
+mod typed;
+mod websocket;
 
-pub use client::AperWebSocketClient;
-pub use state_program_ws_client::AperWebSocketStateProgramClient;
+pub use client::AperWebSocketStateProgramClient;

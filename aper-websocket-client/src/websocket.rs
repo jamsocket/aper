@@ -6,7 +6,10 @@ use wasm_bindgen::JsCast;
 use web_sys::{MessageEvent, WebSocket};
 
 #[derive(Debug)]
-pub struct WebSocketConnection<F> where F: Fn(Message) -> () + 'static {
+pub struct WebSocketConnection<F>
+where
+    F: Fn(Message) + 'static,
+{
     socket: WebSocket,
     _message_handler: Closure<dyn FnMut(MessageEvent)>,
     _ph: PhantomData<F>,
@@ -17,7 +20,10 @@ pub enum Message {
     Bytes(Vec<u8>),
 }
 
-impl<F> WebSocketConnection<F> where F: Fn(Message) -> () + 'static {
+impl<F> WebSocketConnection<F>
+where
+    F: Fn(Message) + 'static,
+{
     pub fn new(url: &str, callback: F) -> Result<Self> {
         let ws =
             WebSocket::new(url).map_err(|err| anyhow!("Error creating websocket. {:?}", err))?;

@@ -1,31 +1,54 @@
 pub use aper_stateroom::{ClientId, StateMachineContainerProgram, StateProgram, TransitionEvent};
 use aper_websocket_client::AperWebSocketStateProgramClient;
-pub use client::ClientBuilder;
-use std::fmt::Debug;
+use chrono::{DateTime, Utc};
 use std::marker::PhantomData;
+use std::{fmt::Debug, rc::Rc};
 pub use update_interval::UpdateInterval;
-use view::StateProgramViewComponent;
-use yew::{html, Callback, Component, Html, Properties, virtual_dom::{VNode, VChild}, NodeRef};
+pub use view::{StateProgramViewComponent, StateProgramViewComponentProps};
+use yew::{
+    html,
+    virtual_dom::{VChild, VNode},
+    Component, Html, NodeRef, Properties,
+};
 
-mod client;
 mod update_interval;
 mod view;
+
+/// WebSocket URLs must be absolute, not relative, paths. For ergonomics, we
+/// allow a relative path and expand it.
+fn get_full_ws_url(path: &str) -> String {
+    let location = web_sys::window().unwrap().location();
+    let host = location.host().unwrap();
+    let path_prefix = location.pathname().unwrap();
+    let ws_protocol = match location.protocol().unwrap().as_str() {
+        "http:" => "ws",
+        "https:" => "wss",
+        scheme => panic!("Unknown scheme: {}", scheme),
+    };
+
+    format!("{}://{}{}{}", ws_protocol, &host, &path_prefix, &path)
+}
 
 /// Properties for [StateProgramComponent].
 #[derive(Properties, Clone)]
 pub struct StateProgramComponentProps<V: StateProgramViewComponent> {
     /// The websocket URL (beginning ws:// or wss://) of the server to connect to.
     pub websocket_url: String,
-
-    /// A no-argument callback that is invoked if there is a connection-related error.
-    pub onerror: Callback<()>,
-
     pub _ph: PhantomData<V>,
+}
+
+impl<V: StateProgramViewComponent> StateProgramComponentProps<V> {
+    pub fn new(websocket_url: &str) -> Self {
+        StateProgramComponentProps {
+            websocket_url: get_full_ws_url(websocket_url),
+            _ph: PhantomData::default(),
+        }
+    }
 }
 
 impl<V: StateProgramViewComponent> PartialEq for StateProgramComponentProps<V> {
     fn eq(&self, other: &Self) -> bool {
-        self.websocket_url == other.websocket_url && self.onerror == other.onerror
+        self.websocket_url == other.websocket_url
     }
 }
 
@@ -34,7 +57,14 @@ impl<V: StateProgramViewComponent> PartialEq for StateProgramComponentProps<V> {
 #[derive(Debug)]
 pub enum Msg<State: StateProgram> {
     StateTransition(State::T),
+    SetState(Rc<State>, DateTime<Utc>, ClientId),
     Redraw,
+}
+
+struct InnerState<P: StateProgram> {
+    state: Rc<P>,
+    timestamp: DateTime<Utc>,
+    client_id: ClientId,
 }
 
 /// Yew Component which owns a copy of the state as well as a connection to the server,
@@ -42,6 +72,7 @@ pub enum Msg<State: StateProgram> {
 pub struct StateProgramComponent<V: StateProgramViewComponent> {
     /// Websocket connection to the server.
     client: Option<AperWebSocketStateProgramClient<V::Program>>,
+    state: Option<InnerState<V::Program>>,
     _ph: PhantomData<V>,
 }
 
@@ -49,11 +80,13 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self, context: &yew::Context<Self>) {
         let link = context.link().clone();
-        let client =
-            AperWebSocketStateProgramClient::new(&context.props().websocket_url, move |_| {
-                link.send_message(Msg::Redraw)
-            })
-            .unwrap();
+        let client = AperWebSocketStateProgramClient::new(
+            &context.props().websocket_url,
+            move |state, timestamp, client_id| {
+                link.send_message(Msg::SetState(state, timestamp, client_id))
+            },
+        )
+        .unwrap();
         self.client = Some(client);
     }
 }
@@ -67,6 +100,7 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
     fn create(context: &yew::Context<Self>) -> Self {
         let mut result = Self {
             client: None,
+            state: None,
             _ph: PhantomData::default(),
         };
 
@@ -81,36 +115,37 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
                 self.client.as_mut().unwrap().push_transition(transition);
                 false
             }
+            Msg::SetState(state, timestamp, client_id) => {
+                self.state = Some(InnerState {
+                    state,
+                    timestamp,
+                    client_id,
+                });
+                true
+            }
             Msg::Redraw => true,
         }
     }
 
     fn view(&self, context: &yew::Context<Self>) -> Html {
-        match &self.client {
-            Some(client) => match client.client().state() {
-                Some(state) => {
-                    let props = {
-                        V::Properties::builder()
-                            .callback(context.link().callback(Msg::StateTransition))
-                            .client(state.client_id)
-                            .redraw(context.link().callback(|()| Msg::Redraw))
-                            .time(state.current_server_time())
-                            .build()
-                    };
+        if let Some(inner_state) = &self.state {
+            let InnerState {
+                state,
+                timestamp,
+                client_id,
+            } = inner_state;
 
-                    VNode::from({
-                        VChild::<V>::new(
-                            props,
-                            NodeRef::default(),
-                            None,
-                        )
-                    })
-                }
-                None => {
-                    html! {{"Waiting for initial state."}}
-                }
-            },
-            None => html! {{"Waiting to connect."}},
+            let props = V::Properties::builder()
+                .callback(context.link().callback(Msg::StateTransition))
+                .client(*client_id)
+                .redraw(context.link().callback(|()| Msg::Redraw))
+                .state(state)
+                .time(*timestamp)
+                .build();
+
+            VNode::from(VChild::<V>::new(props, NodeRef::default(), None))
+        } else {
+            html! {{"Waiting for initial state."}}
         }
     }
 }
