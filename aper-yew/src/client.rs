@@ -1,5 +1,6 @@
-use crate::{StateProgramComponent, StateProgramComponentProps, View};
-use aper_stateroom::StateProgram;
+use std::marker::PhantomData;
+
+use crate::{StateProgramComponent, StateProgramComponentProps, view::StateProgramViewComponent};
 
 /// WebSocket URLs must be absolute, not relative, paths. For ergonomics, we
 /// allow a relative path and expand it.
@@ -16,23 +17,20 @@ fn get_full_ws_url(path: &str) -> String {
     format!("{}://{}{}{}", ws_protocol, &host, &path_prefix, &path)
 }
 
-pub struct ClientBuilder<
-    Program: StateProgram,
-    V: 'static + View<State = Program, Callback = Program::T>,
-> {
+pub struct ClientBuilder<V: StateProgramViewComponent> {
     ws_url: String,
-    view: V,
+    _ph: PhantomData<V>,
 }
 
-impl<Program: StateProgram, V: 'static + View<State = Program, Callback = Program::T>>
-    ClientBuilder<Program, V>
+impl<V: StateProgramViewComponent>
+    ClientBuilder<V>
 {
-    pub fn new(view: V) -> ClientBuilder<Program, V> {
+    pub fn new() -> ClientBuilder<V> {
         console_error_panic_hook::set_once();
 
         ClientBuilder {
             ws_url: get_full_ws_url("ws"),
-            view,
+            _ph: PhantomData::default(),
         }
     }
 
@@ -50,9 +48,9 @@ impl<Program: StateProgram, V: 'static + View<State = Program, Callback = Progra
         let props: StateProgramComponentProps<V> = StateProgramComponentProps {
             websocket_url: self.ws_url,
             onerror: Default::default(),
-            view: self.view,
+            _ph: PhantomData::default(),
         };
 
-        yew::start_app_with_props::<StateProgramComponent<Program, V>>(props);
+        yew::start_app_with_props::<StateProgramComponent<V>>(props);
     }
 }
