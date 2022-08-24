@@ -1,10 +1,14 @@
-use aper_stateroom::{ClientId, Timestamp};
-use yew::{Callback, Html};
+use aper_stateroom::{ClientId, StateProgram, Timestamp};
+use chrono::{DateTime, Utc};
+use std::rc::Rc;
+use yew::{Callback, Html, Properties};
 
-/// Context passed to a [View].
-pub struct ViewContext<T> {
+#[derive(Properties)]
+pub struct StateProgramViewComponentProps<S: StateProgram> {
+    pub state: Rc<S>,
+
     /// A function called to invoke a state machine transformation.
-    pub callback: Callback<Option<T>>,
+    pub callback: Callback<S::T>,
 
     /// A function called to force a redraw.
     pub redraw: Callback<()>,
@@ -12,16 +16,28 @@ pub struct ViewContext<T> {
     /// The ID of the current player.
     pub client: ClientId,
 
-    /// An estimate of the server's time as of the call to `view`.
+    /// An estimate of the server's time as of the render.
     pub time: Timestamp,
 }
 
-/// Applies to a struct that can turn a value of the associated `State` type into `yew::Html`.
-/// The resulting view can emit events of type `Option<Callback>`.
-pub trait View: Clone + PartialEq {
-    type State;
-    type Callback;
+impl<S: StateProgram> PartialEq for StateProgramViewComponentProps<S> {
+    fn eq(&self, other: &Self) -> bool {
+        self.callback == other.callback
+            && self.redraw == other.redraw
+            && self.client == other.client
+            && self.time == other.time
+            && Rc::ptr_eq(&self.state, &other.state)
+    }
+}
 
-    /// Turn a value into HTML.
-    fn view(&self, value: &Self::State, context: &ViewContext<Self::Callback>) -> Html;
+pub struct StateProgramViewContext<P: StateProgram> {
+    pub callback: Callback<P::T>,
+    pub client_id: ClientId,
+    pub timestamp: DateTime<Utc>,
+}
+
+pub trait StateProgramViewComponent: 'static {
+    type Program: StateProgram;
+
+    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html;
 }

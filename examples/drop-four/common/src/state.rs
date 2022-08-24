@@ -250,7 +250,8 @@ mod tests {
             },
             *game.state()
         );
-        game = game.apply(&TransitionEvent::new(Some(player1), dummy_timestamp, Join))
+        game = game
+            .apply(&TransitionEvent::new(Some(player1), dummy_timestamp, Join))
             .unwrap();
         assert_eq!(
             Waiting {
@@ -259,7 +260,8 @@ mod tests {
             *game.state()
         );
 
-        game = game.apply(&TransitionEvent::new(Some(player2), dummy_timestamp, Join))
+        game = game
+            .apply(&TransitionEvent::new(Some(player2), dummy_timestamp, Join))
             .unwrap();
 
         assert!(matches!(
@@ -270,12 +272,13 @@ mod tests {
             }
         ));
 
-        game = game.apply(&TransitionEvent::new(
-            Some(player1),
-            dummy_timestamp,
-            Drop(4),
-        ))
-        .unwrap();
+        game = game
+            .apply(&TransitionEvent::new(
+                Some(player1),
+                dummy_timestamp,
+                Drop(4),
+            ))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -294,12 +297,13 @@ mod tests {
         // .......
         // ....T..
 
-        game = game.apply(&TransitionEvent::new(
-            Some(player2),
-            dummy_timestamp,
-            Drop(4),
-        ))
-        .unwrap();
+        game = game
+            .apply(&TransitionEvent::new(
+                Some(player2),
+                dummy_timestamp,
+                Drop(4),
+            ))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -318,12 +322,13 @@ mod tests {
         // ....B..
         // ....T..
 
-        game = game.apply(&TransitionEvent::new(
-            Some(player1),
-            dummy_timestamp,
-            Drop(3),
-        ))
-        .unwrap();
+        game = game
+            .apply(&TransitionEvent::new(
+                Some(player1),
+                dummy_timestamp,
+                Drop(3),
+            ))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -342,12 +347,13 @@ mod tests {
         // ....B..
         // ...TT..
 
-        game = game.apply(&TransitionEvent::new(
-            Some(player2),
-            dummy_timestamp,
-            Drop(5),
-        ))
-        .unwrap();
+        game = game
+            .apply(&TransitionEvent::new(
+                Some(player2),
+                dummy_timestamp,
+                Drop(5),
+            ))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -366,12 +372,13 @@ mod tests {
         // ....B..
         // ...TTB.
 
-        game = game.apply(&TransitionEvent::new(
-            Some(player1),
-            dummy_timestamp,
-            Drop(2),
-        ))
-        .unwrap();
+        game = game
+            .apply(&TransitionEvent::new(
+                Some(player1),
+                dummy_timestamp,
+                Drop(2),
+            ))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -390,12 +397,13 @@ mod tests {
         // ....B..
         // ..TTTB.
 
-        game = game.apply(&TransitionEvent::new(
-            Some(player2),
-            dummy_timestamp,
-            Drop(2),
-        ))
-        .unwrap();
+        game = game
+            .apply(&TransitionEvent::new(
+                Some(player2),
+                dummy_timestamp,
+                Drop(2),
+            ))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -414,12 +422,13 @@ mod tests {
         // ..B.B..
         // ..TTTB.
 
-        game = game.apply(&TransitionEvent::new(
-            Some(player1),
-            dummy_timestamp,
-            Drop(1),
-        ))
-        .unwrap();
+        game = game
+            .apply(&TransitionEvent::new(
+                Some(player1),
+                dummy_timestamp,
+                Drop(1),
+            ))
+            .unwrap();
 
         assert!(matches!(
             game.state(),
@@ -438,7 +447,8 @@ mod tests {
         // ..B.B..
         // .TTTTB.
 
-        game = game.apply(&TransitionEvent::new(Some(player1), dummy_timestamp, Reset))
+        game = game
+            .apply(&TransitionEvent::new(Some(player1), dummy_timestamp, Reset))
             .unwrap();
         assert!(matches!(
             game.state(),

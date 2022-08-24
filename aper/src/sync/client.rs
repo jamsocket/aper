@@ -2,18 +2,18 @@ use super::messages::{
     ClientTransitionNumber, MessageToClient, MessageToServer, StateVersionNumber,
 };
 use crate::StateMachine;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, rc::Rc};
 
 #[derive(Debug, Clone)]
 struct OptimisticState<S: StateMachine> {
     transition_number: ClientTransitionNumber,
     transition: S::Transition,
-    state: S,
+    state: Rc<S>,
 }
 
 #[derive(Default, Debug, Clone)]
 pub struct StateClient<S: StateMachine> {
-    golden_state: S,
+    golden_state: Rc<S>,
     optimistic_states: VecDeque<OptimisticState<S>>,
     version: StateVersionNumber,
     next_transition: ClientTransitionNumber,
@@ -22,7 +22,7 @@ pub struct StateClient<S: StateMachine> {
 impl<S: StateMachine> StateClient<S> {
     pub fn new(state: S, version: StateVersionNumber) -> Self {
         StateClient {
-            golden_state: state,
+            golden_state: Rc::new(state),
             optimistic_states: VecDeque::new(),
             version,
             next_transition: ClientTransitionNumber::default(),
@@ -40,7 +40,7 @@ impl<S: StateMachine> StateClient<S> {
 
         let optimistic_state = OptimisticState {
             transition: transition.clone(),
-            state,
+            state: Rc::new(state),
             transition_number,
         };
 
@@ -59,13 +59,13 @@ impl<S: StateMachine> StateClient<S> {
         result
     }
 
-    pub fn receive_message_from_golden(
+    pub fn receive_message_from_server(
         &mut self,
         message: MessageToClient<S>,
     ) -> Result<(), S::Conflict> {
         match message {
             MessageToClient::SetState { state, version } => {
-                self.golden_state = state;
+                self.golden_state = Rc::new(state);
                 self.optimistic_states = VecDeque::default();
                 self.version = version;
                 Ok(())
@@ -140,13 +140,14 @@ impl<S: StateMachine> StateClient<S> {
                     self.version,
                     version.prior_version()
                 );
-                self.golden_state = self.golden_state.apply(&transition).unwrap();
+                self.golden_state = Rc::new(self.golden_state.apply(&transition).unwrap());
                 self.version = version;
 
                 let mut state = &self.golden_state;
                 for optimistic_state in self.optimistic_states.iter_mut() {
                     optimistic_state.state = state
                         .apply(&optimistic_state.transition)
+                        .map(Rc::new)
                         .unwrap_or_else(|_| state.clone());
                     state = &optimistic_state.state;
                 }
@@ -156,11 +157,11 @@ impl<S: StateMachine> StateClient<S> {
         }
     }
 
-    pub fn state(&self) -> &S {
+    pub fn state(&self) -> Rc<S> {
         if let Some(v) = self.optimistic_states.back() {
-            &v.state
+            v.state.clone()
         } else {
-            &self.golden_state
+            self.golden_state.clone()
         }
     }
 }
@@ -175,7 +176,7 @@ mod test {
         let counter = Counter::default();
         let mut m1 = StateClient::<Counter>::default();
 
-        m1.receive_message_from_golden(MessageToClient::SetState {
+        m1.receive_message_from_server(MessageToClient::SetState {
             state: counter,
             version: StateVersionNumber(0),
         })

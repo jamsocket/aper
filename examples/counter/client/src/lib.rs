@@ -1,37 +1,37 @@
-use aper_yew::{ClientBuilder, StateMachineContainerProgram, View, ViewContext};
-use wasm_bindgen::prelude::*;
-use yew::prelude::*;
-
+use aper_yew::{
+    StateMachineContainerProgram, StateProgramComponent, StateProgramComponentProps,
+    StateProgramViewComponent, StateProgramViewContext,
+};
 pub use counter_common::{Counter, CounterTransition};
+use std::rc::Rc;
+use wasm_bindgen::prelude::*;
+use yew::prelude::{html, Html};
 
-#[derive(Clone, PartialEq)]
 struct CounterView;
 
-type CounterProgram = StateMachineContainerProgram<Counter>;
+impl StateProgramViewComponent for CounterView {
+    type Program = StateMachineContainerProgram<Counter>;
 
-impl View for CounterView {
-    type Callback = CounterTransition;
-    type State = CounterProgram;
-
-    fn view(&self, state: &Self::State, context: &ViewContext<Self::Callback>) -> Html {
-        return html! {
+    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html {
+        html! {
             <div>
                 <p>{&format!("Counter: {}", state.0.value())}</p>
-                <button onclick={context.callback.reform(|_| Some(CounterTransition::Add(1)))}>
+                <button onclick={context.callback.reform(|_| CounterTransition::Add(1))}>
                     {"+1"}
                 </button>
-                <button onclick={context.callback.reform(|_| Some(CounterTransition::Subtract(1)))}>
+                <button onclick={context.callback.reform(|_| CounterTransition::Subtract(1))}>
                     {"-1"}
                 </button>
-                <button onclick={context.callback.reform(|_| Some(CounterTransition::Reset))}>
+                <button onclick={context.callback.reform(|_| CounterTransition::Reset)}>
                     {"Reset"}
                 </button>
             </div>
-        };
+        }
     }
 }
 
 #[wasm_bindgen(start)]
 pub fn entry() {
-    ClientBuilder::new(CounterView).mount_to_body();
+    let props = StateProgramComponentProps::new("ws");
+    yew::start_app_with_props::<StateProgramComponent<CounterView>>(props);
 }

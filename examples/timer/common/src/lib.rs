@@ -1,4 +1,4 @@
-use aper::{StateMachine, NeverConflict};
+use aper::{NeverConflict, StateMachine};
 use aper_stateroom::{StateProgram, TransitionEvent};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};

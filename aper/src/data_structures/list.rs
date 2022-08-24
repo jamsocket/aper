@@ -122,17 +122,17 @@ impl<T: StateMachine + PartialEq> StateMachine for List<T> {
             ListOperation::Delete(id) => self.do_delete(id),
             ListOperation::Move(id, location) => self.do_move(id, location),
             ListOperation::Apply(id, transition) => {
-                if let Some(v) = self.pool.get(&id) {
+                if let Some(v) = self.pool.get(id) {
                     match v.apply(transition) {
                         Ok(v) => {
                             let mut new_self = self.clone();
-                            new_self.pool = new_self.pool.update(id.clone(), v);
+                            new_self.pool = new_self.pool.update(*id, v);
                             Ok(new_self)
                         }
                         Err(e) => Err(ListConflict::ChildConflict(e)),
                     }
                 } else {
-                    Err(ListConflict::ItemDoesNotExist(id.clone()))
+                    Err(ListConflict::ItemDoesNotExist(*id))
                 }
             }
         }
@@ -165,17 +165,17 @@ impl<T: StateMachine + PartialEq> List<T> {
             }
             ListPosition::AbsolutePosition(p) => p.clone(),
             ListPosition::Before(uuid, fallback_location) => {
-                if let Some(location) = self.items_inv.get(&uuid) {
+                if let Some(location) = self.items_inv.get(uuid) {
                     ZenoIndex::new_before(location)
                 } else {
                     ZenoIndex::new_before(fallback_location)
                 }
             }
             ListPosition::After(uuid, fallback_location) => {
-                if let Some(location) = self.items_inv.get(&uuid) {
+                if let Some(location) = self.items_inv.get(uuid) {
                     ZenoIndex::new_after(location)
                 } else {
-                    ZenoIndex::new_after(&fallback_location)
+                    ZenoIndex::new_after(fallback_location)
                 }
             }
         };
@@ -190,7 +190,7 @@ impl<T: StateMachine + PartialEq> List<T> {
                 ZenoIndex::new_after(&location)
             }
         } else {
-            location.clone()
+            location
         }
     }
 
@@ -203,30 +203,30 @@ impl<T: StateMachine + PartialEq> List<T> {
         let location = self.get_location(position);
 
         let mut new_self = self.clone();
-        new_self.items.insert(location.clone(), id.clone());
-        new_self.items_inv.insert(id.clone(), location);
-        new_self.pool.insert(id.clone(), value);
+        new_self.items.insert(location.clone(), *id);
+        new_self.items_inv.insert(*id, location);
+        new_self.pool.insert(*id, value);
         Ok(new_self)
     }
 
     fn do_move(&self, id: &Uuid, location: &ZenoIndex) -> Result<Self, ListConflict<T>> {
         let mut new_self = self.clone();
-        if let Some(old_location) = new_self.items_inv.remove(&id) {
+        if let Some(old_location) = new_self.items_inv.remove(id) {
             new_self.items.remove(&old_location);
-            new_self.items.insert(location.clone(), id.clone());
-            new_self.items_inv.insert(id.clone(), location.clone());
+            new_self.items.insert(location.clone(), *id);
+            new_self.items_inv.insert(*id, location.clone());
             Ok(new_self)
         } else {
-            Err(ListConflict::ItemDoesNotExist(id.clone()))
+            Err(ListConflict::ItemDoesNotExist(*id))
         }
     }
 
     fn do_delete(&self, id: &Uuid) -> Result<Self, ListConflict<T>> {
         let mut new_self = self.clone();
-        if let Some(location) = new_self.items_inv.remove(&id) {
+        if let Some(location) = new_self.items_inv.remove(id) {
             new_self.items.remove(&location);
         }
-        new_self.pool.remove(&id);
+        new_self.pool.remove(id);
 
         Ok(new_self)
     }

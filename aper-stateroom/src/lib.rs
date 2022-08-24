@@ -1,9 +1,12 @@
-use aper::sync::messages::{ClientTransitionNumber, MessageToClient, MessageToServer, StateVersionNumber};
+use aper::sync::messages::{
+    ClientTransitionNumber, MessageToClient, MessageToServer, StateVersionNumber,
+};
 use aper::sync::server::{StateServer, StateServerMessageResponse};
 use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 pub use state_program::{StateMachineContainerProgram, StateProgram};
+pub use state_program_client::StateProgramClient;
 pub use stateroom::ClientId;
 use stateroom::{
     MessageRecipient, SimpleStateroomService, StateroomContext, StateroomServiceFactory,
@@ -13,6 +16,7 @@ use std::convert::Infallible;
 use std::marker::PhantomData;
 
 mod state_program;
+mod state_program_client;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum StateProgramMessage<S>
@@ -49,7 +53,6 @@ impl<P: StateProgram> AperStateroomService<P> {
 
         if let Some(ev) = &susp {
             if let Ok(dur) = ev.timestamp.signed_duration_since(Utc::now()).to_std() {
-                
                 ctx.set_timer(dur.as_millis() as u32);
             }
         }
@@ -80,7 +83,10 @@ impl<P: StateProgram> AperStateroomService<P> {
             broadcast_message,
         } = self.state.receive_message(message);
 
-        let reply_message = StateProgramMessage::Message { message: reply_message, timestamp };
+        let reply_message = StateProgramMessage::Message {
+            message: reply_message,
+            timestamp,
+        };
 
         if let Some(client_id) = client_id {
             ctx.send_message(
@@ -90,7 +96,10 @@ impl<P: StateProgram> AperStateroomService<P> {
         }
 
         if let Some(broadcast_message) = broadcast_message {
-            let broadcast_message = StateProgramMessage::Message { message: broadcast_message, timestamp };
+            let broadcast_message = StateProgramMessage::Message {
+                message: broadcast_message,
+                timestamp,
+            };
 
             let recipient = if let Some(client_id) = client_id {
                 MessageRecipient::EveryoneExcept(client_id)
@@ -133,9 +142,7 @@ where
 
         ctx.send_message(
             MessageRecipient::Client(client_id),
-            serde_json::to_string(&response)
-                .unwrap()
-                .as_str(),
+            serde_json::to_string(&response).unwrap().as_str(),
         );
     }
 
