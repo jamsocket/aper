@@ -23,7 +23,7 @@ pub enum NeverConflict {}
 /// state machine. It's up to you to implement accessor methods (or use public
 /// fields) in order to expose the data necessary to render your views.
 pub trait StateMachine:
-    Sized + Unpin + 'static + Clone + DeserializeOwned + Serialize + Debug
+    Clone + DeserializeOwned + Serialize + Debug + 'static
 {
     /// The [`StateMachine::Transition`] type associates another type with this state machine
     /// as its transitions.
