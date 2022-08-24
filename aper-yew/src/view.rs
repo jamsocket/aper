@@ -4,7 +4,7 @@ use yew::{Callback, Html};
 /// Context passed to a [View].
 pub struct ViewContext<T> {
     /// A function called to invoke a state machine transformation.
-    pub callback: Callback<Option<T>>,
+    pub callback: Callback<T>,
 
     /// A function called to force a redraw.
     pub redraw: Callback<()>,

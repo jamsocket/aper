@@ -1,20 +1,28 @@
 use crate::{StateProgram, StateProgramMessage, TransitionEvent};
 use aper::sync::{client::StateClient, messages::MessageToServer};
-use chrono::{Duration, Utc};
+use chrono::{Duration, Utc, DateTime};
 use stateroom::ClientId;
 
 #[derive(Debug)]
-struct InnerState<S: StateProgram> {
+pub struct InnerState<S: StateProgram> {
     client: StateClient<S>,
-    client_id: ClientId,
+    pub client_id: ClientId,
     server_time_delta: Duration,
 }
 
 impl<S: StateProgram> InnerState<S> {
-    fn wrap_transition(&self, transition: S::T) -> TransitionEvent<S::T> {
-        let timestamp = Utc::now()
+    pub fn current_server_time(&self) -> DateTime<Utc> {
+        Utc::now()
             .checked_sub_signed(self.server_time_delta)
-            .unwrap();
+            .unwrap()
+    }
+
+    pub fn state(&self) -> &S {
+        self.client.state()
+    }
+
+    fn wrap_transition(&self, transition: S::T) -> TransitionEvent<S::T> {
+        let timestamp = self.current_server_time();
 
         TransitionEvent {
             client: Some(self.client_id),
@@ -24,9 +32,16 @@ impl<S: StateProgram> InnerState<S> {
     }
 }
 
-#[derive(Default)]
 pub struct StateProgramClient<S: StateProgram> {
     inner_state: Option<InnerState<S>>,
+}
+
+impl<S: StateProgram> Default for StateProgramClient<S> {
+    fn default() -> Self {
+        StateProgramClient {
+            inner_state: None,
+        }
+    }
 }
 
 impl<S: StateProgram> StateProgramClient<S> {
@@ -73,11 +88,11 @@ impl<S: StateProgram> StateProgramClient<S> {
         }
     }
 
-    pub fn state(&self) -> &S {
+    pub fn state(&self) -> Option<&InnerState<S>> {
         if let Some(inner_state) = &self.inner_state {
-            inner_state.client.state()
+            Some(inner_state)
         } else {
-            panic!()
+            None
         }
     }
 }

@@ -18,10 +18,8 @@
 //! just as they would in a regular Yew component.
 
 pub use crate::view::{View, ViewContext};
-use aper_stateroom::StateProgramMessage;
 pub use aper_stateroom::{ClientId, StateMachineContainerProgram, StateProgram, TransitionEvent};
 use aper_websocket_client::AperWebSocketStateProgramClient;
-use chrono::Utc;
 pub use client::ClientBuilder;
 use std::fmt::Debug;
 use std::marker::PhantomData;
@@ -50,24 +48,23 @@ pub struct StateProgramComponentProps<V: View> {
 /// Represents a message this component could receive, either from the server or from
 /// an event triggered by the user.
 #[derive(Debug)]
-pub enum Msg<State: StateProgram + Default> {
+pub enum Msg<State: StateProgram> {
     StateTransition(State::T),
     Redraw,
-    NoOp,
 }
 
 /// Yew Component which owns a copy of the state as well as a connection to the server,
 /// and keeps its local copy of the state in sync with the server.
 pub struct StateProgramComponent<
-    Program: StateProgram + Default,
+    Program: StateProgram,
     V: 'static + View<State = Program, Callback = Program::T>,
 > {
     /// Websocket connection to the server.
-    client: AperWebSocketStateProgramClient<Program>,
+    client: Option<AperWebSocketStateProgramClient<Program>>,
     _ph: PhantomData<V>,
 }
 
-impl<Program: StateProgram + Default, V: View<State = Program, Callback = Program::T>>
+impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>>
     StateProgramComponent<Program, V>
 {
     /// Initiate a connection to the remote server.
@@ -82,7 +79,7 @@ impl<Program: StateProgram + Default, V: View<State = Program, Callback = Progra
     }
 }
 
-impl<Program: StateProgram + Default, V: View<State = Program, Callback = Program::T>> Component
+impl<Program: StateProgram, V: View<State = Program, Callback = Program::T>> Component
     for StateProgramComponent<Program, V>
 {
     type Message = Msg<Program>;
@@ -101,63 +98,33 @@ impl<Program: StateProgram + Default, V: View<State = Program, Callback = Progra
         result
     }
 
-    fn update(&mut self, context: &yew::Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::StateTransition(transition) => {
-                self.client.push_transition(transition);
+                self.client.as_mut().unwrap().push_transition(transition);
                 false
-            },
-            Msg::ServerMessage(StateProgramMessage::Message { message, timestamp }) => {
-                if let Status::Connected {
-                    state,
-                    server_time_delta,
-                    ..
-                } = &mut self.status
-                {
-                    *server_time_delta = Utc::now().signed_duration_since(timestamp);
-                    state.receive_message_from_server(message).unwrap();
-
-                    true
-                } else {
-                    panic!(
-                        "Received StateProgramMessage::Message while in state {:?}",
-                        self.status
-                    );
-                }
-            }
-            Msg::UpdateStatus(st) => {
-                if let Status::ErrorConnecting = st {
-                    context.props().onerror.emit(())
-                }
-                self.status = st;
-                true
             }
             Msg::Redraw => true,
-            Msg::NoOp => false,
         }
     }
 
     fn view(&self, context: &yew::Context<Self>) -> Html {
-        match &self.status {
-            Status::WaitingToConnect => html! {{"Waiting to connect."}},
-            Status::WaitingForInitialState => html! {{"Waiting for initial state."}},
-            Status::Connected {
-                state,
-                client_id,
-                server_time_delta,
-            } => {
-                let estimated_server_time =
-                    Utc::now().checked_add_signed(*server_time_delta).unwrap();
-
-                let view_context = ViewContext {
-                    callback: context.link().callback(Msg::StateTransition),
-                    redraw: context.link().callback(|()| Msg::Redraw),
-                    time: estimated_server_time,
-                    client: *client_id,
-                };
-                context.props().view.view(state.state(), &view_context)
-            }
-            Status::ErrorConnecting => html! {{"Error connecting."}},
+        match &self.client {
+            Some(client) => match client.client().state() {
+                Some(state) => {
+                    let view_context = ViewContext {
+                        callback: context.link().callback(Msg::StateTransition),
+                        redraw: context.link().callback(|()| Msg::Redraw),
+                        time: state.current_server_time(),
+                        client: state.client_id,
+                    };
+                    context.props().view.view(state.state(), &view_context)
+                }
+                None => {
+                    html! {{"Waiting for initial state."}}
+                }
+            },
+            None => html! {{"Waiting to connect."}},
         }
     }
 }

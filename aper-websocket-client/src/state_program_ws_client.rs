@@ -3,7 +3,7 @@ use anyhow::Result;
 use aper::sync::{messages::MessageToServer};
 use aper_stateroom::{StateProgram, StateProgramMessage, StateProgramClient};
 use core::fmt::Debug;
-use std::{rc::Rc, sync::Mutex};
+use std::{rc::Rc, sync::{Mutex, MutexGuard}};
 
 pub struct AperWebSocketStateProgramClient<S>
 where
@@ -29,7 +29,7 @@ where
 
 impl<S> AperWebSocketStateProgramClient<S>
 where
-    S: StateProgram + Default,
+    S: StateProgram,
 {
     pub fn new<F>(url: &str, callback: F) -> Result<Self>
     where
@@ -46,7 +46,7 @@ where
                 Box::new(move |message: StateProgramMessage<S>| {
                     let mut lock = state_client.lock().unwrap();
                     lock.receive_message_from_server(message);
-                    callback(lock.state());
+                    callback(lock.state().unwrap().state());
                 })
             };
             TypedWebsocketConnection::new(url, typed_callback).unwrap()
@@ -63,8 +63,11 @@ where
         let mut lock = self.state_client.lock().unwrap();
         if let Ok(message_to_server) = lock.push_transition(transition) {
             self.conn.send(&message_to_server);
-        }
+            (self.callback)(lock.state().unwrap().state());
+        }        
+    }
 
-        (self.callback)(lock.state());
+    pub fn client(&self) -> MutexGuard<StateProgramClient<S>> {
+        self.state_client.lock().unwrap()
     }
 }

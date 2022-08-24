@@ -343,14 +343,11 @@ dependencies = [
  "aper-stateroom",
  "bincode",
  "chrono",
- "console_error_panic_hook",
- "gloo-timers",
  "js-sys",
  "serde",
  "serde_json",
  "wasm-bindgen",
  "web-sys",
- "yew",
 ]
 
 [[package]]
