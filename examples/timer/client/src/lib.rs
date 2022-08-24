@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use aper_yew::{
     StateProgramComponent, StateProgramComponentProps, StateProgramViewComponent,
-    StateProgramViewComponentProps,
+    StateProgramViewContext,
 };
 use timer_common::{Timer, TimerEvent};
 use wasm_bindgen::prelude::*;
@@ -9,31 +11,19 @@ use yew::prelude::*;
 #[derive(Clone, PartialEq)]
 struct TimerView;
 
-impl Component for TimerView {
-    type Message = ();
-    type Properties = StateProgramViewComponentProps<Timer>;
+impl StateProgramViewComponent for TimerView {
+    type Program = Timer;
 
-    fn create(_: &Context<Self>) -> Self {
-        Self
-    }
-
-    fn view(&self, context: &Context<Self>) -> Html {
-        let callback = &context.props().callback;
-        let state = &context.props().state;
-
-        return html! {
+    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html {
+        html! {
             <div>
                 <p>{&format!("Timer: {}", state.value)}</p>
-                <button onclick={callback.reform(|_| TimerEvent::Reset)}>
+                <button onclick={context.callback.reform(|_| TimerEvent::Reset)}>
                     {"Reset"}
                 </button>
             </div>
-        };
+        }
     }
-}
-
-impl StateProgramViewComponent for TimerView {
-    type Program = Timer;
 }
 
 #[wasm_bindgen(start)]

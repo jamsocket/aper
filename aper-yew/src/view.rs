@@ -1,7 +1,7 @@
-use std::rc::Rc;
-
 use aper_stateroom::{ClientId, StateProgram, Timestamp};
-use yew::{Callback, Component, Properties};
+use chrono::{DateTime, Utc};
+use std::rc::Rc;
+use yew::{Callback, Html, Properties};
 
 #[derive(Properties)]
 pub struct StateProgramViewComponentProps<S: StateProgram> {
@@ -30,8 +30,14 @@ impl<S: StateProgram> PartialEq for StateProgramViewComponentProps<S> {
     }
 }
 
-pub trait StateProgramViewComponent:
-    Component<Properties = StateProgramViewComponentProps<Self::Program>>
-{
+pub struct StateProgramViewContext<P: StateProgram> {
+    pub callback: Callback<P::T>,
+    pub client_id: ClientId,
+    pub timestamp: DateTime<Utc>,
+}
+
+pub trait StateProgramViewComponent: 'static {
     type Program: StateProgram;
+
+    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html;
 }

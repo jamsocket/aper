@@ -1,14 +1,14 @@
 #![recursion_limit = "1024"]
-
 use aper_stateroom::ClientId;
 use aper_yew::{
     StateProgramComponent, StateProgramComponentProps, StateProgramViewComponent,
-    StateProgramViewComponentProps,
+    StateProgramViewContext,
 };
 use board_component::BoardComponent;
 use drop_four_common::{
     Board, DropFourGame, GameTransition, PlayState, PlayerColor, BOARD_COLS, BOARD_ROWS,
 };
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
@@ -19,7 +19,6 @@ struct GameView;
 
 impl GameView {
     fn view_waiting(
-        &self,
         waiting_player: Option<ClientId>,
         client_id: ClientId,
         callback: &Callback<GameTransition>,
@@ -45,7 +44,6 @@ impl GameView {
     }
 
     fn view_playing(
-        &self,
         board: &Board,
         next_player: PlayerColor,
         winner: Option<PlayerColor>,
@@ -92,8 +90,7 @@ impl GameView {
     }
 
     fn view_inner(
-        &self,
-        state: &DropFourGame,
+        state: Rc<DropFourGame>,
         client_id: ClientId,
         callback: &Callback<GameTransition>,
     ) -> Html {
@@ -106,38 +103,26 @@ impl GameView {
                 ..
             } => {
                 let own_color = player_map.color_of_player(client_id);
-                self.view_playing(board, *next_player, *winner, own_color, callback)
+                Self::view_playing(board, *next_player, *winner, own_color, callback)
             }
             PlayState::Waiting { waiting_player, .. } => {
-                self.view_waiting(*waiting_player, client_id, callback)
+                Self::view_waiting(*waiting_player, client_id, callback)
             }
         }
     }
 }
 
-impl Component for GameView {
-    type Message = ();
-    type Properties = StateProgramViewComponentProps<DropFourGame>;
-
-    fn create(_: &Context<Self>) -> Self {
-        Self
-    }
-
-    fn view(&self, context: &Context<Self>) -> Html {
-        let callback = &context.props().callback;
-        let state = &context.props().state;
-
-        return html! {
-            <div class="main">
-                <h1>{"Drop Four"}</h1>
-                { self.view_inner(state, context.props().client, callback) }
-            </div>
-        };
-    }
-}
-
 impl StateProgramViewComponent for GameView {
     type Program = DropFourGame;
+
+    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html {
+        html! {
+            <div class="main">
+            <h1>{"Drop Four"}</h1>
+               { Self::view_inner(state, context.client_id, &context.callback) }
+            </div>
+        }
+    }
 }
 
 #[wasm_bindgen(start)]

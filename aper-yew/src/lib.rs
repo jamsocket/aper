@@ -4,12 +4,10 @@ use chrono::{DateTime, Utc};
 use std::marker::PhantomData;
 use std::{fmt::Debug, rc::Rc};
 pub use update_interval::UpdateInterval;
-pub use view::{StateProgramViewComponent, StateProgramViewComponentProps};
-use yew::{
-    html,
-    virtual_dom::{VChild, VNode},
-    Component, Html, NodeRef, Properties,
+pub use view::{
+    StateProgramViewComponent, StateProgramViewComponentProps, StateProgramViewContext,
 };
+use yew::{html, Component, Html, Properties};
 
 mod update_interval;
 mod view;
@@ -135,15 +133,13 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
                 client_id,
             } = inner_state;
 
-            let props = V::Properties::builder()
-                .callback(context.link().callback(Msg::StateTransition))
-                .client(*client_id)
-                .redraw(context.link().callback(|()| Msg::Redraw))
-                .state(state)
-                .time(*timestamp)
-                .build();
+            let context = StateProgramViewContext {
+                callback: context.link().callback(Msg::StateTransition),
+                client_id: *client_id,
+                timestamp: *timestamp,
+            };
 
-            VNode::from(VChild::<V>::new(props, NodeRef::default(), None))
+            V::view(state.clone(), context)
         } else {
             html! {{"Waiting for initial state."}}
         }
