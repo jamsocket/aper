@@ -192,8 +192,6 @@ impl Component for BoardComponent {
     }
 
     fn create(_context: &yew::Context<Self>) -> Self {
-        BoardComponent {
-            hover_col: None,
-        }
+        BoardComponent { hover_col: None }
     }
 }

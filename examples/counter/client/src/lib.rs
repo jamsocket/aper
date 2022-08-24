@@ -1,7 +1,10 @@
-use aper_yew::{StateMachineContainerProgram, StateProgramViewComponent, StateProgramViewComponentProps, StateProgramComponentProps, StateProgramComponent};
+use aper_yew::{
+    StateMachineContainerProgram, StateProgramComponent, StateProgramComponentProps,
+    StateProgramViewComponent, StateProgramViewComponentProps,
+};
+pub use counter_common::{Counter, CounterTransition};
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-pub use counter_common::{Counter, CounterTransition};
 
 #[derive(Clone, PartialEq)]
 struct CounterView;

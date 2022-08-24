@@ -1,7 +1,10 @@
-use aper_yew::{StateProgramViewComponentProps, StateProgramComponentProps, StateProgramComponent, StateProgramViewComponent};
+use aper_yew::{
+    StateProgramComponent, StateProgramComponentProps, StateProgramViewComponent,
+    StateProgramViewComponentProps,
+};
+use timer_common::{Timer, TimerEvent};
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-use timer_common::{Timer, TimerEvent};
 
 #[derive(Clone, PartialEq)]
 struct TimerView;
@@ -25,7 +28,7 @@ impl Component for TimerView {
                     {"Reset"}
                 </button>
             </div>
-        }
+        };
     }
 }
 

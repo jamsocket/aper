@@ -1,7 +1,10 @@
 #![recursion_limit = "1024"]
 
 use aper_stateroom::ClientId;
-use aper_yew::{ClientBuilder, View, ViewContext};
+use aper_yew::{
+    StateProgramComponent, StateProgramComponentProps, StateProgramViewComponent,
+    StateProgramViewComponentProps,
+};
 use board_component::BoardComponent;
 use drop_four_common::{
     Board, DropFourGame, GameTransition, PlayState, PlayerColor, BOARD_COLS, BOARD_ROWS,
@@ -18,9 +21,10 @@ impl GameView {
     fn view_waiting(
         &self,
         waiting_player: Option<ClientId>,
-        context: &ViewContext<GameTransition>,
+        client_id: ClientId,
+        callback: &Callback<GameTransition>,
     ) -> Html {
-        if Some(context.client) == waiting_player {
+        if Some(client_id) == waiting_player {
             return html! {
                 <p>{"Waiting for another player."}</p>
             };
@@ -33,7 +37,7 @@ impl GameView {
 
             return html! {
                 <div>
-                    <button onclick={context.callback.reform(|_| Some(GameTransition::Join))}>{"Join"}</button>
+                    <button onclick={callback.reform(|_| GameTransition::Join)}>{"Join"}</button>
                     <p>{message}</p>
                 </div>
             };
@@ -46,7 +50,7 @@ impl GameView {
         next_player: PlayerColor,
         winner: Option<PlayerColor>,
         own_color: Option<PlayerColor>,
-        context: &ViewContext<GameTransition>,
+        callback: &Callback<GameTransition>,
     ) -> Html {
         let status_message = if let Some(own_color) = own_color {
             if let Some(winner) = winner {
@@ -71,11 +75,11 @@ impl GameView {
                     board={board.clone()}
                     player={next_player}
                     interactive={Some(next_player)==own_color}
-                    callback={context.callback.reform(Some).clone()} />
+                    callback={callback.clone()} />
                 {
                     if winner.is_some() {
                         html! {
-                            <button onclick={context.callback.reform(|_| Some(GameTransition::Reset))}>
+                            <button onclick={callback.reform(|_| GameTransition::Reset)}>
                                 {"New Game"}
                             </button>
                         }
@@ -87,7 +91,12 @@ impl GameView {
         };
     }
 
-    fn view_inner(&self, state: &DropFourGame, context: &ViewContext<GameTransition>) -> Html {
+    fn view_inner(
+        &self,
+        state: &DropFourGame,
+        client_id: ClientId,
+        callback: &Callback<GameTransition>,
+    ) -> Html {
         match state.state() {
             PlayState::Playing {
                 board,
@@ -96,31 +105,43 @@ impl GameView {
                 player_map,
                 ..
             } => {
-                let own_color = player_map.color_of_player(context.client);
-                self.view_playing(board, *next_player, *winner, own_color, context)
+                let own_color = player_map.color_of_player(client_id);
+                self.view_playing(board, *next_player, *winner, own_color, callback)
             }
             PlayState::Waiting { waiting_player, .. } => {
-                self.view_waiting(*waiting_player, context)
+                self.view_waiting(*waiting_player, client_id, callback)
             }
         }
     }
 }
 
-impl View for GameView {
-    type Callback = GameTransition;
-    type State = DropFourGame;
+impl Component for GameView {
+    type Message = ();
+    type Properties = StateProgramViewComponentProps<DropFourGame>;
 
-    fn view(&self, state: &Self::State, context: &ViewContext<Self::Callback>) -> Html {
+    fn create(_: &Context<Self>) -> Self {
+        Self
+    }
+
+    fn view(&self, context: &Context<Self>) -> Html {
+        let callback = &context.props().callback;
+        let state = &context.props().state;
+
         return html! {
             <div class="main">
                 <h1>{"Drop Four"}</h1>
-                { self.view_inner(state, context) }
+                { self.view_inner(state, context.props().client, callback) }
             </div>
         };
     }
 }
 
+impl StateProgramViewComponent for GameView {
+    type Program = DropFourGame;
+}
+
 #[wasm_bindgen(start)]
 pub fn entry() {
-    ClientBuilder::new(GameView).mount_to_body();
+    let props = StateProgramComponentProps::new("ws");
+    yew::start_app_with_props::<StateProgramComponent<GameView>>(props);
 }
