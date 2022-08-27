@@ -1,39 +1,19 @@
-use aper_stateroom::{ClientId, StateProgram, Timestamp};
-use chrono::{DateTime, Utc};
+use aper_stateroom::{ClientId, StateProgram};
+use chrono::{DateTime, Utc, Duration};
 use std::rc::Rc;
-use yew::{Callback, Html, Properties};
-
-#[derive(Properties)]
-pub struct StateProgramViewComponentProps<S: StateProgram> {
-    pub state: Rc<S>,
-
-    /// A function called to invoke a state machine transformation.
-    pub callback: Callback<S::T>,
-
-    /// A function called to force a redraw.
-    pub redraw: Callback<()>,
-
-    /// The ID of the current player.
-    pub client: ClientId,
-
-    /// An estimate of the server's time as of the render.
-    pub time: Timestamp,
-}
-
-impl<S: StateProgram> PartialEq for StateProgramViewComponentProps<S> {
-    fn eq(&self, other: &Self) -> bool {
-        self.callback == other.callback
-            && self.redraw == other.redraw
-            && self.client == other.client
-            && self.time == other.time
-            && Rc::ptr_eq(&self.state, &other.state)
-    }
-}
+use yew::{Callback, Html};
 
 pub struct StateProgramViewContext<P: StateProgram> {
     pub callback: Callback<P::T>,
+    pub redraw: Callback<()>,
     pub client_id: ClientId,
-    pub timestamp: DateTime<Utc>,
+    pub offset: Duration,
+}
+
+impl<P: StateProgram> StateProgramViewContext<P> {
+    pub fn timestamp(&self) -> DateTime<Utc> {
+        Utc::now().checked_add_signed(self.offset).unwrap()
+    }
 }
 
 pub trait StateProgramViewComponent: 'static {

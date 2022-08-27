@@ -9,11 +9,11 @@ use stateroom::ClientId;
 pub struct InnerState<S: StateProgram> {
     client: StateClient<S>,
     pub client_id: ClientId,
-    server_time_delta: Duration,
+    pub server_time_delta: Duration,
 }
 
 impl<S: StateProgram> InnerState<S> {
-    pub fn current_server_time(&self) -> DateTime<Utc> {
+    fn current_server_time(&self) -> DateTime<Utc> {
         Utc::now()
             .checked_sub_signed(self.server_time_delta)
             .unwrap()

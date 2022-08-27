@@ -1,12 +1,10 @@
 pub use aper_stateroom::{ClientId, StateMachineContainerProgram, StateProgram, TransitionEvent};
 use aper_websocket_client::AperWebSocketStateProgramClient;
-use chrono::{DateTime, Utc};
+use chrono::Duration;
 use std::marker::PhantomData;
 use std::{fmt::Debug, rc::Rc};
 pub use update_interval::UpdateInterval;
-pub use view::{
-    StateProgramViewComponent, StateProgramViewComponentProps, StateProgramViewContext,
-};
+pub use view::{StateProgramViewComponent, StateProgramViewContext};
 use yew::{html, Component, Html, Properties};
 
 mod update_interval;
@@ -55,13 +53,13 @@ impl<V: StateProgramViewComponent> PartialEq for StateProgramComponentProps<V> {
 #[derive(Debug)]
 pub enum Msg<State: StateProgram> {
     StateTransition(State::T),
-    SetState(Rc<State>, DateTime<Utc>, ClientId),
+    SetState(Rc<State>, Duration, ClientId),
     Redraw,
 }
 
 struct InnerState<P: StateProgram> {
     state: Rc<P>,
-    timestamp: DateTime<Utc>,
+    offset: Duration,
     client_id: ClientId,
 }
 
@@ -80,8 +78,8 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
         let link = context.link().clone();
         let client = AperWebSocketStateProgramClient::new(
             &context.props().websocket_url,
-            move |state, timestamp, client_id| {
-                link.send_message(Msg::SetState(state, timestamp, client_id))
+            move |state, offset, client_id| {
+                link.send_message(Msg::SetState(state, offset, client_id))
             },
         )
         .unwrap();
@@ -113,10 +111,10 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
                 self.client.as_mut().unwrap().push_transition(transition);
                 false
             }
-            Msg::SetState(state, timestamp, client_id) => {
+            Msg::SetState(state, offset, client_id) => {
                 self.state = Some(InnerState {
                     state,
-                    timestamp,
+                    offset,
                     client_id,
                 });
                 true
@@ -129,14 +127,15 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
         if let Some(inner_state) = &self.state {
             let InnerState {
                 state,
-                timestamp,
+                offset,
                 client_id,
             } = inner_state;
 
             let context = StateProgramViewContext {
                 callback: context.link().callback(Msg::StateTransition),
+                redraw: context.link().callback(|_| Msg::Redraw),
                 client_id: *client_id,
-                timestamp: *timestamp,
+                offset: *offset,
             };
 
             V::view(state.clone(), context)

@@ -2,7 +2,7 @@ use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
 use aper::sync::messages::MessageToServer;
 use aper_stateroom::{ClientId, StateProgram, StateProgramClient, StateProgramMessage};
-use chrono::{DateTime, Utc};
+use chrono::Duration;
 use core::fmt::Debug;
 use std::{rc::Rc, sync::Mutex};
 
@@ -11,7 +11,7 @@ type Conn<S> = TypedWebsocketConnection<
     MessageToServer<S>,
     Box<dyn Fn(StateProgramMessage<S>)>,
 >;
-type BoxedCallback<S> = Rc<Box<dyn Fn(Rc<S>, DateTime<Utc>, ClientId)>>;
+type BoxedCallback<S> = Rc<Box<dyn Fn(Rc<S>, Duration, ClientId)>>;
 
 pub struct AperWebSocketStateProgramClient<S>
 where
@@ -37,7 +37,7 @@ where
 {
     pub fn new<F>(url: &str, callback: F) -> Result<Self>
     where
-        F: Fn(Rc<S>, DateTime<Utc>, ClientId) + 'static,
+        F: Fn(Rc<S>, Duration, ClientId) + 'static,
     {
         let state_client: Rc<Mutex<StateProgramClient<S>>> = Rc::default();
         let callback: BoxedCallback<S> = Rc::new(Box::new(callback));
@@ -51,7 +51,7 @@ where
                     let mut lock = state_client.lock().unwrap();
                     lock.receive_message_from_server(message);
                     let state = lock.state().unwrap();
-                    callback(state.state(), state.current_server_time(), state.client_id);
+                    callback(state.state(), state.server_time_delta, state.client_id);
                 })
             };
             TypedWebsocketConnection::new(url, typed_callback).unwrap()
@@ -69,7 +69,7 @@ where
         if let Ok(message_to_server) = lock.push_transition(transition) {
             self.conn.send(&message_to_server);
             let state = lock.state().unwrap();
-            (self.callback)(state.state(), state.current_server_time(), state.client_id);
+            (self.callback)(state.state(), state.server_time_delta, state.client_id);
         }
     }
 }
