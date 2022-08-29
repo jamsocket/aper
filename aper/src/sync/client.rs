@@ -5,25 +5,33 @@ use crate::StateMachine;
 use std::{collections::VecDeque, rc::Rc};
 
 #[derive(Debug, Clone)]
-struct OptimisticState<S: StateMachine> {
-    transition_number: ClientTransitionNumber,
-    transition: S::Transition,
-    state: Rc<S>,
-}
-
-#[derive(Default, Debug, Clone)]
 pub struct StateClient<S: StateMachine> {
     golden_state: Rc<S>,
-    optimistic_states: VecDeque<OptimisticState<S>>,
+    transitions: VecDeque<(ClientTransitionNumber, S::Transition)>,
+    optimistic_state: Rc<S>,
     version: StateVersionNumber,
     next_transition: ClientTransitionNumber,
 }
 
+impl<S: StateMachine + Default> Default for StateClient<S> {
+    fn default() -> Self {
+        Self {
+            golden_state: Default::default(),
+            transitions: Default::default(),
+            optimistic_state: Default::default(),
+            version: Default::default(),
+            next_transition: Default::default(),
+        }
+    }
+}
+
 impl<S: StateMachine> StateClient<S> {
     pub fn new(state: S, version: StateVersionNumber) -> Self {
+        let state = Rc::new(state);
         StateClient {
-            golden_state: Rc::new(state),
-            optimistic_states: VecDeque::new(),
+            golden_state: state.clone(),
+            optimistic_state: state,
+            transitions: VecDeque::new(),
             version,
             next_transition: ClientTransitionNumber::default(),
         }
@@ -34,17 +42,11 @@ impl<S: StateMachine> StateClient<S> {
         transition: S::Transition,
     ) -> Result<MessageToServer<S>, S::Conflict> {
         let current_state = self.state();
-        let state = current_state.apply(&transition)?;
+        self.optimistic_state = Rc::new(current_state.apply(&transition)?);
 
         let transition_number = self.next_transition();
-
-        let optimistic_state = OptimisticState {
-            transition: transition.clone(),
-            state: Rc::new(state),
-            transition_number,
-        };
-
-        self.optimistic_states.push_back(optimistic_state);
+        self.transitions
+            .push_back((transition_number, transition.clone()));
 
         Ok(MessageToServer::DoTransition {
             transition_number,
@@ -62,70 +64,60 @@ impl<S: StateMachine> StateClient<S> {
     pub fn receive_message_from_server(
         &mut self,
         message: MessageToClient<S>,
-    ) -> Result<(), S::Conflict> {
+    ) -> Option<MessageToServer<S>> {
         match message {
             MessageToClient::SetState { state, version } => {
-                self.golden_state = Rc::new(state);
-                self.optimistic_states = VecDeque::default();
+                let state = Rc::new(state);
+                self.golden_state = state.clone();
+                self.optimistic_state = state;
+                self.transitions = VecDeque::new(); // Don't replay transitions, for now?
                 self.version = version;
-                Ok(())
+                None
             }
 
             MessageToClient::ConfirmTransition {
                 transition_number,
                 version,
             } => {
-                if let Some(OptimisticState {
-                    transition_number: optimistic_transition_number,
-                    state,
-                    ..
-                }) = self.optimistic_states.pop_front()
+                if let Some((optimistic_transition_number, transition)) =
+                    self.transitions.pop_front()
                 {
-                    // TODO: this is recoverable, but panicking until we have a logging solution because we want to know about it.
-                    assert_eq!(
-                        optimistic_transition_number,
-                        transition_number,
-                        "Expected response about transition {:?} but got response about transition {:?}",
-                        optimistic_transition_number,
-                        transition_number
-                    );
+                    if optimistic_transition_number != transition_number {
+                        // Remote confirmed a transition out of expected order.
+                        return Some(MessageToServer::RequestState);
+                    }
 
-                    self.golden_state = state;
+                    if let Ok(state) = self.golden_state.apply(&transition) {
+                        self.golden_state = Rc::new(state);
+                    } else {
+                        // A transition confirmed by the server shouldn't create a conflict,
+                        // so something has drifted.
+                        return Some(MessageToServer::RequestState);
+                    }
                     self.version = version;
 
-                    Ok(())
+                    None
                 } else {
-                    panic!(
-                        "Remote confirmed transition {:?} but we don't have a record of it.",
-                        transition_number
-                    );
+                    // Remote confirmed a transition but we don't have any local transitions.
+                    Some(MessageToServer::RequestState)
                 }
             }
 
             MessageToClient::Conflict {
                 transition_number,
-                conflict,
+                ..
             } => {
-                if let Some(OptimisticState {
-                    transition_number: optimistic_transition_number,
-                    ..
-                }) = self.optimistic_states.pop_front()
+                if let Some((optimistic_transition_number, _)) =
+                    self.transitions.pop_front()
                 {
-                    // TODO: this is recoverable, but panicking until we have a logging solution because we want to know about it.
-                    assert_eq!(
-                        optimistic_transition_number,
-                        transition_number,
-                        "Expected response about transition {:?} but got response about transition {:?}",
-                        optimistic_transition_number,
-                        transition_number
-                    );
+                    if optimistic_transition_number != transition_number {
+                        return Some(MessageToServer::RequestState);
+                    }
 
-                    Err(conflict)
+                    // We've popped the transition that caused a conflict, nothing more to do.
+                    None
                 } else {
-                    panic!(
-                        "Remote rejected transition {:?} but we don't have a record of it.",
-                        transition_number
-                    );
+                    Some(MessageToServer::RequestState)
                 }
             }
 
@@ -133,36 +125,36 @@ impl<S: StateMachine> StateClient<S> {
                 transition,
                 version,
             } => {
-                assert_eq!(
-                    self.version,
-                    version.prior_version(),
-                    "Client has version {:?} but transition implies version {:?}",
-                    self.version,
-                    version.prior_version()
-                );
-                self.golden_state = Rc::new(self.golden_state.apply(&transition).unwrap());
-                self.version = version;
-
-                let mut state = &self.golden_state;
-                for optimistic_state in self.optimistic_states.iter_mut() {
-                    optimistic_state.state = state
-                        .apply(&optimistic_state.transition)
-                        .map(Rc::new)
-                        .unwrap_or_else(|_| state.clone());
-                    state = &optimistic_state.state;
+                if self.version != version.prior_version() {
+                    return Some(MessageToServer::RequestState);
                 }
 
-                Ok(())
+                let state = if let Ok(state) = self.golden_state.apply(&transition) {
+                    state
+                } else {
+                    // Applying state locally caused conflict.
+                    return Some(MessageToServer::RequestState);
+                };
+
+                self.golden_state = Rc::new(state);
+                self.version = version;
+
+                let mut state = self.golden_state.clone();
+                for (_, transition) in &self.transitions {
+                    if let Ok(st) = state.apply(&transition) {
+                        state = Rc::new(st);
+                    };
+                }
+
+                self.optimistic_state = state;
+
+                None
             }
         }
     }
 
     pub fn state(&self) -> Rc<S> {
-        if let Some(v) = self.optimistic_states.back() {
-            v.state.clone()
-        } else {
-            self.golden_state.clone()
-        }
+        self.optimistic_state.clone()
     }
 }
 
@@ -176,11 +168,10 @@ mod test {
         let counter = Counter::default();
         let mut m1 = StateClient::<Counter>::default();
 
-        m1.receive_message_from_server(MessageToClient::SetState {
+        assert!(m1.receive_message_from_server(MessageToClient::SetState {
             state: counter,
             version: StateVersionNumber(0),
-        })
-        .unwrap();
+        }).is_none());
 
         assert_eq!(0, m1.state().value());
 
