@@ -49,7 +49,12 @@ where
 
                 Box::new(move |message: StateProgramMessage<S>| {
                     let mut lock = state_client.lock().unwrap();
-                    lock.receive_message_from_server(message);
+                    if let Some(response) = lock.receive_message_from_server(message) {
+                        panic!(
+                            "Can't yet return message to server, but state client returned {:?}",
+                            response
+                        );
+                    }
                     let state = lock.state().unwrap();
                     callback(state.state(), state.server_time_delta, state.client_id);
                 })
