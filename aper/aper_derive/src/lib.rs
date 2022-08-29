@@ -23,15 +23,15 @@ struct Field<'a> {
 
 impl<'a> Field<'a> {
     pub fn new(field: &syn::Field) -> Field {
-        let name_str =
-            inflections::case::to_pascal_case(&field.ident.as_ref().unwrap().to_string());
+        let name = &field.ident.as_ref().expect("Could not extract field identifier.");
+        let name_str = inflections::case::to_pascal_case(&name.to_string());
         let apply_variant = quote::format_ident!("Apply{}", name_str);
         let conflict_variant = quote::format_ident!("{}Conflict", name_str);
         let ty = &field.ty;
         let transition_ty = quote! {
             <#ty as StateMachine>::Transition
         };
-        let name = &field.ident.as_ref().unwrap();
+        
         let map_fn_name = quote::format_ident!("map_{}", name.to_string());
 
         Field {
