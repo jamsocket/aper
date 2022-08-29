@@ -7,9 +7,9 @@
 
 <img src="https://aper.dev/ape.svg" alt="Cartoonized face of an ape." width="200px" />
 
-Aper is a data structure library in which every data structure is a **state
-machine**, and every mutation is a first-class value that can be serialized
-and sent over the network, or stored for later.
+Aper is a Rust library for data synchronization using **state machines**. Aper provides mechanisms to represent common data structures in terms of state machines, as well as a transport-agnostic protocol for keeping multiple instances of a state machine synchronized across a network.
+
+Use-cases include real-time multiplayer applications that operate on shared state, client-server applications that want to share state updates incrementally and bidirectionally, and multiplayer turn-based games.
 
 ## What is a state machine?
 
