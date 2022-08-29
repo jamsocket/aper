@@ -1,7 +1,7 @@
-use std::fmt::Debug;
+use crate::{NeverConflict, StateMachine};
 use im_rc::OrdMap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use crate::{NeverConflict, StateMachine};
+use std::fmt::Debug;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Map<
@@ -24,7 +24,10 @@ impl<
     }
 
     pub fn insert(&self, key: T, value: V) -> MapTransition<T, V> {
-        MapTransition { key, value: Some(value) }
+        MapTransition {
+            key,
+            value: Some(value),
+        }
     }
 
     pub fn delete(&self, key: T) -> MapTransition<T, V> {
@@ -60,16 +63,12 @@ impl<
             Some(v) => {
                 let mut c = self.inner.clone();
                 c.insert(transition.key.clone(), v.clone());
-                Ok(Map {
-                    inner: c,
-                })
+                Ok(Map { inner: c })
             }
             None => {
                 let mut c = self.inner.clone();
                 c.remove(&transition.key);
-                Ok(Map {
-                    inner: c,
-                })
+                Ok(Map { inner: c })
             }
         }
     }

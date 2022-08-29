@@ -104,12 +104,9 @@ impl<S: StateMachine> StateClient<S> {
             }
 
             MessageToClient::Conflict {
-                transition_number,
-                ..
+                transition_number, ..
             } => {
-                if let Some((optimistic_transition_number, _)) =
-                    self.transitions.pop_front()
-                {
+                if let Some((optimistic_transition_number, _)) = self.transitions.pop_front() {
                     if optimistic_transition_number != transition_number {
                         return Some(MessageToServer::RequestState);
                     }
@@ -168,10 +165,12 @@ mod test {
         let counter = Counter::default();
         let mut m1 = StateClient::<Counter>::default();
 
-        assert!(m1.receive_message_from_server(MessageToClient::SetState {
-            state: counter,
-            version: StateVersionNumber(0),
-        }).is_none());
+        assert!(m1
+            .receive_message_from_server(MessageToClient::SetState {
+                state: counter,
+                version: StateVersionNumber(0),
+            })
+            .is_none());
 
         assert_eq!(0, m1.state().value());
 

@@ -74,7 +74,9 @@ impl<'de, T: Deserialize<'de> + Debug + PartialEq> Deserialize<'de> for ReplaceA
     }
 }
 
-impl<T: Debug + Clone + Serialize + DeserializeOwned + PartialEq + 'static> StateMachine for AtomRc<T> {
+impl<T: Debug + Clone + Serialize + DeserializeOwned + PartialEq + 'static> StateMachine
+    for AtomRc<T>
+{
     type Transition = ReplaceAtomRc<T>;
     type Conflict = NeverConflict;
 
