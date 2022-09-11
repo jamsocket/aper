@@ -4,7 +4,10 @@ use aper::sync::messages::MessageToServer;
 use aper_stateroom::{ClientId, StateProgram, StateProgramClient, StateProgramMessage};
 use chrono::Duration;
 use core::fmt::Debug;
-use std::{rc::Rc, sync::Mutex};
+use std::{
+    rc::{Rc, Weak},
+    sync::Mutex,
+};
 
 type Conn<S> = TypedWebsocketConnection<
     StateProgramMessage<S>,
@@ -17,7 +20,7 @@ pub struct AperWebSocketStateProgramClient<S>
 where
     S: StateProgram,
 {
-    conn: Conn<S>,
+    conn: Rc<Conn<S>>,
     state_client: Rc<Mutex<StateProgramClient<S>>>,
     callback: BoxedCallback<S>,
 }
@@ -42,25 +45,24 @@ where
         let state_client: Rc<Mutex<StateProgramClient<S>>> = Rc::default();
         let callback: BoxedCallback<S> = Rc::new(Box::new(callback));
 
-        let conn = {
+        let conn = Rc::new_cyclic(|conn: &Weak<Conn<S>>| {
             let callback = callback.clone();
             let typed_callback: Box<dyn Fn(StateProgramMessage<S>)> = {
                 let state_client = state_client.clone();
+                let conn = conn.clone();
 
                 Box::new(move |message: StateProgramMessage<S>| {
                     let mut lock = state_client.lock().unwrap();
                     if let Some(response) = lock.receive_message_from_server(message) {
-                        panic!(
-                            "Can't yet return message to server, but state client returned {:?}",
-                            response
-                        );
+                        conn.upgrade().unwrap().send(&response)
                     }
                     let state = lock.state().unwrap();
                     callback(state.state(), state.server_time_delta, state.client_id);
                 })
             };
+
             TypedWebsocketConnection::new(url, typed_callback).unwrap()
-        };
+        });
 
         Ok(AperWebSocketStateProgramClient {
             conn,

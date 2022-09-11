@@ -45,7 +45,10 @@ impl<S: StateProgram> Default for StateProgramClient<S> {
 }
 
 impl<S: StateProgram> StateProgramClient<S> {
-    pub fn receive_message_from_server(&mut self, message: StateProgramMessage<S>) -> Option<MessageToServer<S>> {
+    pub fn receive_message_from_server(
+        &mut self,
+        message: StateProgramMessage<S>,
+    ) -> Option<MessageToServer<S>> {
         match (message, &mut self.inner_state) {
             (
                 StateProgramMessage::InitialState {
@@ -66,11 +69,9 @@ impl<S: StateProgram> StateProgramClient<S> {
                 None
             }
             (StateProgramMessage::Message { message, timestamp }, Some(inner_state)) => {
-                if let Some(response) = inner_state
-                    .client
-                    .receive_message_from_server(message) {
-                        return Some(response)
-                    }
+                if let Some(response) = inner_state.client.receive_message_from_server(message) {
+                    return Some(response);
+                }
                 let server_time_delta = Utc::now().signed_duration_since(timestamp);
                 inner_state.server_time_delta = server_time_delta;
                 None

@@ -22,9 +22,7 @@ pub enum NeverConflict {}
 /// None of the methods in this trait provide access to the internal data of the
 /// state machine. It's up to you to implement accessor methods (or use public
 /// fields) in order to expose the data necessary to render your views.
-pub trait StateMachine:
-    Clone + DeserializeOwned + Serialize + Debug + 'static
-{
+pub trait StateMachine: Clone + DeserializeOwned + Serialize + Debug + 'static {
     /// The [`StateMachine::Transition`] type associates another type with this state machine
     /// as its transitions.
     type Transition: Debug + Serialize + DeserializeOwned + Clone + PartialEq;

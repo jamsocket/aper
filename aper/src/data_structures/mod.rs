@@ -8,7 +8,7 @@ mod list;
 mod map;
 
 pub use atom::{Atom, ReplaceAtom};
-pub use atom_rc::{AtomRc};
+pub use atom_rc::AtomRc;
 pub use constant::Constant;
 pub use counter::Counter;
 pub use list::{List, ListItem, ListOperation, OperationWithId};

@@ -1,9 +1,9 @@
 use crate::StateMachine;
 use fractional_index::ZenoIndex;
+use im_rc::{HashMap, OrdMap};
 use serde::de::Visitor;
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
-use im_rc::{HashMap, OrdMap};
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::Bound::{Excluded, Unbounded};
