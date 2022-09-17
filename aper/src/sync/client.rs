@@ -138,7 +138,7 @@ impl<S: StateMachine> StateClient<S> {
 
                 let mut state = self.golden_state.clone();
                 for (_, transition) in &self.transitions {
-                    if let Ok(st) = state.apply(&transition) {
+                    if let Ok(st) = state.apply(transition) {
                         state = Rc::new(st);
                     };
                 }

@@ -3,7 +3,7 @@ use im_rc::OrdMap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Map<
     T: Serialize + DeserializeOwned + Ord + PartialEq + Clone + Debug + 'static,
     V: StateMachine,
