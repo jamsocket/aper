@@ -1,9 +1,8 @@
-use std::rc::Rc;
-
 use crate::{StateProgram, StateProgramMessage, TransitionEvent};
 use aper::sync::{client::StateClient, messages::MessageToServer};
 use chrono::{DateTime, Duration, Utc};
 use stateroom::ClientId;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct InnerState<S: StateProgram> {
