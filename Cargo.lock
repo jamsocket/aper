@@ -292,7 +292,7 @@ checksum = "b9a8f622bcf6ff3df478e9deba3e03e4e04b300f8e6a139e192c05fa3490afc7"
 
 [[package]]
 name = "aper"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "aper_derive",
  "fractional_index",
@@ -304,7 +304,7 @@ dependencies = [
 
 [[package]]
 name = "aper-book"
-version = "0.1.0"
+version = "0.2.2"
 dependencies = [
  "aper",
  "doc-comment",
@@ -313,7 +313,7 @@ dependencies = [
 
 [[package]]
 name = "aper-serve"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "aper",
  "aper-stateroom",
@@ -324,7 +324,7 @@ dependencies = [
 
 [[package]]
 name = "aper-stateroom"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "aper",
  "bincode",
@@ -337,7 +337,7 @@ dependencies = [
 
 [[package]]
 name = "aper-websocket-client"
-version = "0.1.0"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "aper",
@@ -353,7 +353,7 @@ dependencies = [
 
 [[package]]
 name = "aper-yew"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "aper",
  "aper-stateroom",
@@ -374,7 +374,7 @@ dependencies = [
 
 [[package]]
 name = "aper_derive"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "inflections",
  "proc-macro2",
@@ -1418,9 +1418,9 @@ dependencies = [
 
 [[package]]
 name = "stateroom"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc0b52d6f56b54e7a6595ae439c108ab6f151882167a40a29d593586ddeb0f26"
+checksum = "6f1df53db2463520d8ba92d3707c660187dd716833e9a63d1752c096611a375c"
 dependencies = [
  "serde",
 ]

@@ -1,6 +1,6 @@
 [package]
 name = "aper-book"
-version = "0.1.0"
+version = "0.2.2"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 
