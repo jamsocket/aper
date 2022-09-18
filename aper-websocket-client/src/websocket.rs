@@ -1,6 +1,5 @@
-use std::marker::PhantomData;
-
 use anyhow::{anyhow, Result};
+use std::marker::PhantomData;
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::JsCast;
 use web_sys::{MessageEvent, WebSocket};

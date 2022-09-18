@@ -1,6 +1,9 @@
 pub use aper_stateroom::{ClientId, StateMachineContainerProgram, StateProgram, TransitionEvent};
 use aper_websocket_client::AperWebSocketStateProgramClient;
 use chrono::Duration;
+use gloo_storage::{SessionStorage, Storage};
+use rand::Rng;
+use rand::distributions::Alphanumeric;
 use std::marker::PhantomData;
 use std::{fmt::Debug, rc::Rc};
 pub use update_interval::UpdateInterval;
@@ -9,6 +12,8 @@ use yew::{html, Component, Html, Properties};
 
 mod update_interval;
 mod view;
+
+const CONNECTION_TOKEN_KEY: &str = "CONNECTION_TOKEN";
 
 /// WebSocket URLs must be absolute, not relative, paths. For ergonomics, we
 /// allow a relative path and expand it.
@@ -76,8 +81,24 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
     /// Initiate a connection to the remote server.
     fn do_connect(&mut self, context: &yew::Context<Self>) {
         let link = context.link().clone();
+        
+        let token = if let Ok(token) = SessionStorage::get::<String>(CONNECTION_TOKEN_KEY) {
+            token
+        } else {
+            let token: String = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(24)
+                .map(char::from)
+                .collect();
+            
+            SessionStorage::set(CONNECTION_TOKEN_KEY, &token).expect("Couldn't set session state.");
+            token
+        };
+
+        let url = format!("{}?token={}", context.props().websocket_url, token);
+
         let client = AperWebSocketStateProgramClient::new(
-            &context.props().websocket_url,
+            &url,
             move |state, offset, client_id| {
                 link.send_message(Msg::SetState(state, offset, client_id))
             },
