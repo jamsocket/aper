@@ -1427,9 +1427,9 @@ dependencies = [
 
 [[package]]
 name = "stateroom-server"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3214d12431b31a494ad71c4d18301b4a22a05c208c00566913b0c188d111533b"
+checksum = "dddb7ee8363ed52d857768bed1a64351f39d31ad94b3d53d6975545d26f0303e"
 dependencies = [
  "actix",
  "actix-web",

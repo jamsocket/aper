@@ -3,6 +3,7 @@ name = "aper-book"
 version = "0.2.2"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
+publish = false
 
 [dependencies]
 aper = { path = "../../aper" }

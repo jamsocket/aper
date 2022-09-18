@@ -3,6 +3,7 @@ name = "aper-stateroom"
 version = "0.2.2"
 edition = "2018"
 repository = "https://github.com/drifting-in-space/aper"
+publish = false
 
 [dependencies]
 stateroom = { version="0.2.5", features=["serde"] }
