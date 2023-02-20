@@ -33,5 +33,5 @@ impl StateProgramViewComponent for CounterView {
 #[wasm_bindgen(start)]
 pub fn entry() {
     let props = StateProgramComponentProps::new("ws");
-    yew::start_app_with_props::<StateProgramComponent<CounterView>>(props);
+    yew::Renderer::<StateProgramComponent<CounterView>>::with_props(props).render();
 }
