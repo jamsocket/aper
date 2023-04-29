@@ -12,5 +12,5 @@ aper-stateroom = {path="../../../aper-stateroom"}
 aper-yew = {path="../../../aper-yew"}
 serde = { version = "1.0.127", features = ["derive"] }
 wasm-bindgen = "0.2.83"
-yew = "0.19.3"
+yew = {version = "0.20.0", features=["csr"]}
 drop-four-common = {path="../common"}
