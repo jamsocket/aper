@@ -1,6 +1,6 @@
 [package]
 name = "aper"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 homepage = "https://aper.dev"
@@ -14,7 +14,7 @@ categories = ["data-structures", "web-programming::websocket", "wasm"]
 [dependencies]
 serde = { version = "1.0.143", features = ["derive"] }
 uuid = { version = "1.1.2", features = ["serde", "v4", "js"] }
-aper_derive = { version="0.2.1", path="./aper_derive" }
+aper_derive = { version="0.3.0", path="./aper_derive" }
 fractional_index = "2.0.1"
 im-rc = { version = "15.1.0", features = ["serde"] }
 
