@@ -10,8 +10,8 @@ readme = "../README.md"
 
 [dependencies]
 aper = { version="0.3.0", path = "../aper" }
-aper-stateroom = { version="0.2.2", path="../aper-stateroom" }
-aper-websocket-client = { path="../aper-websocket-client" }
+aper-stateroom = { version="0.3.0", path="../aper-stateroom" }
+aper-websocket-client = { version="0.3.0", path="../aper-websocket-client" }
 bincode = "1.3.3"
 chrono = { version = "0.4.22", features = ["serde", "wasmbind"] }
 console_error_panic_hook = "0.1.7"

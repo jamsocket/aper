@@ -137,7 +137,7 @@ dependencies = [
 
 [[package]]
 name = "aper-stateroom"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "aper",
  "bincode",
@@ -150,7 +150,7 @@ dependencies = [
 
 [[package]]
 name = "aper-websocket-client"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "aper",
@@ -166,7 +166,7 @@ dependencies = [
 
 [[package]]
 name = "aper-yew"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "aper",
  "aper-stateroom",
