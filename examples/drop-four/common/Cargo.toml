@@ -9,4 +9,4 @@ aper-stateroom = {path="../../../aper-stateroom"}
 serde = { version = "1.0.127", features = ["derive"] }
 
 [dev-dependencies]
-chrono = "0.4.19"
+chrono = "0.4.38"

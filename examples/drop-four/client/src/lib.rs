@@ -128,5 +128,5 @@ impl StateProgramViewComponent for GameView {
 #[wasm_bindgen(start)]
 pub fn entry() {
     let props = StateProgramComponentProps::new("ws");
-    yew::start_app_with_props::<StateProgramComponent<GameView>>(props);
+    yew::Renderer::<StateProgramComponent<GameView>>::with_props(props).render();
 }
