@@ -7,7 +7,7 @@ use std::fmt::Debug;
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
-pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>>
+pub trait StateProgram: StateMachine<Transition = TransitionEvent<Self::T>> + Send + Sync + 'static
 where
     <Self as StateProgram>::T: Unpin + Send + Sync,
 {
@@ -61,7 +61,7 @@ where
     }
 }
 
-impl<SM: StateMachine + Default> StateProgram for StateMachineContainerProgram<SM>
+impl<SM: StateMachine + Default + Send + Sync + 'static> StateProgram for StateMachineContainerProgram<SM>
 where
     <SM as StateMachine>::Transition: Send + Unpin + Sync,
 {
