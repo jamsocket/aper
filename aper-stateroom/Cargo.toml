@@ -6,7 +6,7 @@ repository = "https://github.com/drifting-in-space/aper"
 homepage = "https://aper.dev"
 description = "Synchronized state machines over WebSockets"
 license = "MIT"
-readme = "README.md"
+readme = "../README.md"
 keywords = ["webassembly"]
 categories = ["data-structures", "web-programming::websocket", "wasm"]
 
