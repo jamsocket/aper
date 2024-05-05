@@ -720,9 +720,9 @@ dependencies = [
 
 [[package]]
 name = "fractional_index"
-version = "1.0.1"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "431f421295b3185afd05d846d86c8f7a4f680e5971c0250156cb6ffecd199c24"
+checksum = "a1151a9f3ec0f115ddf899dd5baf57532c29b424ef4c63fb2f5636ba789dcbc4"
 dependencies = [
  "serde",
 ]
