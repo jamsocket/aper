@@ -8,9 +8,7 @@ use serde::{Deserialize, Serialize};
 pub use state_program::{StateMachineContainerProgram, StateProgram};
 pub use state_program_client::StateProgramClient;
 pub use stateroom::ClientId;
-use stateroom::{
-    MessagePayload, MessageRecipient, StateroomContext, StateroomService
-};
+use stateroom::{MessagePayload, MessageRecipient, StateroomContext, StateroomService};
 
 mod state_program;
 mod state_program_client;
@@ -143,7 +141,12 @@ where
 
     fn disconnect(&mut self, _user: ClientId, _ctx: &impl StateroomContext) {}
 
-    fn message(&mut self, client_id: ClientId, message: MessagePayload, ctx: &impl StateroomContext) {
+    fn message(
+        &mut self,
+        client_id: ClientId,
+        message: MessagePayload,
+        ctx: &impl StateroomContext,
+    ) {
         match message {
             MessagePayload::Text(txt) => {
                 let message: MessageToServer<P> = serde_json::from_str(&txt).unwrap();
