@@ -56,9 +56,8 @@ impl<P: StateProgram + Default> AperStateroomService<P> {
         }
 
         if let Some(ev) = &susp {
-            if let Ok(dur) = ev.timestamp.signed_duration_since(Utc::now()).to_std() {
-                ctx.set_timer(dur.as_millis() as u32);
-            }
+            let dur = ev.timestamp.signed_duration_since(Utc::now());
+            ctx.set_timer(dur.num_milliseconds().max(0) as u32);
         }
 
         self.suspended_event = susp;
@@ -125,6 +124,10 @@ impl<P: StateProgram + Default> StateroomService for AperStateroomService<P>
 where
     P::T: Unpin + Send + Sync + 'static,
 {
+    fn init(&mut self, ctx: &impl StateroomContext) {
+        self.update_suspended_event(ctx);
+    }
+
     fn connect(&mut self, client_id: ClientId, ctx: &impl StateroomContext) {
         let response = StateProgramMessage::InitialState {
             timestamp: Utc::now(),
