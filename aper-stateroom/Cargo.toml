@@ -3,6 +3,12 @@ name = "aper-stateroom"
 version = "0.3.0"
 edition = "2018"
 repository = "https://github.com/drifting-in-space/aper"
+homepage = "https://aper.dev"
+description = "Synchronized state machines over WebSockets"
+license = "MIT"
+readme = "README.md"
+keywords = ["webassembly"]
+categories = ["data-structures", "web-programming::websocket", "wasm"]
 
 [dependencies]
 stateroom = { version="0.4.0", features=["serde"] }
