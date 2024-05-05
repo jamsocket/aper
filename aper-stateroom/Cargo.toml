@@ -1,6 +1,6 @@
 [package]
 name = "aper-stateroom"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2018"
 repository = "https://github.com/drifting-in-space/aper"
 publish = false
