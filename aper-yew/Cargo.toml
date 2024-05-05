@@ -1,10 +1,12 @@
 [package]
 name = "aper-yew"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/drifting-in-space/aper"
-publish = false
+description = "Synchronized state machines over WebSockets"
+license = "MIT"
+readme = "../README.md"
 
 [dependencies]
 aper = { version="0.3.0", path = "../aper" }
