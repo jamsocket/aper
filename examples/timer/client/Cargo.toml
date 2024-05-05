@@ -14,5 +14,5 @@ console_error_panic_hook = "0.1.6"
 serde = { version = "1.0.124", features = ["derive"] }
 wasm-bindgen = "0.2.83"
 web-sys = "0.3.48"
-yew = "0.19.3"
+yew = { version = "0.21.0", features = ["csr"] }
 timer-common = {path="../common"}

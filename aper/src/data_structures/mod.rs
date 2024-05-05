@@ -4,6 +4,7 @@ mod atom;
 mod atom_rc;
 mod constant;
 mod counter;
+#[allow(deprecated)] // ZenoIndex is deprecated in fractional_index 2.0.0.
 mod list;
 mod map;
 

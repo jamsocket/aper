@@ -8,12 +8,7 @@ use serde::{Deserialize, Serialize};
 pub use state_program::{StateMachineContainerProgram, StateProgram};
 pub use state_program_client::StateProgramClient;
 pub use stateroom::ClientId;
-use stateroom::{
-    MessageRecipient, SimpleStateroomService, StateroomContext, StateroomServiceFactory,
-    WrappedStateroomService,
-};
-use std::convert::Infallible;
-use std::marker::PhantomData;
+use stateroom::{MessagePayload, MessageRecipient, StateroomContext, StateroomService};
 
 mod state_program;
 mod state_program_client;
@@ -39,12 +34,21 @@ where
     },
 }
 
-pub struct AperStateroomService<P: StateProgram> {
+pub struct AperStateroomService<P: StateProgram + Default> {
     state: StateServer<P>,
     suspended_event: Option<TransitionEvent<P::T>>,
 }
 
-impl<P: StateProgram> AperStateroomService<P> {
+impl<P: StateProgram + Default> Default for AperStateroomService<P> {
+    fn default() -> Self {
+        AperStateroomService {
+            state: StateServer::default(),
+            suspended_event: None,
+        }
+    }
+}
+
+impl<P: StateProgram + Default> AperStateroomService<P> {
     fn update_suspended_event(&mut self, ctx: &impl StateroomContext) {
         let susp = self.state.state().suspended_event();
         if susp == self.suspended_event {
@@ -117,21 +121,10 @@ impl<P: StateProgram> AperStateroomService<P> {
     }
 }
 
-impl<P: StateProgram + Default> SimpleStateroomService for AperStateroomService<P>
+impl<P: StateProgram + Default> StateroomService for AperStateroomService<P>
 where
     P::T: Unpin + Send + Sync + 'static,
 {
-    fn new(_name: &str, ctx: &impl StateroomContext) -> Self {
-        let state: StateServer<P> = StateServer::default();
-        let mut serv = AperStateroomService {
-            state,
-            suspended_event: None,
-        };
-        serv.update_suspended_event(ctx);
-
-        serv
-    }
-
     fn connect(&mut self, client_id: ClientId, ctx: &impl StateroomContext) {
         let response = StateProgramMessage::InitialState {
             timestamp: Utc::now(),
@@ -148,14 +141,22 @@ where
 
     fn disconnect(&mut self, _user: ClientId, _ctx: &impl StateroomContext) {}
 
-    fn message(&mut self, client_id: ClientId, message: &str, ctx: &impl StateroomContext) {
-        let message: MessageToServer<P> = serde_json::from_str(message).unwrap();
-        self.process_message(message, Some(client_id), ctx);
-    }
-
-    fn binary(&mut self, client_id: ClientId, message: &[u8], ctx: &impl StateroomContext) {
-        let message: MessageToServer<P> = bincode::deserialize(message).unwrap();
-        self.process_message(message, Some(client_id), ctx);
+    fn message(
+        &mut self,
+        client_id: ClientId,
+        message: MessagePayload,
+        ctx: &impl StateroomContext,
+    ) {
+        match message {
+            MessagePayload::Text(txt) => {
+                let message: MessageToServer<P> = serde_json::from_str(&txt).unwrap();
+                self.process_message(message, Some(client_id), ctx);
+            }
+            MessagePayload::Bytes(bytes) => {
+                let message: MessageToServer<P> = bincode::deserialize(&bytes).unwrap();
+                self.process_message(message, Some(client_id), ctx);
+            }
+        }
     }
 
     fn timer(&mut self, ctx: &impl StateroomContext) {
@@ -169,34 +170,6 @@ where
                 ctx,
             );
         }
-    }
-}
-
-pub struct AperStateroomServiceBuilder<K: StateProgram, C: StateroomContext> {
-    ph_k: PhantomData<K>,
-    ph_c: PhantomData<C>,
-}
-
-impl<K: StateProgram, C: StateroomContext> Default for AperStateroomServiceBuilder<K, C> {
-    fn default() -> Self {
-        AperStateroomServiceBuilder {
-            ph_k: Default::default(),
-            ph_c: Default::default(),
-        }
-    }
-}
-
-impl<K: StateProgram + Default, C: StateroomContext> StateroomServiceFactory<C>
-    for AperStateroomServiceBuilder<K, C>
-where
-    K::T: Unpin + Send + Sync + 'static,
-{
-    type Service = WrappedStateroomService<AperStateroomService<K>, C>;
-    type Error = Infallible;
-
-    fn build(&self, room_id: &str, context: C) -> Result<Self::Service, Infallible> {
-        let service = AperStateroomService::new(room_id, &context);
-        Ok(WrappedStateroomService::new(service, context))
     }
 }
 
