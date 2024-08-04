@@ -167,6 +167,10 @@ impl<A: Aper> AperServer<A> {
         self.version
     }
 
+    pub fn state_snapshot(&self) -> Vec<Mutation> {
+        self.state.clone().into_mutations()
+    }
+
     pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
         let overlay = self.state.push_overlay();
         let mut sm = A::attach(overlay.clone());

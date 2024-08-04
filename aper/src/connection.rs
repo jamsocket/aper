@@ -2,6 +2,7 @@ use crate::{Aper, AperClient, AperServer};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::{
+    borrow::Borrow,
     cell::RefCell,
     sync::{atomic::AtomicU64, Arc, Mutex},
 };
@@ -11,6 +12,9 @@ pub enum MessageToServer {
     Intent {
         intent: Vec<u8>,
         client_version: u64,
+    },
+    RequestState {
+        latest_version: u64,
     },
 }
 
@@ -158,6 +162,19 @@ impl<A: Aper> ServerHandle<A> {
                         callback(&message_to_others);
                     }
                 }
+            }
+            MessageToServer::RequestState { latest_version } => {
+                let server = self.server.lock().unwrap();
+                let c = server.borrow();
+                let mutations = c.state_snapshot();
+
+                self.callbacks.get(&self.client_id).map(|callback| {
+                    callback(&MessageToClient::Apply {
+                        mutations,
+                        client_version: None,
+                        server_version: c.version(),
+                    });
+                });
             }
         }
     }
