@@ -180,11 +180,12 @@ impl<A: Aper> AperServer<A> {
         sm.apply(&intent)?;
 
         println!("aa {:?}", overlay.collect());
+        overlay.dump();
+        overlay.dump();
 
         self.version += 1;
 
         let mutations = overlay.into_mutations();
-        println!("bb {:?}", mutations);
         self.state.mutate(&mutations);
 
         Ok(mutations)

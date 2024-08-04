@@ -79,6 +79,25 @@ impl TreeMapLayer {
 
         result
     }
+
+    pub fn into_mutations(&self) -> Vec<Mutation> {
+        let mut mutations = vec![];
+
+        for (prefix, map) in self.maps.lock().unwrap().iter() {
+            let mut entries = vec![];
+
+            for (key, value) in map.lock().unwrap().iter() {
+                entries.push((key.clone(), value.clone()));
+            }
+
+            mutations.push(Mutation {
+                prefix: prefix.clone(),
+                entries,
+            });
+        }
+
+        mutations
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -121,21 +140,7 @@ impl TreeMapRef {
     }
 
     pub fn into_mutations(self) -> Vec<Mutation> {
-        let mut mutations = vec![];
-
-        let reference = self.reference.lock().unwrap();
-        let mut entries = vec![];
-
-        for (key, value) in reference.iter() {
-            entries.push((key.clone(), value.clone()));
-        }
-
-        mutations.push(Mutation {
-            prefix: self.prefix.clone(),
-            entries,
-        });
-
-        mutations
+        self.map.into_mutations()
     }
 
     pub fn combine(&self, other: &Self) {
@@ -191,5 +196,9 @@ impl TreeMapRef {
 
     pub fn collect(&self) -> BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Bytes>> {
         self.map.collect()
+    }
+
+    pub fn dump(&self) {
+        println!("overlay: {:?}", self.map.maps);
     }
 }
