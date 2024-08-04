@@ -10,7 +10,7 @@ pub use aper_derive::Attach;
 use serde::{Deserialize, Serialize};
 pub use treemap::*;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Mutation {
     pub prefix: Vec<Bytes>,
     pub entries: Vec<(Bytes, Option<Bytes>)>,

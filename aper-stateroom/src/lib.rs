@@ -50,6 +50,8 @@ impl<P: StateProgram> AperStateroomService<P> {
     ) {
         if let Some(handle) = client_id.and_then(|id| self.client_connections.get_mut(&id)) {
             handle.receive(&message);
+        } else {
+            panic!("Received message for unknown client");
         }
     }
 }

@@ -5,6 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+#[derive(Debug)]
 pub struct TreeMapLayer {
     /// Parent layers are read-only.
     parent: Option<Arc<TreeMapLayer>>,
@@ -54,9 +55,33 @@ impl TreeMapLayer {
             }
         }
     }
+
+    pub fn collect(&self) -> BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Bytes>> {
+        let mut result = if let Some(parent) = &self.parent {
+            parent.collect()
+        } else {
+            BTreeMap::new()
+        };
+
+        for (prefix, map) in self.maps.lock().unwrap().iter() {
+            let prefix_map = result
+                .entry(prefix.clone())
+                .or_insert_with(|| BTreeMap::new());
+
+            for (key, value) in map.lock().unwrap().iter() {
+                if let Some(value) = value {
+                    prefix_map.insert(key.clone(), value.clone());
+                } else {
+                    prefix_map.remove(key);
+                }
+            }
+        }
+
+        result
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TreeMapRef {
     map: Arc<TreeMapLayer>,
     prefix: Vec<Bytes>,
@@ -162,5 +187,9 @@ impl TreeMapRef {
             prefix: vec![],
             reference: root,
         }
+    }
+
+    pub fn collect(&self) -> BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Bytes>> {
+        self.map.collect()
     }
 }

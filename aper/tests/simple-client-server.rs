@@ -99,3 +99,22 @@ fn test_speculative_change_remains() {
     let state = client.state();
     assert_eq!(15, state.get());
 }
+
+#[test]
+fn test_remote_changes_persist() {
+    let mut server = AperServer::<Counter>::new();
+    let mut client = AperClient::<Counter>::new();
+
+    let intent = CounterIntent::IncrementBy(5);
+    let mutations = server.apply(&intent).unwrap();
+    client.mutate(&mutations, None, 1);
+
+    let state = client.state();
+    assert_eq!(5, state.get());
+
+    let mutations = server.apply(&intent).unwrap();
+    client.mutate(&mutations, None, 1);
+
+    let state = client.state();
+    assert_eq!(10, state.get());
+}

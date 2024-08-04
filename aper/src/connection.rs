@@ -134,6 +134,7 @@ impl<A: Aper> ServerHandle<A> {
                 let mut server_borrow = self.server.lock().unwrap();
                 let Ok(mutations) = server_borrow.apply(&intent) else {
                     // still need to ack the client.
+                    println!("here11");
 
                     self.callbacks.get(&self.client_id).map(|callback| {
                         callback(&MessageToClient::Apply {
@@ -145,6 +146,8 @@ impl<A: Aper> ServerHandle<A> {
 
                     return;
                 };
+
+                println!("Mutations: {:?}", mutations);
 
                 let version = server_borrow.version();
 
