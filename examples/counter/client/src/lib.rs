@@ -2,7 +2,7 @@ use aper_yew::{
     StateMachineContainerProgram, StateProgramComponent, StateProgramComponentProps,
     StateProgramViewComponent, StateProgramViewContext,
 };
-pub use counter_common::{Counter, CounterTransition};
+pub use counter_common::{Counter, CounterIntent};
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use yew::prelude::{html, Html};
@@ -16,13 +16,13 @@ impl StateProgramViewComponent for CounterView {
         html! {
             <div>
                 <p>{&format!("Counter: {}", state.0.value())}</p>
-                <button onclick={context.callback.reform(|_| CounterTransition::Add(1))}>
+                <button onclick={context.callback.reform(|_| CounterIntent::Add(1))}>
                     {"+1"}
                 </button>
-                <button onclick={context.callback.reform(|_| CounterTransition::Subtract(1))}>
+                <button onclick={context.callback.reform(|_| CounterIntent::Subtract(1))}>
                     {"-1"}
                 </button>
-                <button onclick={context.callback.reform(|_| CounterTransition::Reset)}>
+                <button onclick={context.callback.reform(|_| CounterIntent::Reset)}>
                     {"Reset"}
                 </button>
             </div>

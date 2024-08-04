@@ -1,14 +1,13 @@
 use crate::TransitionEvent;
-use aper::StateMachine;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use aper::{Aper, Attach, TreeMapRef};
+use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
 pub trait StateProgram:
-    StateMachine<Transition = TransitionEvent<Self::T>> + Send + Sync + 'static
+    Aper<Intent = TransitionEvent<Self::T>> + Send + Sync + 'static
 where
     <Self as StateProgram>::T: Unpin + Send + Sync,
 {
@@ -42,34 +41,41 @@ where
 
 /// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
 /// are stripped of their metadata and passed down to the underlying state machine.
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(bound = "")]
-pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM)
+pub struct StateMachineContainerProgram<SM: Aper>(pub SM)
 where
-    <SM as StateMachine>::Transition: Send;
+    <SM as Aper>::Intent: Send;
 
-impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM>
+impl<SM> Attach for StateMachineContainerProgram<SM>
 where
-    <SM as StateMachine>::Transition: Send + Unpin + Sync,
+    SM: Aper,
+    SM::Intent: Send,
 {
-    type Transition = TransitionEvent<SM::Transition>;
-    type Conflict = SM::Conflict;
-
-    fn apply(&self, transition: &Self::Transition) -> Result<Self, Self::Conflict> {
-        Ok(StateMachineContainerProgram(
-            self.0.apply(&transition.transition)?,
-        ))
+    fn attach(treemap: TreeMapRef) -> Self {
+        StateMachineContainerProgram(SM::attach(treemap))
     }
 }
 
-impl<SM: StateMachine + Default + Send + Sync + 'static> StateProgram
-    for StateMachineContainerProgram<SM>
+impl<SM: Aper> Aper for StateMachineContainerProgram<SM>
 where
-    <SM as StateMachine>::Transition: Send + Unpin + Sync,
+    <SM as Aper>::Intent: Send + Unpin + Sync + 'static,
 {
-    type T = SM::Transition;
+    type Intent = TransitionEvent<SM::Intent>;
+    type Error = SM::Error;
 
-    fn new() -> Self {
-        Self::default()
+    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
+        
+        self.0.apply(&intent.intent)?;
+        Ok(())
     }
 }
+
+// impl<SM: Aper + Default + Send + Sync + 'static> StateProgram
+// where
+//     <SM as Aper>::Intent: Send + Unpin + Sync,
+// {
+//     type T = SM::Intent;
+
+//     fn new() -> Self {
+//         Self::default()
+//     }
+// }
