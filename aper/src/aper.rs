@@ -173,15 +173,10 @@ impl<A: Aper> AperServer<A> {
 
     pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
         let overlay = self.state.push_overlay();
-        println!("00 {:?}", overlay.collect());
 
         let mut sm = A::attach(overlay.clone());
 
         sm.apply(&intent)?;
-
-        println!("aa {:?}", overlay.collect());
-        overlay.dump();
-        overlay.dump();
 
         self.version += 1;
 

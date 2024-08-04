@@ -26,8 +26,6 @@ impl Aper for Counter {
     fn apply(&mut self, event: &CounterIntent) -> Result<(), ()> {
         let value = self.value.get();
 
-        println!("Current value: {}", value);
-
         match event {
             CounterIntent::Add(i) => {
                 self.value.set(value + i);
@@ -39,8 +37,6 @@ impl Aper for Counter {
                 self.value.set(0);
             }
         }
-
-        println!("New value: {}", self.value.get());
 
         Ok(())
     }

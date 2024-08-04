@@ -52,7 +52,7 @@ where
         let pending = Arc::new(Mutex::new(None));
         let pending_ = pending.clone();
         let ws_ = ws.clone();
-        let conn_handler = Closure::<dyn FnMut(JsValue)>::wrap(Box::new(move |e: JsValue| {
+        let conn_handler = Closure::<dyn FnMut(JsValue)>::wrap(Box::new(move |_: JsValue| {
             let mut pending = pending_.lock().unwrap();
             if let Some(message) = pending.take() {
                 match message {

@@ -127,13 +127,18 @@ impl TreeMapRef {
     }
 
     pub fn mutate(&self, mutations: &Vec<Mutation>) {
-        let mut reference = self.reference.lock().unwrap();
-
         for mutation in mutations {
+            let mut map_lock = self.map.maps.lock().unwrap();
+            let mut map = map_lock
+                .entry(mutation.prefix.clone())
+                .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
+                .lock()
+                .unwrap();
+
             for (key, value) in &mutation.entries {
                 match value {
-                    Some(value) => reference.insert(key.clone(), Some(value.clone())),
-                    None => reference.insert(key.clone(), None),
+                    Some(value) => map.insert(key.clone(), Some(value.clone())),
+                    None => map.insert(key.clone(), None),
                 };
             }
         }
@@ -196,9 +201,5 @@ impl TreeMapRef {
 
     pub fn collect(&self) -> BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Bytes>> {
         self.map.collect()
-    }
-
-    pub fn dump(&self) {
-        println!("overlay: {:?}", self.map.maps);
     }
 }
