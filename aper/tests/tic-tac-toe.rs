@@ -11,7 +11,7 @@ struct TicTacToe {
     winner: Atom<Option<TicTacToePlayer>>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Copy)]
+#[derive(Serialize, Deserialize, Clone, Debug, Copy, PartialEq)]
 enum TicTacToePlay {
     Play(u8),
     Reset,

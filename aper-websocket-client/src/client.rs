@@ -1,10 +1,10 @@
 use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
 use aper::{
-    connection::{MessageToClient, MessageToServer},
+    connection::{ClientConnection, MessageToClient, MessageToServer},
     AperClient,
 };
-use aper_stateroom::{StateProgram, StateProgramClient};
+use aper_stateroom::StateProgram;
 use core::fmt::Debug;
 use std::{
     rc::{Rc, Weak},
@@ -18,8 +18,7 @@ pub struct AperWebSocketStateProgramClient<S>
 where
     S: StateProgram,
 {
-    conn: Rc<Conn>,
-    state_client: Rc<Mutex<StateProgramClient<S>>>,
+    conn: Rc<Mutex<ClientConnection<S>>>,
 }
 
 impl<S> Debug for AperWebSocketStateProgramClient<S>
@@ -35,49 +34,40 @@ impl<S> AperWebSocketStateProgramClient<S>
 where
     S: StateProgram,
 {
-    pub fn new<F>(url: &str, callback: F) -> Result<Self>
+    pub fn new<F>(url: &str, state_callback: F) -> Result<Self>
     where
         F: Fn(S) + 'static,
     {
-        // let client = AperClient::<S>::new();
+        // callback is called when the state changes
+        // need to create a connection
+        // connection needs to be able to call the state and message callback
 
-        // let callback = |message: MessageToServer| {
-        //     let state = client.state();
-        //     callback(state);
-        // };
+        // client message handler needs to have websocket connection; websocket
+        // connection needs to be able to send messages to client
 
-        // let conn = client.connect(callback);
+        let conn = Rc::new_cyclic(|c: &Weak<Mutex<ClientConnection<S>>>| {
+            let client = AperClient::<S>::new();
 
-        todo!()
+            let d = c.clone();
+            let socket_message_callback = move |message: MessageToClient| {
+                let d = d.upgrade().unwrap();
+                let mut conn = d.lock().unwrap();
+                conn.receive(&message);
+            };
 
-        // let state_client: Rc<Mutex<StateProgramClient<S>>> = Rc::default();
-        // let callback: BoxedCallback<S> = Rc::new(Box::new(callback));
+            let wss_conn = TypedWebsocketConnection::new(url, socket_message_callback).unwrap();
 
-        // let conn = Rc::new_cyclic(|conn: &Weak<Conn>| {
-        //     let callback = callback.clone();
-        //     let typed_callback: Box<dyn Fn(MessageToClient)> = {
-        //         let state_client = state_client.clone();
-        //         let conn = conn.clone();
+            let message_callback = Box::new(move |message: MessageToServer| {
+                wss_conn.send(&message);
+            });
 
-        //         Box::new(move |message: MessageToClient| {
-        //             let mut lock = state_client.lock().unwrap();
-        //             lock.receive_message_from_server(message);
-        //             let state = lock.state();
-        //             callback(state);
-        //         })
-        //     };
+            Mutex::new(ClientConnection::new(
+                client,
+                message_callback,
+                state_callback,
+            ))
+        });
 
-        //     TypedWebsocketConnection::new(url, typed_callback).unwrap()
-        // });
-
-        // Ok(AperWebSocketStateProgramClient {
-        //     conn,
-        //     state_client,
-        // })
-    }
-
-    pub fn push_intent(&self, intent: S::T) {
-        let mut lock = self.state_client.lock().unwrap();
-        lock.push_intent(intent);
+        Ok(AperWebSocketStateProgramClient { conn })
     }
 }

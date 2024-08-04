@@ -1,17 +1,15 @@
 use crate::IntentEvent;
 use aper::{Aper, Attach, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
-use std::fmt::Debug;
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
-pub trait StateProgram:
-    Aper<Intent = IntentEvent<Self::T>> + Send + Sync + 'static + Default
+pub trait StateProgram: Aper<Intent = IntentEvent<Self::T>> + Send + Sync + 'static
 where
     <Self as StateProgram>::T: Unpin + Send + Sync,
 {
-    type T: Debug + Serialize + DeserializeOwned + Clone + PartialEq;
+    type T: Serialize + DeserializeOwned + Clone + PartialEq;
 
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
@@ -41,13 +39,14 @@ where
 
 /// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
 /// are stripped of their metadata and passed down to the underlying state machine.
-pub struct StateMachineContainerProgram<SM: Aper>(pub SM)
+pub struct StateMachineContainerProgram<SM>(pub SM)
 where
+    SM: Aper + Send + Sync + 'static,
     <SM as Aper>::Intent: Send;
 
 impl<SM> Attach for StateMachineContainerProgram<SM>
 where
-    SM: Aper,
+    SM: Aper + Send + Sync + 'static,
     SM::Intent: Send,
 {
     fn attach(treemap: TreeMapRef) -> Self {
@@ -55,8 +54,9 @@ where
     }
 }
 
-impl<SM: Aper> Aper for StateMachineContainerProgram<SM>
+impl<SM> Aper for StateMachineContainerProgram<SM>
 where
+    SM: Aper + Send + Sync + 'static,
     <SM as Aper>::Intent: Send + Unpin + Sync + 'static,
 {
     type Intent = IntentEvent<SM::Intent>;
@@ -65,6 +65,19 @@ where
     fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
         self.0.apply(&intent.intent)?;
         Ok(())
+    }
+}
+
+impl<SM> StateProgram for StateMachineContainerProgram<SM>
+where
+    SM: Aper + Send + Sync + 'static,
+    <SM as Aper>::Intent: Send + Unpin + Sync + 'static,
+{
+    type T = SM::Intent;
+
+    fn new() -> Self {
+        let treemap = TreeMapRef::new();
+        StateMachineContainerProgram(SM::attach(treemap))
     }
 }
 

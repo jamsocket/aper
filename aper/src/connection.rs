@@ -3,7 +3,7 @@ use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
-    sync::{atomic::AtomicU64, Arc},
+    sync::{atomic::AtomicU64, Arc, Mutex},
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -25,14 +25,20 @@ pub enum MessageToClient {
 
 pub struct ClientConnection<A: Aper> {
     client: AperClient<A>,
-    callback: Box<dyn Fn(MessageToServer)>,
+    message_callback: Box<dyn Fn(MessageToServer)>,
+    state_callback: Box<dyn Fn(A)>,
 }
 
 impl<A: Aper> ClientConnection<A> {
-    pub fn new<F: Fn(MessageToServer) + 'static>(client: AperClient<A>, callback: F) -> Self {
+    pub fn new<F: Fn(MessageToServer) + 'static, FS: Fn(A) + 'static>(
+        client: AperClient<A>,
+        message_callback: F,
+        state_callback: FS,
+    ) -> Self {
         Self {
             client,
-            callback: Box::new(callback),
+            message_callback: Box::new(message_callback),
+            state_callback: Box::new(state_callback),
         }
     }
 
@@ -43,10 +49,13 @@ impl<A: Aper> ClientConnection<A> {
     pub fn apply(&mut self, intent: &A::Intent) -> Result<(), A::Error> {
         let version = self.client.apply(&intent)?;
         let intent = bincode::serialize(intent).unwrap();
-        (self.callback)(MessageToServer::Intent {
+        (self.message_callback)(MessageToServer::Intent {
             intent,
             client_version: version,
         });
+
+        (self.state_callback)(self.client.state());
+
         Ok(())
     }
 
@@ -58,14 +67,16 @@ impl<A: Aper> ClientConnection<A> {
                 server_version,
             } => {
                 self.client.mutate(mutations, *version, *server_version);
+
+                (self.state_callback)(self.client.state());
             }
         }
     }
 }
 
 pub struct ServerConnection<A: Aper> {
-    callbacks: Arc<DashMap<u64, Box<dyn Fn(&MessageToClient)>>>,
-    server: Arc<RefCell<AperServer<A>>>,
+    callbacks: Arc<DashMap<u64, Box<dyn Fn(&MessageToClient) + Send + Sync>>>,
+    server: Arc<Mutex<AperServer<A>>>,
     next_client_id: AtomicU64,
 }
 
@@ -73,14 +84,17 @@ impl<A: Aper> ServerConnection<A> {
     pub fn new() -> Self {
         Self {
             callbacks: Arc::new(DashMap::new()),
-            server: Arc::new(RefCell::new(AperServer::new())),
+            server: Arc::new(Mutex::new(AperServer::new())),
             next_client_id: AtomicU64::new(0),
         }
     }
 }
 
 impl<A: Aper> ServerConnection<A> {
-    pub fn connect<F: Fn(&MessageToClient) + 'static>(&mut self, callback: F) -> ServerHandle<A> {
+    pub fn connect<F: Fn(&MessageToClient) + Send + Sync + 'static>(
+        &mut self,
+        callback: F,
+    ) -> ServerHandle<A> {
         let client_id = self
             .next_client_id
             .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -95,23 +109,23 @@ impl<A: Aper> ServerConnection<A> {
 
 pub struct ServerHandle<A: Aper> {
     client_id: u64,
-    server: Arc<RefCell<AperServer<A>>>,
-    callbacks: Arc<DashMap<u64, Box<dyn Fn(&MessageToClient)>>>,
+    server: Arc<Mutex<AperServer<A>>>,
+    callbacks: Arc<DashMap<u64, Box<dyn Fn(&MessageToClient) + Send + Sync>>>,
 }
 
 impl<A: Aper> ServerHandle<A> {
-    pub fn receive(&mut self, message: &MessageToServer, client_id: u64) {
+    pub fn receive(&mut self, message: &MessageToServer) {
         match message {
             MessageToServer::Intent {
                 intent,
                 client_version,
             } => {
                 let intent = bincode::deserialize(intent).unwrap();
-                let mut server_borrow = self.server.borrow_mut();
+                let mut server_borrow = self.server.lock().unwrap();
                 let Ok(mutations) = server_borrow.apply(&intent) else {
                     // still need to ack the client.
 
-                    self.callbacks.get(&client_id).map(|callback| {
+                    self.callbacks.get(&self.client_id).map(|callback| {
                         callback(&MessageToClient::Apply {
                             mutations: vec![],
                             client_version: Some(*client_version),
@@ -138,7 +152,7 @@ impl<A: Aper> ServerHandle<A> {
 
                 for entry in self.callbacks.iter() {
                     let (other_client_id, callback) = entry.pair();
-                    if *other_client_id == client_id {
+                    if *other_client_id == self.client_id {
                         callback(&message_to_sender);
                     } else {
                         callback(&message_to_others);

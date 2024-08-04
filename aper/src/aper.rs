@@ -11,7 +11,7 @@ pub trait Attach {
 }
 
 pub trait Aper: Attach {
-    type Intent: Clone + Serialize + for<'de> Deserialize<'de>;
+    type Intent: Clone + Serialize + for<'de> Deserialize<'de> + PartialEq;
     type Error;
 
     fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error>;
@@ -53,8 +53,12 @@ impl<A: Aper> AperClient<A> {
         }
     }
 
-    pub fn connect<F: Fn(MessageToServer) + 'static>(self, callback: F) -> ClientConnection<A> {
-        ClientConnection::new(self, callback)
+    pub fn connect<F: Fn(MessageToServer) + 'static, FS: Fn(A) + 'static>(
+        self,
+        message_callback: F,
+        state_callback: FS,
+    ) -> ClientConnection<A> {
+        ClientConnection::new(self, message_callback, state_callback)
     }
 
     pub fn state(&self) -> A {

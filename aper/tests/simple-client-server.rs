@@ -15,7 +15,7 @@ impl Counter {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 enum CounterIntent {
     IncrementBy(u64),
     SetTo(u64),

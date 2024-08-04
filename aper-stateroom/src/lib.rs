@@ -1,4 +1,4 @@
-use aper::connection::{MessageToServer, ServerConnection};
+use aper::connection::{MessageToClient, MessageToServer, ServerConnection, ServerHandle};
 use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -6,25 +6,28 @@ pub use state_program::{StateMachineContainerProgram, StateProgram};
 pub use state_program_client::StateProgramClient;
 pub use stateroom::ClientId;
 use stateroom::{MessagePayload, StateroomContext, StateroomService};
+use std::collections::HashMap;
 
 mod state_program;
 mod state_program_client;
 
-pub struct AperStateroomService<P: StateProgram + Default> {
-    state: ServerConnection<P>,
+pub struct AperStateroomService<P: StateProgram> {
+    connection: ServerConnection<P>,
     suspended_event: Option<IntentEvent<P::T>>,
+    client_connections: HashMap<ClientId, ServerHandle<P>>,
 }
 
-impl<P: StateProgram + Default> Default for AperStateroomService<P> {
+impl<P: StateProgram> Default for AperStateroomService<P> {
     fn default() -> Self {
         AperStateroomService {
-            state: ServerConnection::new(),
+            connection: ServerConnection::new(),
             suspended_event: None,
+            client_connections: HashMap::new(),
         }
     }
 }
 
-impl<P: StateProgram + Default> AperStateroomService<P> {
+impl<P: StateProgram> AperStateroomService<P> {
     // fn update_suspended_event(&mut self, ctx: &impl StateroomContext) {
     //     let susp = self.state.state().suspended_event();
     //     if susp == self.suspended_event {
@@ -43,82 +46,36 @@ impl<P: StateProgram + Default> AperStateroomService<P> {
         &mut self,
         message: MessageToServer,
         client_id: Option<ClientId>,
-        ctx: &impl StateroomContext,
+        _ctx: &impl StateroomContext,
     ) {
-        // if let MessageToServer::DoTransition { transition, .. } = &message {
-        //     if transition.client != client_id {
-        //         log::warn!(
-        //             "Received a transition from a client with an invalid player ID. {:?} != {:?}",
-        //             transition.client,
-        //             client_id
-        //         );
-        //         return;
-        //     }
-        // }
-
-        // let timestamp = Utc::now();
-        // let StateServerMessageResponse {
-        //     reply_message,
-        //     broadcast_message,
-        // } = self.state.receive_message(message);
-
-        // let reply_message = StateProgramMessage::Message {
-        //     message: reply_message,
-        //     timestamp,
-        // };
-
-        // if let Some(client_id) = client_id {
-        //     ctx.send_message(
-        //         MessageRecipient::Client(client_id),
-        //         serde_json::to_string(&reply_message).unwrap().as_str(),
-        //     );
-        // }
-
-        // if let Some(broadcast_message) = broadcast_message {
-        //     let broadcast_message = StateProgramMessage::Message {
-        //         message: broadcast_message,
-        //         timestamp,
-        //     };
-
-        //     let recipient = if let Some(client_id) = client_id {
-        //         MessageRecipient::EveryoneExcept(client_id)
-        //     } else {
-        //         MessageRecipient::Broadcast
-        //     };
-
-        //     ctx.send_message(
-        //         recipient,
-        //         serde_json::to_string(&broadcast_message).unwrap().as_str(),
-        //     );
-        // }
-
-        // self.update_suspended_event(ctx);
+        if let Some(handle) = client_id.and_then(|id| self.client_connections.get_mut(&id)) {
+            handle.receive(&message);
+        }
     }
 }
 
-impl<P: StateProgram + Default> StateroomService for AperStateroomService<P>
+impl<P: StateProgram> StateroomService for AperStateroomService<P>
 where
     P::T: Unpin + Send + Sync + 'static,
 {
-    fn init(&mut self, ctx: &impl StateroomContext) {
+    fn init(&mut self, _ctx: &impl StateroomContext) {
         // self.update_suspended_event(ctx);
     }
 
     fn connect(&mut self, client_id: ClientId, ctx: &impl StateroomContext) {
-        // let response = StateProgramMessage::InitialState {
-        //     timestamp: Utc::now(),
-        //     client_id,
-        //     state: self.state.state().clone(),
-        //     version: self.state.version,
-        // };
+        let ctx = Clone::clone(ctx);
+        let callback = move |message: &MessageToClient| {
+            ctx.send_message(client_id, serde_json::to_string(&message).unwrap().as_str());
+        };
 
-        // ctx.send_message(
-        //     MessageRecipient::Client(client_id),
-        //     serde_json::to_string(&response).unwrap().as_str(),
-        // );
+        let handle = self.connection.connect(callback);
+
+        self.client_connections.insert(client_id, handle);
     }
 
-    fn disconnect(&mut self, _user: ClientId, _ctx: &impl StateroomContext) {}
+    fn disconnect(&mut self, user: ClientId, _ctx: &impl StateroomContext) {
+        self.client_connections.remove(&user);
+    }
 
     fn message(
         &mut self,
@@ -126,25 +83,22 @@ where
         message: MessagePayload,
         ctx: &impl StateroomContext,
     ) {
-        // match message {
-        //     MessagePayload::Text(txt) => {
-        //         let message: MessageToServer<P> = serde_json::from_str(&txt).unwrap();
-        //         self.process_message(message, Some(client_id), ctx);
-        //     }
-        //     MessagePayload::Bytes(bytes) => {
-        //         let message: MessageToServer<P> = bincode::deserialize(&bytes).unwrap();
-        //         self.process_message(message, Some(client_id), ctx);
-        //     }
-        // }
+        match message {
+            MessagePayload::Text(txt) => {
+                let message: MessageToServer = serde_json::from_str(&txt).unwrap();
+                self.process_message(message, Some(client_id), ctx);
+            }
+            MessagePayload::Bytes(bytes) => {
+                let message: MessageToServer = bincode::deserialize(&bytes).unwrap();
+                self.process_message(message, Some(client_id), ctx);
+            }
+        }
     }
 
-    fn timer(&mut self, ctx: &impl StateroomContext) {
+    fn timer(&mut self, _ctx: &impl StateroomContext) {
         // if let Some(event) = self.suspended_event.take() {
         //     self.process_message(
-        //         MessageToServer::DoTransition {
-        //             transition_number: ClientTransitionNumber::default(),
-        //             transition: event,
-        //         },
+        //         MessageToServer::Intent { intent: event, client_version: 0 },
         //         None,
         //         ctx,
         //     );

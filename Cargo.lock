@@ -1616,9 +1616,9 @@ dependencies = [
 
 [[package]]
 name = "stateroom"
-version = "0.4.3"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "945a3f637c6fac8f29e60d3a6b7ed56012b90c27481ab655b1de3bc6a53a306f"
+checksum = "10e8809586a7d67bd87e6545f9fbdc8f090b704081f79c8ebbc526c14b5b8925"
 dependencies = [
  "serde",
 ]

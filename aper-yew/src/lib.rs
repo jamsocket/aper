@@ -98,7 +98,8 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
         let url = format!("{}?token={}", context.props().websocket_url, token);
 
         let client = AperWebSocketStateProgramClient::new(&url, move |state| {
-            // link.send_message(Msg::SetState(state, offset, client_id))
+            // link.send_message(Msg::SetState(state, offset, client_id));
+
             todo!()
         })
         .unwrap();
