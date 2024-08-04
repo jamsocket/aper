@@ -4,7 +4,7 @@ use crate::{
     Mutation,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
+use std::{collections::VecDeque, fmt::Debug};
 
 pub trait Attach {
     fn attach(map: TreeMapRef) -> Self;
@@ -12,7 +12,7 @@ pub trait Attach {
 
 pub trait Aper: Attach {
     type Intent: Clone + Serialize + for<'de> Deserialize<'de> + PartialEq;
-    type Error;
+    type Error: Debug;
 
     fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error>;
 }

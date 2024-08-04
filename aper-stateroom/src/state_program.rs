@@ -80,14 +80,3 @@ where
         StateMachineContainerProgram(SM::attach(treemap))
     }
 }
-
-// impl<SM: Aper + Default + Send + Sync + 'static> StateProgram
-// where
-//     <SM as Aper>::Intent: Send + Unpin + Sync,
-// {
-//     type T = SM::Intent;
-
-//     fn new() -> Self {
-//         Self::default()
-//     }
-// }

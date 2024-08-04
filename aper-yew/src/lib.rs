@@ -127,8 +127,8 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
 
     fn update(&mut self, _: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::StateTransition(transition) => {
-                self.client.as_mut().unwrap().push_intent(transition);
+            Msg::StateTransition(intent) => {
+                self.client.as_mut().unwrap().push_intent(intent).unwrap();
                 false
             }
             Msg::SetState(state, offset, client_id) => {

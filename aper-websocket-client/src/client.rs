@@ -4,15 +4,12 @@ use aper::{
     connection::{ClientConnection, MessageToClient, MessageToServer},
     AperClient,
 };
-use aper_stateroom::StateProgram;
+use aper_stateroom::{IntentEvent, StateProgram};
 use core::fmt::Debug;
 use std::{
     rc::{Rc, Weak},
     sync::Mutex,
 };
-
-type Conn =
-    TypedWebsocketConnection<MessageToClient, MessageToServer, Box<dyn Fn(MessageToClient)>>;
 
 pub struct AperWebSocketStateProgramClient<S>
 where
@@ -69,5 +66,15 @@ where
         });
 
         Ok(AperWebSocketStateProgramClient { conn })
+    }
+
+    pub fn push_intent(&self, intent: S::T) -> Result<(), S::Error> {
+        let intent = IntentEvent {
+            client: None,
+            timestamp: chrono::Utc::now(),
+            intent,
+        };
+
+        self.conn.lock().unwrap().apply(&intent)
     }
 }
