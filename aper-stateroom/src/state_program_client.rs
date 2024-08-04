@@ -36,7 +36,7 @@ impl<S: StateProgram> StateProgramClient<S> {
 
     pub fn push_intent(&mut self, intent: S::T) -> Result<(), S::Error> {
         let intent = self.wrap_intent(intent);
-        self.client.apply(&intent);
+        self.client.apply(&intent)?;
         Ok(())
     }
 }

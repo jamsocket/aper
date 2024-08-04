@@ -97,8 +97,9 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
 
         let url = format!("{}?token={}", context.props().websocket_url, token);
 
-        let client = AperWebSocketStateProgramClient::new(&url, move |state, offset, client_id| {
-            link.send_message(Msg::SetState(state, offset, client_id))
+        let client = AperWebSocketStateProgramClient::new(&url, move |state| {
+            // link.send_message(Msg::SetState(state, offset, client_id))
+            todo!()
         })
         .unwrap();
         self.client = Some(client);
@@ -126,7 +127,7 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
     fn update(&mut self, _: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::StateTransition(transition) => {
-                self.client.as_mut().unwrap().push_transition(transition);
+                self.client.as_mut().unwrap().push_intent(transition);
                 false
             }
             Msg::SetState(state, offset, client_id) => {

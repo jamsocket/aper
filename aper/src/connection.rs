@@ -29,7 +29,7 @@ pub struct ClientConnection<A: Aper> {
 }
 
 impl<A: Aper> ClientConnection<A> {
-    fn new<F: Fn(MessageToServer) + 'static>(client: AperClient<A>, callback: F) -> Self {
+    pub fn new<F: Fn(MessageToServer) + 'static>(client: AperClient<A>, callback: F) -> Self {
         Self {
             client,
             callback: Box::new(callback),

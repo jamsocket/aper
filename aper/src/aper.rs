@@ -1,4 +1,8 @@
-use crate::{treemap::TreeMapRef, Mutation};
+use crate::{
+    connection::{ClientConnection, MessageToServer},
+    treemap::TreeMapRef,
+    Mutation,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
@@ -47,6 +51,10 @@ impl<A: Aper> AperClient<A> {
             verified_client_version: 0,
             verified_server_version: 0,
         }
+    }
+
+    pub fn connect<F: Fn(MessageToServer) + 'static>(self, callback: F) -> ClientConnection<A> {
+        ClientConnection::new(self, callback)
     }
 
     pub fn state(&self) -> A {

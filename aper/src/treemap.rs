@@ -1,5 +1,9 @@
 use crate::{Bytes, Mutation};
-use std::{cell::RefCell, collections::BTreeMap, sync::{Arc, Mutex}};
+use std::{
+    cell::RefCell,
+    collections::BTreeMap,
+    sync::{Arc, Mutex},
+};
 
 pub struct TreeMapLayer {
     /// Parent layers are read-only.
@@ -42,7 +46,8 @@ impl TreeMapLayer {
             let mut map = maps_borrow
                 .entry(prefix.clone())
                 .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
-                .lock().unwrap();
+                .lock()
+                .unwrap();
 
             for (key, value) in other_map.lock().unwrap().iter() {
                 map.insert(key.clone(), value.clone());

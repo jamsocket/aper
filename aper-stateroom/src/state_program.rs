@@ -7,7 +7,7 @@ use std::fmt::Debug;
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
 pub trait StateProgram:
-    Aper<Intent = TransitionEvent<Self::T>> + Send + Sync + 'static
+    Aper<Intent = TransitionEvent<Self::T>> + Send + Sync + 'static + Default
 where
     <Self as StateProgram>::T: Unpin + Send + Sync,
 {
@@ -63,7 +63,6 @@ where
     type Error = SM::Error;
 
     fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
-        
         self.0.apply(&intent.intent)?;
         Ok(())
     }
