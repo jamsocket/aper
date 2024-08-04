@@ -1,4 +1,4 @@
-use crate::{StateProgram, TransitionEvent};
+use crate::{IntentEvent, StateProgram};
 use aper::connection::{ClientConnection, MessageToClient};
 use chrono::{DateTime, Duration, Utc};
 use stateroom::ClientId;
@@ -20,10 +20,10 @@ impl<S: StateProgram> StateProgramClient<S> {
         self.client.state()
     }
 
-    fn wrap_intent(&self, intent: S::T) -> TransitionEvent<S::T> {
+    fn wrap_intent(&self, intent: S::T) -> IntentEvent<S::T> {
         let timestamp = self.current_server_time();
 
-        TransitionEvent {
+        IntentEvent {
             client: Some(self.client_id),
             timestamp,
             intent,

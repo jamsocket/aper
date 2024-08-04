@@ -1,4 +1,4 @@
-pub use aper_stateroom::{ClientId, StateMachineContainerProgram, StateProgram, TransitionEvent};
+pub use aper_stateroom::{ClientId, IntentEvent, StateMachineContainerProgram, StateProgram};
 use aper_websocket_client::AperWebSocketStateProgramClient;
 use chrono::Duration;
 use gloo_storage::{SessionStorage, Storage};

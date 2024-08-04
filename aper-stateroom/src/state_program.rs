@@ -1,4 +1,4 @@
-use crate::TransitionEvent;
+use crate::IntentEvent;
 use aper::{Aper, Attach, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
@@ -7,7 +7,7 @@ use std::fmt::Debug;
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
 pub trait StateProgram:
-    Aper<Intent = TransitionEvent<Self::T>> + Send + Sync + 'static + Default
+    Aper<Intent = IntentEvent<Self::T>> + Send + Sync + 'static + Default
 where
     <Self as StateProgram>::T: Unpin + Send + Sync,
 {
@@ -32,7 +32,7 @@ where
     ///
     /// Since they are not associated with a particular player, suspended events trigger
     /// `process_event` with a `None` as the player in the [TransitionEvent].
-    fn suspended_event(&self) -> Option<TransitionEvent<Self::T>> {
+    fn suspended_event(&self) -> Option<IntentEvent<Self::T>> {
         None
     }
 
@@ -59,7 +59,7 @@ impl<SM: Aper> Aper for StateMachineContainerProgram<SM>
 where
     <SM as Aper>::Intent: Send + Unpin + Sync + 'static,
 {
-    type Intent = TransitionEvent<SM::Intent>;
+    type Intent = IntentEvent<SM::Intent>;
     type Error = SM::Error;
 
     fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {

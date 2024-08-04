@@ -1,5 +1,4 @@
-use aper::connection::MessageToServer;
-use aper::AperServer;
+use aper::connection::{MessageToServer, ServerConnection};
 use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -12,14 +11,14 @@ mod state_program;
 mod state_program_client;
 
 pub struct AperStateroomService<P: StateProgram + Default> {
-    state: AperServer<P>,
-    suspended_event: Option<TransitionEvent<P::T>>,
+    state: ServerConnection<P>,
+    suspended_event: Option<IntentEvent<P::T>>,
 }
 
 impl<P: StateProgram + Default> Default for AperStateroomService<P> {
     fn default() -> Self {
         AperStateroomService {
-            state: AperServer::new(),
+            state: ServerConnection::new(),
             suspended_event: None,
         }
     }
@@ -156,7 +155,7 @@ where
 pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct TransitionEvent<T>
+pub struct IntentEvent<T>
 where
     T: Unpin + Send + Sync + 'static + Clone,
 {
@@ -166,12 +165,12 @@ where
     pub intent: T,
 }
 
-impl<T> TransitionEvent<T>
+impl<T> IntentEvent<T>
 where
     T: Unpin + Send + Sync + 'static + Clone,
 {
-    pub fn new(player: Option<ClientId>, timestamp: Timestamp, intent: T) -> TransitionEvent<T> {
-        TransitionEvent {
+    pub fn new(player: Option<ClientId>, timestamp: Timestamp, intent: T) -> IntentEvent<T> {
+        IntentEvent {
             timestamp,
             client: player,
             intent,

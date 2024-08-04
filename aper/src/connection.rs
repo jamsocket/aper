@@ -70,6 +70,16 @@ pub struct ServerConnection<A: Aper> {
 }
 
 impl<A: Aper> ServerConnection<A> {
+    pub fn new() -> Self {
+        Self {
+            callbacks: Arc::new(DashMap::new()),
+            server: Arc::new(RefCell::new(AperServer::new())),
+            next_client_id: AtomicU64::new(0),
+        }
+    }
+}
+
+impl<A: Aper> ServerConnection<A> {
     pub fn connect<F: Fn(&MessageToClient) + 'static>(&mut self, callback: F) -> ServerHandle<A> {
         let client_id = self
             .next_client_id
