@@ -39,6 +39,12 @@ impl<A: Aper> ClientConnection<A> {
         message_callback: F,
         state_callback: FS,
     ) -> Self {
+        // Request initial state.
+
+        let init_message = MessageToServer::RequestState { latest_version: 0 };
+
+        (message_callback)(init_message);
+
         Self {
             client,
             message_callback: Box::new(message_callback),
