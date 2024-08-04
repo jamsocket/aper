@@ -4,8 +4,8 @@ use chrono::Duration;
 use gloo_storage::{SessionStorage, Storage};
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::{fmt::Debug, rc::Rc};
 pub use update_interval::UpdateInterval;
 pub use view::{StateProgramViewComponent, StateProgramViewContext};
 use yew::{html, Component, Html, Properties};
@@ -58,12 +58,12 @@ impl<V: StateProgramViewComponent> PartialEq for StateProgramComponentProps<V> {
 #[derive(Debug)]
 pub enum Msg<State: StateProgram> {
     StateTransition(State::T),
-    SetState(Rc<State>, Duration, ClientId),
+    SetState(State, Duration, ClientId),
     Redraw,
 }
 
 struct InnerState<P: StateProgram> {
-    state: Rc<P>,
+    state: P,
     offset: Duration,
     client_id: ClientId,
 }
@@ -98,9 +98,11 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
         let url = format!("{}?token={}", context.props().websocket_url, token);
 
         let client = AperWebSocketStateProgramClient::new(&url, move |state| {
-            // link.send_message(Msg::SetState(state, offset, client_id));
+            // TODO!
+            let offset = Duration::zero();
+            let client_id = ClientId::from(0);
 
-            todo!()
+            link.send_message(Msg::SetState(state, offset, client_id));
         })
         .unwrap();
         self.client = Some(client);
@@ -158,7 +160,7 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
                 offset: *offset,
             };
 
-            V::view(state.clone(), context)
+            V::view(state, context)
         } else {
             html! {{"Waiting for initial state."}}
         }

@@ -3,7 +3,6 @@ use aper_yew::{
     StateProgramViewComponent, StateProgramViewContext,
 };
 pub use counter_common::{Counter, CounterIntent};
-use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use yew::prelude::{html, Html};
 
@@ -12,7 +11,7 @@ struct CounterView;
 impl StateProgramViewComponent for CounterView {
     type Program = StateMachineContainerProgram<Counter>;
 
-    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html {
+    fn view(state: &Self::Program, context: StateProgramViewContext<Self::Program>) -> Html {
         html! {
             <div>
                 <p>{&format!("Counter: {}", state.0.value())}</p>

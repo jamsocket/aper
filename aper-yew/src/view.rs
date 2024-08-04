@@ -1,6 +1,5 @@
 use aper_stateroom::{ClientId, StateProgram};
 use chrono::{DateTime, Duration, Utc};
-use std::rc::Rc;
 use yew::{Callback, Html};
 
 pub struct StateProgramViewContext<P: StateProgram> {
@@ -19,5 +18,5 @@ impl<P: StateProgram> StateProgramViewContext<P> {
 pub trait StateProgramViewComponent: 'static {
     type Program: StateProgram;
 
-    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html;
+    fn view(state: &Self::Program, context: StateProgramViewContext<Self::Program>) -> Html;
 }
