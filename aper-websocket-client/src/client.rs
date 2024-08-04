@@ -1,5 +1,6 @@
 use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
+use aper::connection::MessageToServer;
 use aper_stateroom::{ClientId, StateProgram, StateProgramClient};
 use chrono::Duration;
 use core::fmt::Debug;
@@ -10,7 +11,7 @@ use std::{
 
 type Conn<S> = TypedWebsocketConnection<
     StateProgramMessage<S>,
-    MessageToServer<S>,
+    MessageToServer,
     Box<dyn Fn(StateProgramMessage<S>)>,
 >;
 type BoxedCallback<S> = Rc<Box<dyn Fn(Rc<S>, Duration, ClientId)>>;
