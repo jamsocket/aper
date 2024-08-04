@@ -1,7 +1,6 @@
 use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
-use aper::sync::messages::MessageToServer;
-use aper_stateroom::{ClientId, StateProgram, StateProgramClient, StateProgramMessage};
+use aper_stateroom::{ClientId, StateProgram, StateProgramClient};
 use chrono::Duration;
 use core::fmt::Debug;
 use std::{

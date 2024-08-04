@@ -1,12 +1,11 @@
 use crate::{Bytes, Mutation};
-use std::{cell::RefCell, collections::BTreeMap, sync::Arc};
+use std::{cell::RefCell, collections::BTreeMap, sync::{Arc, Mutex}};
 
-#[derive(Clone, Debug)]
 pub struct TreeMapLayer {
     /// Parent layers are read-only.
     parent: Option<Arc<TreeMapLayer>>,
     /// Map of prefix -> (key -> value)
-    maps: RefCell<BTreeMap<Vec<Bytes>, Arc<RefCell<BTreeMap<Bytes, Option<Bytes>>>>>>,
+    maps: Mutex<BTreeMap<Vec<Bytes>, Arc<Mutex<BTreeMap<Bytes, Option<Bytes>>>>>>,
 }
 
 impl TreeMapLayer {
@@ -14,8 +13,8 @@ impl TreeMapLayer {
         let mut layer = self;
 
         loop {
-            if let Some(map) = layer.maps.borrow().get(prefix) {
-                if let Some(value) = map.borrow().get(key) {
+            if let Some(map) = layer.maps.lock().unwrap().get(prefix) {
+                if let Some(value) = map.lock().unwrap().get(key) {
                     return value.clone();
                 }
             }
@@ -30,33 +29,33 @@ impl TreeMapLayer {
 
     fn push_overlay(self: &Arc<Self>) -> Self {
         let parent = Some(self.clone());
-        let maps = RefCell::new(BTreeMap::new());
+        let maps = Mutex::new(BTreeMap::new());
 
         TreeMapLayer { parent, maps }
     }
 
     pub fn combine(&self, other: &Self) {
-        let mut maps_borrow = self.maps.borrow_mut();
-        let other_maps = other.maps.borrow();
+        let mut maps_borrow = self.maps.lock().unwrap();
+        let other_maps = other.maps.lock().unwrap();
 
         for (prefix, other_map) in other_maps.iter() {
             let mut map = maps_borrow
                 .entry(prefix.clone())
-                .or_insert_with(|| Arc::new(RefCell::new(BTreeMap::new())))
-                .borrow_mut();
+                .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
+                .lock().unwrap();
 
-            for (key, value) in other_map.borrow().iter() {
+            for (key, value) in other_map.lock().unwrap().iter() {
                 map.insert(key.clone(), value.clone());
             }
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct TreeMapRef {
     map: Arc<TreeMapLayer>,
     prefix: Vec<Bytes>,
-    reference: Arc<RefCell<BTreeMap<Bytes, Option<Bytes>>>>,
+    reference: Arc<Mutex<BTreeMap<Bytes, Option<Bytes>>>>,
 }
 
 impl TreeMapRef {
@@ -64,10 +63,10 @@ impl TreeMapRef {
         let map = self.map.push_overlay();
 
         let reference = {
-            let mut maps_borrow = map.maps.borrow_mut();
+            let mut maps_borrow = map.maps.lock().unwrap();
             maps_borrow
                 .entry(self.prefix.clone())
-                .or_insert_with(|| Arc::new(RefCell::new(BTreeMap::new())))
+                .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
                 .clone()
         };
 
@@ -79,7 +78,7 @@ impl TreeMapRef {
     }
 
     pub fn mutate(&self, mutations: &Vec<Mutation>) {
-        let mut reference = self.reference.borrow_mut();
+        let mut reference = self.reference.lock().unwrap();
 
         for mutation in mutations {
             for (key, value) in &mutation.entries {
@@ -94,7 +93,7 @@ impl TreeMapRef {
     pub fn into_mutations(self) -> Vec<Mutation> {
         let mut mutations = vec![];
 
-        let reference = self.reference.borrow();
+        let reference = self.reference.lock().unwrap();
         let mut entries = vec![];
 
         for (key, value) in reference.iter() {
@@ -117,10 +116,10 @@ impl TreeMapRef {
         let mut prefix = self.prefix.clone();
         prefix.push(name.to_vec());
 
-        let mut map_borrow = self.map.maps.borrow_mut();
+        let mut map_borrow = self.map.maps.lock().unwrap();
         let map = map_borrow
             .entry(prefix.clone())
-            .or_insert_with(|| Arc::new(RefCell::new(BTreeMap::new())))
+            .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
             .clone();
 
         Self {
@@ -135,23 +134,23 @@ impl TreeMapRef {
     }
 
     pub fn set(&mut self, key: Bytes, value: Bytes) {
-        self.reference.borrow_mut().insert(key, Some(value));
+        self.reference.lock().unwrap().insert(key, Some(value));
     }
 
     pub fn delete(&mut self, key: Bytes) {
-        self.reference.borrow_mut().insert(key, None);
+        self.reference.lock().unwrap().insert(key, None);
     }
 
     pub fn len(&self) -> usize {
-        self.reference.borrow().len()
+        self.reference.lock().unwrap().len()
     }
 
     pub fn new() -> Self {
-        let root = Arc::new(RefCell::new(BTreeMap::new()));
+        let root = Arc::new(Mutex::new(BTreeMap::new()));
         let mut maps = BTreeMap::new();
         maps.insert(vec![], root.clone());
 
-        let maps = RefCell::new(maps);
+        let maps = Mutex::new(maps);
 
         Self {
             map: Arc::new(TreeMapLayer { parent: None, maps }),

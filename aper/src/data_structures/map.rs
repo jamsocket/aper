@@ -1,7 +1,6 @@
 use crate::{Attach, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
-#[derive(Debug)]
 pub struct Map<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> {
     inner: TreeMapRef,
     _phantom: std::marker::PhantomData<(K, V)>,
