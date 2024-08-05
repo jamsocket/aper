@@ -31,12 +31,15 @@ impl<S: StateProgram> StateProgramClient<S> {
     }
 
     pub fn receive_message_from_server(&mut self, message: MessageToClient) {
+        self.server_time_delta = Utc::now().signed_duration_since(message.timestamp);
+
         self.client.receive(&message);
     }
 
     pub fn push_intent(&mut self, intent: S::T) -> Result<(), S::Error> {
         let intent = self.wrap_intent(intent);
         self.client.apply(&intent)?;
+
         Ok(())
     }
 }

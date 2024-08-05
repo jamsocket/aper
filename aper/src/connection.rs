@@ -1,4 +1,5 @@
 use crate::{Aper, AperClient, AperServer};
+use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -19,12 +20,19 @@ pub enum MessageToServer {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub enum MessageToClient {
+pub enum MessageToClientType {
     Apply {
         mutations: Vec<crate::Mutation>,
         client_version: Option<u64>,
         server_version: u64,
     },
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MessageToClient {
+    pub message: MessageToClientType,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub timestamp: DateTime<Utc>,
 }
 
 pub struct ClientConnection<A: Aper> {
@@ -70,8 +78,8 @@ impl<A: Aper> ClientConnection<A> {
     }
 
     pub fn receive(&mut self, message: &MessageToClient) {
-        match message {
-            MessageToClient::Apply {
+        match &message.message {
+            MessageToClientType::Apply {
                 mutations,
                 client_version: version,
                 server_version,
@@ -98,9 +106,7 @@ impl<A: Aper> ServerConnection<A> {
             next_client_id: AtomicU64::new(0),
         }
     }
-}
 
-impl<A: Aper> ServerConnection<A> {
     pub fn connect<F: Fn(&MessageToClient) + Send + Sync + 'static>(
         &mut self,
         callback: F,
@@ -114,6 +120,10 @@ impl<A: Aper> ServerConnection<A> {
             client_id,
             callbacks: self.callbacks.clone(),
         }
+    }
+
+    pub fn state(&self) -> A {
+        self.server.lock().unwrap().state()
     }
 }
 
@@ -136,28 +146,41 @@ impl<A: Aper> ServerHandle<A> {
                     // still need to ack the client.
 
                     self.callbacks.get(&self.client_id).map(|callback| {
-                        callback(&MessageToClient::Apply {
-                            mutations: vec![],
-                            client_version: Some(*client_version),
-                            server_version: server_borrow.version(),
-                        });
+                        let time = Utc::now();
+                        let message = MessageToClient {
+                            message: MessageToClientType::Apply {
+                                mutations: vec![],
+                                client_version: Some(*client_version),
+                                server_version: server_borrow.version(),
+                            },
+                            timestamp: time,
+                        };
+
+                        callback(&message);
                     });
 
                     return;
                 };
 
                 let version = server_borrow.version();
+                let time = Utc::now();
 
-                let message_to_others = MessageToClient::Apply {
-                    mutations: mutations.clone(),
-                    client_version: None,
-                    server_version: version,
+                let message_to_others = MessageToClient {
+                    message: MessageToClientType::Apply {
+                        mutations: mutations.clone(),
+                        client_version: None,
+                        server_version: version,
+                    },
+                    timestamp: time,
                 };
 
-                let message_to_sender = MessageToClient::Apply {
-                    mutations: mutations.clone(),
-                    client_version: Some(*client_version),
-                    server_version: version,
+                let message_to_sender = MessageToClient {
+                    message: MessageToClientType::Apply {
+                        mutations: mutations.clone(),
+                        client_version: Some(*client_version),
+                        server_version: version,
+                    },
+                    timestamp: time,
                 };
 
                 for entry in self.callbacks.iter() {
@@ -175,11 +198,17 @@ impl<A: Aper> ServerHandle<A> {
                 let mutations = c.state_snapshot();
 
                 self.callbacks.get(&self.client_id).map(|callback| {
-                    callback(&MessageToClient::Apply {
-                        mutations,
-                        client_version: None,
-                        server_version: c.version(),
-                    });
+                    let time = Utc::now();
+                    let message = MessageToClient {
+                        message: MessageToClientType::Apply {
+                            mutations,
+                            client_version: None,
+                            server_version: c.version(),
+                        },
+                        timestamp: time,
+                    };
+
+                    callback(&message);
                 });
             }
         }

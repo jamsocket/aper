@@ -1,64 +1,58 @@
-use aper::{NeverConflict, StateMachine};
-use aper_stateroom::{StateProgram, TransitionEvent};
+use aper::{data_structures::atom::Atom, Aper, Attach, TreeMapRef};
+use aper_stateroom::{IntentEvent, StateProgram};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Attach)]
 pub struct Timer {
-    pub value: i64,
-    pub last_increment: DateTime<Utc>,
+    pub value: Atom<i64>,
+    pub last_increment: Atom<DateTime<Utc>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum TimerEvent {
+pub enum TimerIntent {
     Reset,
     Increment,
 }
 
-impl Default for Timer {
-    fn default() -> Self {
-        Timer {
-            value: 0,
-            last_increment: Utc::now(),
-        }
-    }
-}
+impl Aper for Timer {
+    type Intent = IntentEvent<TimerIntent>;
+    type Error = ();
 
-impl StateMachine for Timer {
-    type Transition = TransitionEvent<TimerEvent>;
-    type Conflict = NeverConflict;
+    fn apply(&mut self, event: &Self::Intent) -> Result<(), ()> {
+        println!("Timer apply: {:?}", event);
 
-    fn apply(&self, event: &Self::Transition) -> Result<Self, NeverConflict> {
-        let mut new_self = self.clone();
-        match event.transition {
-            TimerEvent::Reset => new_self.value = 0,
-            TimerEvent::Increment => {
-                new_self.value += 1;
-                new_self.last_increment = event.timestamp;
+        match event.intent {
+            TimerIntent::Reset => self.value.set(0),
+            TimerIntent::Increment => {
+                self.value.set(self.value.get() + 1);
+                self.last_increment.set(event.timestamp);
             }
         }
 
-        Ok(new_self)
+        Ok(())
     }
 }
 
 impl StateProgram for Timer {
-    type T = TimerEvent;
+    type T = TimerIntent;
 
     fn new() -> Self {
-        Timer::default()
+        let treemap = TreeMapRef::new();
+        Timer::attach(treemap)
     }
 
-    fn suspended_event(&self) -> Option<TransitionEvent<Self::T>> {
+    fn suspended_event(&self) -> Option<IntentEvent<Self::T>> {
         let next_event = self
             .last_increment
+            .get()
             .checked_add_signed(Duration::seconds(1))
             .unwrap();
 
-        Some(TransitionEvent::new(
+        Some(IntentEvent::new(
             None,
             next_event,
-            TimerEvent::Increment,
+            TimerIntent::Increment,
         ))
     }
 }

@@ -185,4 +185,8 @@ impl<A: Aper> AperServer<A> {
 
         Ok(mutations)
     }
+
+    pub fn state(&self) -> A {
+        A::attach(self.state.clone())
+    }
 }

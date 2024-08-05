@@ -108,6 +108,7 @@ version = "0.4.0"
 dependencies = [
  "aper-derive",
  "bincode",
+ "chrono",
  "dashmap 6.0.1",
  "serde",
 ]

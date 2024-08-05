@@ -15,44 +15,53 @@ pub struct AperStateroomService<P: StateProgram> {
     connection: ServerConnection<P>,
     suspended_event: Option<IntentEvent<P::T>>,
     client_connections: HashMap<ClientId, ServerHandle<P>>,
+
+    /// Pseudo-connection for sending timer events.
+    timer_event_handle: ServerHandle<P>,
 }
 
 impl<P: StateProgram> Default for AperStateroomService<P> {
     fn default() -> Self {
+        let mut connection = ServerConnection::new();
+        let timer_event_handle = connection.connect(|_| {});
+
         AperStateroomService {
-            connection: ServerConnection::new(),
+            connection,
             suspended_event: None,
             client_connections: HashMap::new(),
+            timer_event_handle,
         }
     }
 }
 
 impl<P: StateProgram> AperStateroomService<P> {
-    // fn update_suspended_event(&mut self, ctx: &impl StateroomContext) {
-    //     let susp = self.state.state().suspended_event();
-    //     if susp == self.suspended_event {
-    //         return;
-    //     }
+    fn update_suspended_event(&mut self, ctx: &impl StateroomContext) {
+        let susp = self.connection.state().suspended_event();
+        if susp == self.suspended_event {
+            return;
+        }
 
-    //     if let Some(ev) = &susp {
-    //         let dur = ev.timestamp.signed_duration_since(Utc::now());
-    //         ctx.set_timer(dur.num_milliseconds().max(0) as u32);
-    //     }
+        if let Some(ev) = &susp {
+            let dur = ev.timestamp.signed_duration_since(Utc::now());
+            ctx.set_timer(dur.num_milliseconds().max(0) as u32);
+        }
 
-    //     self.suspended_event = susp;
-    // }
+        self.suspended_event = susp;
+    }
 
     fn process_message(
         &mut self,
         message: MessageToServer,
         client_id: Option<ClientId>,
-        _ctx: &impl StateroomContext,
+        ctx: &impl StateroomContext,
     ) {
         if let Some(handle) = client_id.and_then(|id| self.client_connections.get_mut(&id)) {
             handle.receive(&message);
         } else {
-            panic!("Received message for unknown client");
+            self.timer_event_handle.receive(&message);
         }
+
+        self.update_suspended_event(ctx);
     }
 }
 
@@ -60,8 +69,8 @@ impl<P: StateProgram> StateroomService for AperStateroomService<P>
 where
     P::T: Unpin + Send + Sync + 'static,
 {
-    fn init(&mut self, _ctx: &impl StateroomContext) {
-        // self.update_suspended_event(ctx);
+    fn init(&mut self, ctx: &impl StateroomContext) {
+        self.update_suspended_event(ctx);
     }
 
     fn connect(&mut self, client_id: ClientId, ctx: &impl StateroomContext) {
@@ -97,14 +106,19 @@ where
         }
     }
 
-    fn timer(&mut self, _ctx: &impl StateroomContext) {
-        // if let Some(event) = self.suspended_event.take() {
-        //     self.process_message(
-        //         MessageToServer::Intent { intent: event, client_version: 0 },
-        //         None,
-        //         ctx,
-        //     );
-        // }
+    fn timer(&mut self, ctx: &impl StateroomContext) {
+        if let Some(mut event) = self.suspended_event.take() {
+            event.timestamp = Utc::now();
+            let event = bincode::serialize(&event).unwrap();
+            self.process_message(
+                MessageToServer::Intent {
+                    intent: event,
+                    client_version: 0,
+                },
+                None,
+                ctx,
+            );
+        }
     }
 }
 
