@@ -1,6 +1,7 @@
 use crate::{Attach, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
+#[derive(Clone)]
 pub struct FixedArray<const N: u32, T: Serialize + DeserializeOwned + Default> {
     map: TreeMapRef,
     _phantom: std::marker::PhantomData<T>,

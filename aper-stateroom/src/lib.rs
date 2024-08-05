@@ -3,13 +3,11 @@ use chrono::serde::ts_milliseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 pub use state_program::{StateMachineContainerProgram, StateProgram};
-pub use state_program_client::StateProgramClient;
 pub use stateroom::ClientId;
 use stateroom::{MessagePayload, StateroomContext, StateroomService};
 use std::collections::HashMap;
 
 mod state_program;
-mod state_program_client;
 
 pub struct AperStateroomService<P: StateProgram> {
     connection: ServerConnection<P>,

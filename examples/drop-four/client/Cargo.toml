@@ -14,3 +14,4 @@ serde = { version = "1.0.127", features = ["derive"] }
 wasm-bindgen = "0.2.83"
 yew = { version = "0.21.0", features = ["csr"] }
 drop-four-common = {path="../common"}
+gloo-console = "0.3.0"

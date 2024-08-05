@@ -88,6 +88,10 @@ impl TreeMapLayer {
                 entries.push((key.clone(), value.clone()));
             }
 
+            if entries.is_empty() {
+                continue;
+            }
+
             mutations.push(Mutation {
                 prefix: prefix.clone(),
                 entries,

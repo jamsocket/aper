@@ -8,9 +8,9 @@ use board_component::BoardComponent;
 use drop_four_common::{
     Board, DropFourGame, GameTransition, PlayState, PlayerColor, BOARD_COLS, BOARD_ROWS,
 };
-use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
+use gloo_console::log;
 
 mod board_component;
 
@@ -90,23 +90,17 @@ impl GameView {
     }
 
     fn view_inner(
-        state: Rc<DropFourGame>,
+        state: &DropFourGame,
         client_id: ClientId,
         callback: &Callback<GameTransition>,
     ) -> Html {
         match state.state() {
-            PlayState::Playing {
-                board,
-                next_player,
-                winner,
-                player_map,
-                ..
-            } => {
-                let own_color = player_map.color_of_player(client_id);
-                Self::view_playing(board, *next_player, *winner, own_color, callback)
+            PlayState::Playing => {
+                let own_color = state.player_map.color_of_player(client_id);
+                Self::view_playing(&state.board, state.next_player.get(), state.winner.get(), own_color, callback)
             }
-            PlayState::Waiting { waiting_player, .. } => {
-                Self::view_waiting(*waiting_player, client_id, callback)
+            PlayState::Waiting => {
+                Self::view_waiting(state.player_map.teal_player.get(), client_id, callback)
             }
         }
     }
@@ -115,7 +109,9 @@ impl GameView {
 impl StateProgramViewComponent for GameView {
     type Program = DropFourGame;
 
-    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html {
+    fn view(state: &Self::Program, context: StateProgramViewContext<Self::Program>) -> Html {
+        log!(format!("View rendering: {:?}", state.player_map.teal_player.get()));
+
         html! {
             <div class="main">
             <h1>{"Drop Four"}</h1>

@@ -20,8 +20,6 @@ impl Aper for Timer {
     type Error = ();
 
     fn apply(&mut self, event: &Self::Intent) -> Result<(), ()> {
-        println!("Timer apply: {:?}", event);
-
         match event.intent {
             TimerIntent::Reset => self.value.set(0),
             TimerIntent::Increment => {
