@@ -72,7 +72,7 @@ where
             socket: ws,
             _message_handler: message_handler,
             _conn_handler: conn_handler,
-            _ph: PhantomData::default(),
+            _ph: PhantomData,
             pending,
         })
     }

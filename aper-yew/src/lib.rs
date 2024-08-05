@@ -42,7 +42,7 @@ impl<V: StateProgramViewComponent> StateProgramComponentProps<V> {
     pub fn new(websocket_url: &str) -> Self {
         StateProgramComponentProps {
             websocket_url: get_full_ws_url(websocket_url),
-            _ph: PhantomData::default(),
+            _ph: PhantomData,
         }
     }
 }
@@ -119,7 +119,7 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
         let mut result = Self {
             client: None,
             state: None,
-            _ph: PhantomData::default(),
+            _ph: PhantomData,
         };
 
         result.do_connect(context);

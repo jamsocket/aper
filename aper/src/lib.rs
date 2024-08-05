@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![allow(unused, clippy::type_complexity)]
 
 mod aper;
 pub mod connection;

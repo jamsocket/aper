@@ -17,16 +17,11 @@ enum TicTacToePlay {
     Reset,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Debug, Default)]
 enum TicTacToePlayer {
+    #[default]
     X,
     O,
-}
-
-impl Default for TicTacToePlayer {
-    fn default() -> Self {
-        TicTacToePlayer::X
-    }
 }
 
 fn check_winner(grid: Vec<Option<TicTacToePlayer>>) -> Option<TicTacToePlayer> {

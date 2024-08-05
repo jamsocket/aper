@@ -64,9 +64,7 @@ impl TreeMapLayer {
         };
 
         for (prefix, map) in self.maps.lock().unwrap().iter() {
-            let prefix_map = result
-                .entry(prefix.clone())
-                .or_insert_with(|| BTreeMap::new());
+            let prefix_map = result.entry(prefix.clone()).or_insert_with(BTreeMap::new);
 
             for (key, value) in map.lock().unwrap().iter() {
                 if let Some(value) = value {
@@ -105,6 +103,12 @@ pub struct TreeMapRef {
     map: Arc<TreeMapLayer>,
     prefix: Vec<Bytes>,
     reference: Arc<Mutex<BTreeMap<Bytes, Option<Bytes>>>>,
+}
+
+impl Default for TreeMapRef {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TreeMapRef {
@@ -183,6 +187,10 @@ impl TreeMapRef {
 
     pub fn len(&self) -> usize {
         self.reference.lock().unwrap().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.reference.lock().unwrap().is_empty()
     }
 
     pub fn new() -> Self {

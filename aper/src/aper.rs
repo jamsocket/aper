@@ -38,6 +38,12 @@ pub struct AperClient<A: Aper> {
     verified_server_version: u64,
 }
 
+impl<A: Aper> Default for AperClient<A> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<A: Aper> AperClient<A> {
     pub fn new() -> Self {
         let verified = TreeMapRef::new();
@@ -85,9 +91,7 @@ impl<A: Aper> AperClient<A> {
         {
             let mut sm = A::attach(overlay.clone());
 
-            if let Err(err) = sm.apply(&intent) {
-                return Err(err);
-            }
+            sm.apply(intent)?
         }
 
         let version = self.next_client_version;
@@ -137,7 +141,7 @@ impl<A: Aper> AperClient<A> {
             let overlay = self.speculative.push_overlay();
             let mut sm = A::attach(overlay.clone());
 
-            if let Err(_) = sm.apply(&speculative_intent.intent) {
+            if sm.apply(&speculative_intent.intent).is_err() {
                 continue;
             }
 
@@ -150,6 +154,12 @@ pub struct AperServer<A: Aper> {
     state: TreeMapRef,
     version: u64,
     _phantom: std::marker::PhantomData<A>,
+}
+
+impl<A: Aper> Default for AperServer<A> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<A: Aper> AperServer<A> {
@@ -176,7 +186,7 @@ impl<A: Aper> AperServer<A> {
 
         let mut sm = A::attach(overlay.clone());
 
-        sm.apply(&intent)?;
+        sm.apply(intent)?;
 
         self.version += 1;
 

@@ -65,7 +65,7 @@ impl<A: Aper> ClientConnection<A> {
     }
 
     pub fn apply(&mut self, intent: &A::Intent) -> Result<(), A::Error> {
-        let version = self.client.apply(&intent)?;
+        let version = self.client.apply(intent)?;
         let intent = bincode::serialize(intent).unwrap();
         (self.message_callback)(MessageToServer::Intent {
             intent,
@@ -96,6 +96,12 @@ pub struct ServerConnection<A: Aper> {
     callbacks: Arc<DashMap<u64, Box<dyn Fn(&MessageToClient) + Send + Sync>>>,
     server: Arc<Mutex<AperServer<A>>>,
     next_client_id: AtomicU64,
+}
+
+impl<A: Aper> Default for ServerConnection<A> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<A: Aper> ServerConnection<A> {
@@ -145,7 +151,7 @@ impl<A: Aper> ServerHandle<A> {
                 let Ok(mutations) = server_borrow.apply(&intent) else {
                     // still need to ack the client.
 
-                    self.callbacks.get(&self.client_id).map(|callback| {
+                    if let Some(callback) = self.callbacks.get(&self.client_id) {
                         let time = Utc::now();
                         let message = MessageToClient {
                             message: MessageToClientType::Apply {
@@ -157,7 +163,7 @@ impl<A: Aper> ServerHandle<A> {
                         };
 
                         callback(&message);
-                    });
+                    }
 
                     return;
                 };
@@ -197,7 +203,7 @@ impl<A: Aper> ServerHandle<A> {
                 let c = server.borrow();
                 let mutations = c.state_snapshot();
 
-                self.callbacks.get(&self.client_id).map(|callback| {
+                if let Some(callback) = self.callbacks.get(&self.client_id) {
                     let time = Utc::now();
                     let message = MessageToClient {
                         message: MessageToClientType::Apply {
@@ -209,7 +215,7 @@ impl<A: Aper> ServerHandle<A> {
                     };
 
                     callback(&message);
-                });
+                }
             }
         }
     }

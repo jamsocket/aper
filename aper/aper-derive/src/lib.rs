@@ -52,7 +52,7 @@ impl MacroState {
         let fields = match &self.fields {
             StructType::Record(fields) => {
                 let fields = fields.iter().map(|field| {
-                    let field = syn::Ident::new(&field, proc_macro2::Span::call_site());
+                    let field = syn::Ident::new(field, proc_macro2::Span::call_site());
                     let name = Literal::byte_string(field.to_string().as_bytes());
                     quote! {
                         #field: aper::Attach::attach(treemap.child(#name))
