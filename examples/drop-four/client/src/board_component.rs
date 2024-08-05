@@ -23,12 +23,18 @@ pub struct BoardComponent {
 
 pub struct SetHoverCol(Option<u32>);
 
-#[derive(Properties, Clone, PartialEq)]
+#[derive(Properties, Clone)]
 pub struct BoardProps {
     pub board: Board,
     pub player: PlayerColor,
     pub interactive: bool,
     pub callback: Callback<GameTransition>,
+}
+
+impl PartialEq for BoardProps {
+    fn eq(&self, _other: &Self) -> bool {
+        false
+    }
 }
 
 impl BoardComponent {
@@ -107,11 +113,11 @@ impl BoardComponent {
     }
 
     fn view_played_discs(&self, context: &yew::Context<Self>) -> Html {
-        let board = context.props().board.0;
+        let board = &context.props().board;
 
         let col_groups = (0..BOARD_COLS).map(|col| {
             let discs = (0..BOARD_ROWS).rev().flat_map(|row| {
-                board[row][col].map(|p| {
+                board.get(row, col).map(|p| {
                     let ty = CELL_SIZE * row as u32 + CELL_SIZE / 2;
                     let style = format!("transform: translate(0, {}px)", ty);
 

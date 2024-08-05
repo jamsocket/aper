@@ -1,19 +1,23 @@
 use anyhow::{anyhow, Result};
-use std::marker::PhantomData;
-use wasm_bindgen::prelude::Closure;
+use std::sync::Arc;
+use std::{marker::PhantomData, sync::Mutex};
 use wasm_bindgen::JsCast;
+use wasm_bindgen::{prelude::Closure, JsValue};
 use web_sys::{MessageEvent, WebSocket};
 
-#[derive(Debug)]
 pub struct WebSocketConnection<F>
 where
     F: Fn(Message) + 'static,
 {
     socket: WebSocket,
     _message_handler: Closure<dyn FnMut(MessageEvent)>,
+    _conn_handler: Closure<dyn FnMut(JsValue)>,
     _ph: PhantomData<F>,
+
+    pending: Arc<Mutex<Option<Message>>>,
 }
 
+#[derive(Clone)]
 pub enum Message {
     Text(String),
     Bytes(Vec<u8>),
@@ -45,14 +49,42 @@ where
 
         ws.set_onmessage(Some(message_handler.as_ref().unchecked_ref()));
 
+        let pending = Arc::new(Mutex::new(None));
+        let pending_ = pending.clone();
+        let ws_ = ws.clone();
+        let conn_handler = Closure::<dyn FnMut(JsValue)>::wrap(Box::new(move |_: JsValue| {
+            let mut pending = pending_.lock().unwrap();
+            if let Some(message) = pending.take() {
+                match message {
+                    Message::Text(txt) => {
+                        ws_.send_with_str(&txt).unwrap();
+                    }
+                    Message::Bytes(bytes) => {
+                        ws_.send_with_u8_array(&bytes).unwrap();
+                    }
+                }
+            }
+        }));
+
+        ws.set_onopen(Some(conn_handler.as_ref().unchecked_ref()));
+
         Ok(WebSocketConnection {
             socket: ws,
             _message_handler: message_handler,
-            _ph: PhantomData::default(),
+            _conn_handler: conn_handler,
+            _ph: PhantomData,
+            pending,
         })
     }
 
     pub fn send(&self, message: &Message) {
+        // if the socket is not open, queue the message
+        if self.socket.ready_state() != WebSocket::OPEN {
+            let mut pending = self.pending.lock().unwrap();
+            *pending = Some(message.clone());
+            return;
+        }
+
         match message {
             Message::Text(txt) => {
                 self.socket.send_with_str(txt).unwrap();

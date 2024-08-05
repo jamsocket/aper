@@ -31,6 +31,6 @@ impl Component for UpdateInterval {
     }
 
     fn view(&self, _context: &yew::Context<Self>) -> Html {
-        return html! {};
+        html! {}
     }
 }
