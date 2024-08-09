@@ -9,3 +9,4 @@ dashmap = "6.0.1"
 serde = { version = "1.0.204", features = ["derive"] }
 aper-derive = {path = "./aper-derive"}
 chrono = { version = "0.4.38", features = ["serde"] }
+tracing = "0.1.40"

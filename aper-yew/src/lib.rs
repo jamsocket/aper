@@ -2,16 +2,16 @@ pub use aper_stateroom::{ClientId, IntentEvent, StateMachineContainerProgram, St
 use aper_websocket_client::AperWebSocketStateProgramClient;
 use chrono::Duration;
 use gloo_storage::{SessionStorage, Storage};
+use init_tracing::init_tracing;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 use std::fmt::Debug;
 use std::marker::PhantomData;
-use tracing::init_tracing;
 pub use update_interval::UpdateInterval;
 pub use view::{StateProgramViewComponent, StateProgramViewContext};
 use yew::{html, Component, Html, Properties};
 
-mod tracing;
+mod init_tracing;
 mod update_interval;
 mod view;
 
@@ -62,14 +62,14 @@ impl<V: StateProgramViewComponent> PartialEq for StateProgramComponentProps<V> {
 #[derive(Debug)]
 pub enum Msg<State: StateProgram> {
     StateTransition(State::T),
-    SetState(State, Duration, ClientId),
+    SetState(State, Duration, u32),
     Redraw,
 }
 
 struct InnerState<P: StateProgram> {
     state: P,
     offset: Duration,
-    client_id: ClientId,
+    client_id: u32,
 }
 
 /// Yew Component which owns a copy of the state as well as a connection to the server,
@@ -101,10 +101,9 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
 
         let url = format!("{}?token={}", context.props().websocket_url, token);
 
-        let client = AperWebSocketStateProgramClient::new(&url, move |state| {
+        let client = AperWebSocketStateProgramClient::new(&url, move |state, client_id| {
             // TODO!
             let offset = Duration::zero();
-            let client_id = ClientId::from(0);
 
             link.send_message(Msg::SetState(state, offset, client_id));
         })

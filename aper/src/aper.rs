@@ -59,7 +59,7 @@ impl<A: Aper> AperClient<A> {
         }
     }
 
-    pub fn connect<F: Fn(MessageToServer) + 'static, FS: Fn(A) + 'static>(
+    pub fn connect<F: Fn(MessageToServer) + 'static, FS: Fn(A, u32) + 'static>(
         self,
         message_callback: F,
         state_callback: FS,

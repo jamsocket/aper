@@ -4,7 +4,7 @@ use aper::{
     connection::{ClientConnection, MessageToClient, MessageToServer},
     AperClient,
 };
-use aper_stateroom::{ClientId, IntentEvent, StateProgram};
+use aper_stateroom::{IntentEvent, StateProgram};
 use core::fmt::Debug;
 use std::{
     rc::{Rc, Weak},
@@ -33,7 +33,7 @@ where
 {
     pub fn new<F>(url: &str, state_callback: F) -> Result<Self>
     where
-        F: Fn(S) + 'static,
+        F: Fn(S, u32) + 'static,
     {
         // callback is called when the state changes
         // need to create a connection
@@ -71,8 +71,7 @@ where
     pub fn push_intent(&self, intent: S::T) -> Result<(), S::Error> {
         let mut conn = self.conn.lock().unwrap();
 
-        let client = conn.client_id.map(ClientId);
-
+        let client = conn.client_id;
         let intent = IntentEvent {
             client,
             timestamp: chrono::Utc::now(),

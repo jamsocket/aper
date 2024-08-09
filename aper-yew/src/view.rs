@@ -1,11 +1,11 @@
-use aper_stateroom::{ClientId, StateProgram};
+use aper_stateroom::StateProgram;
 use chrono::{DateTime, Duration, Utc};
 use yew::{Callback, Html};
 
 pub struct StateProgramViewContext<P: StateProgram> {
     pub callback: Callback<P::T>,
     pub redraw: Callback<()>,
-    pub client_id: ClientId,
+    pub client_id: u32,
     pub offset: Duration,
 }
 

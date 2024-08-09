@@ -111,6 +111,7 @@ dependencies = [
  "chrono",
  "dashmap 6.0.1",
  "serde",
+ "tracing",
 ]
 
 [[package]]
@@ -168,6 +169,7 @@ dependencies = [
  "js-sys",
  "serde",
  "serde_json",
+ "tracing",
  "wasm-bindgen",
  "web-sys",
 ]

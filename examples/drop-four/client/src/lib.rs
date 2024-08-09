@@ -1,5 +1,4 @@
 #![recursion_limit = "1024"]
-use aper_stateroom::ClientId;
 use aper_yew::{
     StateProgramComponent, StateProgramComponentProps, StateProgramViewComponent,
     StateProgramViewContext,
@@ -18,8 +17,8 @@ struct GameView;
 
 impl GameView {
     fn view_waiting(
-        waiting_player: Option<ClientId>,
-        client_id: ClientId,
+        waiting_player: Option<u32>,
+        client_id: u32,
         callback: &Callback<GameTransition>,
     ) -> Html {
         if Some(client_id) == waiting_player {
@@ -90,7 +89,7 @@ impl GameView {
 
     fn view_inner(
         state: &DropFourGame,
-        client_id: ClientId,
+        client_id: u32,
         callback: &Callback<GameTransition>,
     ) -> Html {
         match state.state() {

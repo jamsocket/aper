@@ -129,7 +129,7 @@ where
 {
     #[serde(with = "ts_milliseconds")]
     pub timestamp: Timestamp,
-    pub client: Option<ClientId>,
+    pub client: Option<u32>,
     pub intent: T,
 }
 
@@ -137,10 +137,10 @@ impl<T> IntentEvent<T>
 where
     T: Unpin + Send + Sync + 'static + Clone,
 {
-    pub fn new(player: Option<ClientId>, timestamp: Timestamp, intent: T) -> IntentEvent<T> {
+    pub fn new(client: Option<u32>, timestamp: Timestamp, intent: T) -> IntentEvent<T> {
         IntentEvent {
             timestamp,
-            client: player,
+            client,
             intent,
         }
     }

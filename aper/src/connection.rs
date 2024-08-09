@@ -45,12 +45,12 @@ pub struct MessageToClient {
 pub struct ClientConnection<A: Aper> {
     client: AperClient<A>,
     message_callback: Box<dyn Fn(MessageToServer)>,
-    state_callback: Box<dyn Fn(A)>,
+    state_callback: Box<dyn Fn(A, u32)>,
     pub client_id: Option<u32>,
 }
 
 impl<A: Aper> ClientConnection<A> {
-    pub fn new<F: Fn(MessageToServer) + 'static, FS: Fn(A) + 'static>(
+    pub fn new<F: Fn(MessageToServer) + 'static, FS: Fn(A, u32) + 'static>(
         client: AperClient<A>,
         message_callback: F,
         state_callback: FS,
@@ -81,7 +81,11 @@ impl<A: Aper> ClientConnection<A> {
             client_version: version,
         });
 
-        (self.state_callback)(self.client.state());
+        if let Some(client_id) = self.client_id {
+            (self.state_callback)(self.client.state(), client_id);
+        } else {
+            tracing::warn!("Received intent before client ID was assigned.");
+        }
 
         Ok(())
     }
@@ -97,7 +101,11 @@ impl<A: Aper> ClientConnection<A> {
             } => {
                 self.client.mutate(mutations, *version, *server_version);
 
-                (self.state_callback)(self.client.state());
+                if let Some(client_id) = self.client_id {
+                    (self.state_callback)(self.client.state(), client_id);
+                } else {
+                    tracing::warn!("Received state before client ID was assigned.");
+                }
             }
             MessageToClientType::Hello { client_id } => {
                 self.client_id = Some(*client_id);
