@@ -10,7 +10,6 @@ use drop_four_common::{
 };
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
-use gloo_console::log;
 
 mod board_component;
 
@@ -110,8 +109,6 @@ impl StateProgramViewComponent for GameView {
     type Program = DropFourGame;
 
     fn view(state: &Self::Program, context: StateProgramViewContext<Self::Program>) -> Html {
-        log!(format!("View rendering: {:?}", state.player_map.teal_player.get()));
-
         html! {
             <div class="main">
             <h1>{"Drop Four"}</h1>

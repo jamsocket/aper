@@ -257,7 +257,6 @@ dependencies = [
  "aper-stateroom",
  "aper-yew",
  "drop-four-common",
- "gloo-console 0.3.0",
  "serde",
  "wasm-bindgen",
  "yew",
