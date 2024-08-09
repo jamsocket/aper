@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 use std::{
     borrow::Borrow,
     cell::RefCell,
-    sync::{atomic::AtomicU64, Arc, Mutex},
+    sync::{
+        atomic::{AtomicU32, AtomicU64},
+        Arc, Mutex,
+    },
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -19,16 +22,20 @@ pub enum MessageToServer {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageToClientType {
     Apply {
         mutations: Vec<crate::Mutation>,
         client_version: Option<u64>,
         server_version: u64,
     },
+    Hello {
+        /// The client's assigned ID.
+        client_id: u32,
+    },
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageToClient {
     pub message: MessageToClientType,
     #[serde(with = "chrono::serde::ts_milliseconds")]
@@ -39,6 +46,7 @@ pub struct ClientConnection<A: Aper> {
     client: AperClient<A>,
     message_callback: Box<dyn Fn(MessageToServer)>,
     state_callback: Box<dyn Fn(A)>,
+    pub client_id: Option<u32>,
 }
 
 impl<A: Aper> ClientConnection<A> {
@@ -57,6 +65,7 @@ impl<A: Aper> ClientConnection<A> {
             client,
             message_callback: Box::new(message_callback),
             state_callback: Box::new(state_callback),
+            client_id: None,
         }
     }
 
@@ -78,6 +87,8 @@ impl<A: Aper> ClientConnection<A> {
     }
 
     pub fn receive(&mut self, message: &MessageToClient) {
+        println!("Received message: {:?}", message);
+
         match &message.message {
             MessageToClientType::Apply {
                 mutations,
@@ -88,14 +99,17 @@ impl<A: Aper> ClientConnection<A> {
 
                 (self.state_callback)(self.client.state());
             }
+            MessageToClientType::Hello { client_id } => {
+                self.client_id = Some(*client_id);
+            }
         }
     }
 }
 
 pub struct ServerConnection<A: Aper> {
-    callbacks: Arc<DashMap<u64, Box<dyn Fn(&MessageToClient) + Send + Sync>>>,
+    callbacks: Arc<DashMap<u32, Box<dyn Fn(&MessageToClient) + Send + Sync>>>,
     server: Arc<Mutex<AperServer<A>>>,
-    next_client_id: AtomicU64,
+    next_client_id: AtomicU32,
 }
 
 impl<A: Aper> Default for ServerConnection<A> {
@@ -109,7 +123,7 @@ impl<A: Aper> ServerConnection<A> {
         Self {
             callbacks: Arc::new(DashMap::new()),
             server: Arc::new(Mutex::new(AperServer::new())),
-            next_client_id: AtomicU64::new(0),
+            next_client_id: AtomicU32::new(0),
         }
     }
 
@@ -120,7 +134,14 @@ impl<A: Aper> ServerConnection<A> {
         let client_id = self
             .next_client_id
             .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
+        (callback)(&MessageToClient {
+            message: MessageToClientType::Hello { client_id },
+            timestamp: Utc::now(),
+        });
+
         self.callbacks.insert(client_id, Box::new(callback));
+
         ServerHandle {
             server: self.server.clone(),
             client_id,
@@ -134,9 +155,9 @@ impl<A: Aper> ServerConnection<A> {
 }
 
 pub struct ServerHandle<A: Aper> {
-    client_id: u64,
+    client_id: u32,
     server: Arc<Mutex<AperServer<A>>>,
-    callbacks: Arc<DashMap<u64, Box<dyn Fn(&MessageToClient) + Send + Sync>>>,
+    callbacks: Arc<DashMap<u32, Box<dyn Fn(&MessageToClient) + Send + Sync>>>,
 }
 
 impl<A: Aper> ServerHandle<A> {

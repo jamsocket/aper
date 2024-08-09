@@ -180,8 +180,6 @@ impl Aper for DropFourGame {
     type Error = ();
 
     fn apply(&mut self, event: &Self::Intent) -> Result<(), ()> {
-        println!("Applying event: {:?}", event);
-
         match event.intent {
             GameTransition::Join => {
                 if PlayState::Waiting == self.state() {

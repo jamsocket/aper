@@ -6,10 +6,12 @@ use rand::distributions::Alphanumeric;
 use rand::Rng;
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use tracing::init_tracing;
 pub use update_interval::UpdateInterval;
 pub use view::{StateProgramViewComponent, StateProgramViewContext};
 use yew::{html, Component, Html, Properties};
 
+mod tracing;
 mod update_interval;
 mod view;
 
@@ -40,6 +42,8 @@ pub struct StateProgramComponentProps<V: StateProgramViewComponent> {
 
 impl<V: StateProgramViewComponent> StateProgramComponentProps<V> {
     pub fn new(websocket_url: &str) -> Self {
+        init_tracing();
+
         StateProgramComponentProps {
             websocket_url: get_full_ws_url(websocket_url),
             _ph: PhantomData,
