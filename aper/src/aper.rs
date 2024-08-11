@@ -85,6 +85,7 @@ impl<A: Aper> AperClient<A> {
         self.verified_server_version
     }
 
+    /// Apply a mutation to the local client state.
     pub fn apply(&mut self, intent: &A::Intent) -> Result<u64, A::Error> {
         let overlay = self.speculative.push_overlay();
 
@@ -106,6 +107,7 @@ impl<A: Aper> AperClient<A> {
         Ok(version)
     }
 
+    /// Mutate the local client state according to server-verified mutations.
     pub fn mutate(
         &mut self,
         mutations: &Vec<Mutation>,

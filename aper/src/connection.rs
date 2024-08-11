@@ -73,6 +73,7 @@ impl<A: Aper> ClientConnection<A> {
         self.client.state()
     }
 
+    /// Send an intent to the server, and apply it speculatively to the local state.
     pub fn apply(&mut self, intent: &A::Intent) -> Result<(), A::Error> {
         let version = self.client.apply(intent)?;
         let intent = bincode::serialize(intent).unwrap();
