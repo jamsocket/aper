@@ -113,6 +113,7 @@ impl<A: Aper> AperClient<A> {
         self.next_client_version += 1;
 
         self.map.combine_down();
+        self.map.notify_dirty();
 
         Ok(version)
     }
@@ -166,6 +167,8 @@ impl<A: Aper> AperClient<A> {
 
             self.map.combine_down();
         }
+
+        self.map.notify_dirty();
     }
 }
 

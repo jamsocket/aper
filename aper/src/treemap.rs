@@ -8,6 +8,7 @@ use std::{
 #[derive(Default)]
 pub struct TreeMapLayer {
     layer: BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Option<Bytes>>>,
+    dirty: HashSet<Vec<Bytes>>,
 }
 
 impl TreeMapLayer {
@@ -47,6 +48,20 @@ impl TreeMap {
     pub fn pop_overlay(&self) {
         let mut inner = self.inner.lock().unwrap();
         inner.layers.pop();
+    }
+
+    pub fn notify_dirty(&self) {
+        let mut dirty_prefixes = HashSet::new();
+        let mut inner = self.inner.lock().unwrap();
+
+        for layer in inner.layers.iter_mut() {
+            let new_prefixes = std::mem::take(&mut layer.dirty);
+            dirty_prefixes.extend(new_prefixes.into_iter());
+        }
+
+        for prefix in dirty_prefixes.iter() {
+            inner.listeners.alert(prefix);
+        }
     }
 
     pub fn top_layer_mutations(&self) -> Vec<Mutation> {
@@ -102,6 +117,8 @@ impl TreeMap {
                 next_map.insert(key.clone(), value.clone());
             }
         }
+
+        next_layer.dirty.extend(top_layer.dirty.into_iter());
     }
 
     pub fn get(&self, prefix: &Vec<Bytes>, key: &Bytes) -> Option<Bytes> {
@@ -131,6 +148,8 @@ impl TreeMap {
             for (key, value) in mutation.entries.iter() {
                 map.insert(key.clone(), value.clone());
             }
+
+            top_layer.dirty.insert(mutation.prefix.clone());
         }
     }
 }
@@ -168,6 +187,8 @@ impl TreeMapRef {
             .entry(self.prefix.clone())
             .or_insert_with(|| BTreeMap::new());
 
+        top_layer.dirty.insert(self.prefix.clone());
+
         map.insert(key, Some(value));
     }
 
@@ -181,6 +202,8 @@ impl TreeMapRef {
             .layer
             .entry(self.prefix.clone())
             .or_insert_with(|| BTreeMap::new());
+
+        top_layer.dirty.insert(self.prefix.clone());
 
         map.insert(key, None);
     }
