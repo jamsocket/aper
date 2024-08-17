@@ -4,7 +4,7 @@ use crate::{
     Mutation,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::VecDeque, fmt::Debug};
+use std::{collections::{HashSet, VecDeque}, fmt::Debug};
 
 pub trait Attach {
     fn attach(map: TreeMapRef) -> Self;
@@ -110,13 +110,6 @@ impl<A: Aper> AperClient<A> {
 
         let mut listeners = overlay.listeners.lock().unwrap();
         for prefix in overlay.prefixes() {
-            println!(
-                "prefix: {:?}",
-                prefix
-                    .iter()
-                    .map(|b| std::str::from_utf8(b).unwrap())
-                    .collect::<Vec<_>>()
-            );
             listeners.alert(&prefix);
         }
 
@@ -134,6 +127,11 @@ impl<A: Aper> AperClient<A> {
     ) {
         self.verified.mutate(mutations);
         self.verified_server_version = server_version;
+        let mut prefixes_changed = HashSet::new();
+
+        for mutation in mutations {
+            prefixes_changed.insert(mutation.prefix.clone());
+        }
 
         if let Some(version) = client_version {
             self.verified_client_version = version;
@@ -165,7 +163,16 @@ impl<A: Aper> AperClient<A> {
                 continue;
             }
 
+            for prefix in overlay.prefixes() {
+                prefixes_changed.insert(prefix);
+            }
+
             self.speculative.combine(&overlay);
+        }
+
+        for prefix in prefixes_changed {
+            let mut listeners = self.speculative.listeners.lock().unwrap();
+            listeners.alert(&prefix);
         }
     }
 }
