@@ -1,5 +1,5 @@
 use crate::IntentEvent;
-use aper::{Aper, Attach, TreeMapRef};
+use aper::{Aper, Attach, TreeMap, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
@@ -76,7 +76,8 @@ where
     type T = SM::Intent;
 
     fn new() -> Self {
-        let treemap = TreeMapRef::new();
-        StateMachineContainerProgram(SM::attach(treemap))
+        let treemap = TreeMap::default();
+        let treemap_ref = TreeMapRef::new_root(&treemap);
+        StateMachineContainerProgram(SM::attach(treemap_ref))
     }
 }

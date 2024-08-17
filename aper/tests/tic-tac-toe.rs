@@ -1,6 +1,6 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, Attach, TreeMapRef,
+    Aper, Attach, TreeMap, TreeMapRef,
 };
 use serde::{Deserialize, Serialize};
 
@@ -86,8 +86,8 @@ impl Aper for TicTacToe {
 
 #[test]
 fn test_tic_tac_toe() {
-    let map = TreeMapRef::new();
-    let mut game = TicTacToe::attach(map);
+    let map = TreeMap::default();
+    let mut game = TicTacToe::attach(TreeMapRef::new_root(&map));
 
     game.apply(&TicTacToePlay::Play(0)).unwrap(); // X
     game.apply(&TicTacToePlay::Play(1)).unwrap(); // O

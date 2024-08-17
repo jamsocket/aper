@@ -1,4 +1,4 @@
-use crate::{Attach, TreeMapRef};
+use crate::{Attach, TreeMap, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct Atom<T: Serialize + DeserializeOwned + Default> {

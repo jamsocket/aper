@@ -1,10 +1,13 @@
 use crate::{
     connection::{ClientConnection, MessageToServer},
-    treemap::TreeMapRef,
-    Mutation,
+    treemap::TreeMap,
+    Mutation, TreeMapRef,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::{HashSet, VecDeque}, fmt::Debug};
+use std::{
+    collections::{HashSet, VecDeque},
+    fmt::Debug,
+};
 
 pub trait Attach {
     fn attach(map: TreeMapRef) -> Self;
@@ -27,8 +30,7 @@ struct SpeculativeIntent<I> {
 }
 
 pub struct AperClient<A: Aper> {
-    verified: TreeMapRef,
-    speculative: TreeMapRef,
+    map: TreeMap,
     intent_stack: VecDeque<SpeculativeIntent<A::Intent>>,
 
     /// The next unused client version number for this client.
@@ -50,12 +52,12 @@ impl<A: Aper> Default for AperClient<A> {
 
 impl<A: Aper> AperClient<A> {
     pub fn new() -> Self {
-        let verified = TreeMapRef::new();
-        let speculative = verified.push_overlay();
+        let map = TreeMap::default();
+        // add an overlay for speculative (local) changes
+        map.push_overlay();
 
         Self {
-            verified,
-            speculative,
+            map,
             intent_stack: VecDeque::new(),
             next_client_version: 1,
             verified_client_version: 0,
@@ -72,7 +74,7 @@ impl<A: Aper> AperClient<A> {
     }
 
     pub fn state(&self) -> A {
-        A::attach(self.speculative.clone())
+        A::attach(TreeMapRef::new_root(&self.map))
     }
 
     pub fn verified_client_version(&self) -> u64 {
@@ -91,12 +93,16 @@ impl<A: Aper> AperClient<A> {
 
     /// Apply a mutation to the local client state.
     pub fn apply(&mut self, intent: &A::Intent) -> Result<u64, A::Error> {
-        let overlay = self.speculative.push_overlay();
+        self.map.push_overlay();
 
         {
-            let mut sm = A::attach(overlay.clone());
+            let mut sm = A::attach(TreeMapRef::new_root(&self.map));
 
-            sm.apply(intent)?
+            if let Err(e) = sm.apply(intent) {
+                // reverse changes.
+                self.map.pop_overlay();
+                return Err(e);
+            }
         }
 
         let version = self.next_client_version;
@@ -106,14 +112,7 @@ impl<A: Aper> AperClient<A> {
         });
         self.next_client_version += 1;
 
-        // get a list of affected prefixes to later alert listeners for.
-
-        let mut listeners = overlay.listeners.lock().unwrap();
-        for prefix in overlay.prefixes() {
-            listeners.alert(&prefix);
-        }
-
-        self.speculative.combine(&overlay);
+        self.map.combine_down();
 
         Ok(version)
     }
@@ -125,13 +124,11 @@ impl<A: Aper> AperClient<A> {
         client_version: Option<u64>,
         server_version: u64,
     ) {
-        self.verified.mutate(mutations);
+        // pop speculative overlay
+        self.map.pop_overlay();
         self.verified_server_version = server_version;
-        let mut prefixes_changed = HashSet::new();
 
-        for mutation in mutations {
-            prefixes_changed.insert(mutation.prefix.clone());
-        }
+        self.map.mutate(mutations);
 
         if let Some(version) = client_version {
             self.verified_client_version = version;
@@ -153,32 +150,27 @@ impl<A: Aper> AperClient<A> {
             }
         }
 
-        self.speculative = self.verified.push_overlay();
+        // push new speculative overlay
+        self.map.push_overlay();
 
         for speculative_intent in self.intent_stack.iter() {
-            let overlay = self.speculative.push_overlay();
-            let mut sm = A::attach(overlay.clone());
+            // push a working overlay
+            self.map.push_overlay();
+            let mut sm = A::attach(TreeMapRef::new_root(&self.map));
 
             if sm.apply(&speculative_intent.intent).is_err() {
+                // reverse changes.
+                self.map.pop_overlay();
                 continue;
             }
 
-            for prefix in overlay.prefixes() {
-                prefixes_changed.insert(prefix);
-            }
-
-            self.speculative.combine(&overlay);
-        }
-
-        for prefix in prefixes_changed {
-            let mut listeners = self.speculative.listeners.lock().unwrap();
-            listeners.alert(&prefix);
+            self.map.combine_down();
         }
     }
 }
 
 pub struct AperServer<A: Aper> {
-    state: TreeMapRef,
+    map: TreeMap,
     version: u64,
     _phantom: std::marker::PhantomData<A>,
 }
@@ -191,10 +183,10 @@ impl<A: Aper> Default for AperServer<A> {
 
 impl<A: Aper> AperServer<A> {
     pub fn new() -> Self {
-        let state = TreeMapRef::new();
+        let map = TreeMap::default();
 
         Self {
-            state,
+            map,
             version: 0,
             _phantom: std::marker::PhantomData,
         }
@@ -205,25 +197,30 @@ impl<A: Aper> AperServer<A> {
     }
 
     pub fn state_snapshot(&self) -> Vec<Mutation> {
-        self.state.clone().into_mutations()
+        // self.map.clone().into_mutations()
+        todo!()
     }
 
     pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
-        let overlay = self.state.push_overlay();
+        self.map.push_overlay();
 
-        let mut sm = A::attach(overlay.clone());
+        let mut sm = A::attach(TreeMapRef::new_root(&self.map));
 
-        sm.apply(intent)?;
+        if let Err(e) = sm.apply(intent) {
+            // reverse changes.
+            self.map.pop_overlay();
+            return Err(e);
+        }
 
         self.version += 1;
 
-        let mutations = overlay.into_mutations();
-        self.state.mutate(&mutations);
+        let mutations = self.map.top_layer_mutations();
+        self.map.combine_down();
 
         Ok(mutations)
     }
 
     pub fn state(&self) -> A {
-        A::attach(self.state.clone())
+        A::attach(TreeMapRef::new_root(&self.map))
     }
 }

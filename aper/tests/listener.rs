@@ -91,12 +91,14 @@ fn test_mutate_listener_simple() {
     st.fixed_array
         .listen(move || fixed_array_send.send(()).is_ok());
 
-    client.mutate(&vec![
-        Mutation {
+    client.mutate(
+        &vec![Mutation {
             prefix: vec![b"atom_i32".to_vec()],
             entries: vec![(b"".to_vec(), Some(42i32.to_le_bytes().to_vec()))],
-        }
-    ], None, 1);
+        }],
+        None,
+        1,
+    );
 
     assert_eq!(42, st.atom_i32.get());
 
@@ -161,13 +163,15 @@ fn test_mutate_listener_incidental() {
 
     // now mutate the rhs, which should cause the sum to be recomputed
 
-    client.mutate(&vec![
-        Mutation {
+    client.mutate(
+        &vec![Mutation {
             prefix: vec![b"rhs".to_vec()],
             entries: vec![(b"".to_vec(), Some(26i32.to_le_bytes().to_vec()))],
-        }
-    ], None, 1);
-    
+        }],
+        None,
+        1,
+    );
+
     // TODO: we shouldn't need to reconstruct the state, but we do because the state refers to a specific layer.
     let st = client.state();
 
