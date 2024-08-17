@@ -13,6 +13,10 @@ impl<T: Serialize + DeserializeOwned + Default> Attach for Atom<T> {
             _phantom: std::marker::PhantomData,
         }
     }
+
+    fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
+        self.map.listen(listener)
+    }
 }
 
 impl<T: Serialize + DeserializeOwned + Default> Atom<T> {

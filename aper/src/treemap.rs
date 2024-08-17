@@ -1,4 +1,4 @@
-use crate::{Bytes, Mutation};
+use crate::{listener::ListenerMap, Bytes, Mutation};
 use std::{
     cell::RefCell,
     collections::BTreeMap,
@@ -102,11 +102,12 @@ impl TreeMapLayer {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct TreeMapRef {
     map: Arc<TreeMapLayer>,
     prefix: Vec<Bytes>,
     reference: Arc<Mutex<BTreeMap<Bytes, Option<Bytes>>>>,
+    pub(crate) listeners: Arc<Mutex<ListenerMap>>,
 }
 
 impl Default for TreeMapRef {
@@ -131,7 +132,32 @@ impl TreeMapRef {
             map: Arc::new(map),
             prefix: self.prefix.clone(),
             reference,
+            listeners: self.listeners.clone(),
         }
+    }
+
+    // TODO: avoid clones.
+    pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
+        self.map
+            .maps
+            .lock()
+            .unwrap()
+            .iter()
+            .filter_map(|(k, v)| {
+                if v.lock().unwrap().is_empty() {
+                    None
+                } else {
+                    Some(k.clone())
+                }
+            })
+            .collect()
+    }
+
+    pub fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
+        self.listeners
+            .lock()
+            .unwrap()
+            .listen(self.prefix.clone(), listener);
     }
 
     pub fn mutate(&self, mutations: &Vec<Mutation>) {
@@ -174,6 +200,7 @@ impl TreeMapRef {
             map: self.map.clone(),
             prefix,
             reference: map,
+            listeners: self.listeners.clone(),
         }
     }
 
@@ -208,6 +235,7 @@ impl TreeMapRef {
             map: Arc::new(TreeMapLayer { parent: None, maps }),
             prefix: vec![],
             reference: root,
+            listeners: Arc::default(),
         }
     }
 

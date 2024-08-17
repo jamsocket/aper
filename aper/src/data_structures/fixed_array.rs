@@ -14,6 +14,10 @@ impl<const N: u32, T: Serialize + DeserializeOwned + Default> Attach for FixedAr
             _phantom: std::marker::PhantomData,
         }
     }
+
+    fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
+        self.map.listen(listener)
+    }
 }
 
 impl<const N: u32, T: Serialize + DeserializeOwned + Default> FixedArray<N, T> {

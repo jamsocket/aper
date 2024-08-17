@@ -8,6 +8,10 @@ use std::{collections::VecDeque, fmt::Debug};
 
 pub trait Attach {
     fn attach(map: TreeMapRef) -> Self;
+
+    fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
+        // Default implementation does nothing.
+    }
 }
 
 pub trait Aper: Attach {
@@ -101,6 +105,20 @@ impl<A: Aper> AperClient<A> {
             version,
         });
         self.next_client_version += 1;
+
+        // get a list of affected prefixes to later alert listeners for.
+
+        let mut listeners = overlay.listeners.lock().unwrap();
+        for prefix in overlay.prefixes() {
+            println!(
+                "prefix: {:?}",
+                prefix
+                    .iter()
+                    .map(|b| std::str::from_utf8(b).unwrap())
+                    .collect::<Vec<_>>()
+            );
+            listeners.alert(&prefix);
+        }
 
         self.speculative.combine(&overlay);
 
