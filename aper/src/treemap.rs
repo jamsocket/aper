@@ -155,7 +155,7 @@ impl TreeMap {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct TreeMapRef {
     map: TreeMap,
     prefix: Vec<Bytes>,

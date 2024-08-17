@@ -36,7 +36,7 @@ impl StateProgram for Timer {
     type T = TimerIntent;
 
     fn new() -> Self {
-        let treemap = TreeMapRef::new();
+        let treemap = TreeMapRef::default();
         Timer::attach(treemap)
     }
 
