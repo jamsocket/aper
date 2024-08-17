@@ -123,7 +123,7 @@ impl<A: Aper> AperClient<A> {
     /// Mutate the local client state according to server-verified mutations.
     pub fn mutate(
         &mut self,
-        mutations: &Vec<Mutation>,
+        mutations: &[Mutation],
         client_version: Option<u64>,
         server_version: u64,
     ) {

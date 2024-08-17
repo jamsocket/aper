@@ -115,14 +115,14 @@ impl TreeMap {
             let mut next_map = next_layer
                 .layer
                 .entry(prefix.clone())
-                .or_insert_with(|| BTreeMap::new());
+                .or_insert_with(BTreeMap::new);
 
             for (key, value) in map.iter() {
                 next_map.insert(key.clone(), value.clone());
             }
         }
 
-        next_layer.dirty.extend(top_layer.dirty.into_iter());
+        next_layer.dirty.extend(top_layer.dirty);
     }
 
     pub fn get(&self, prefix: &Vec<Bytes>, key: &Bytes) -> Option<Bytes> {
@@ -139,15 +139,12 @@ impl TreeMap {
         None
     }
 
-    pub fn mutate(&self, mutations: &Vec<Mutation>) {
+    pub fn mutate(&self, mutations: &[Mutation]) {
         let mut inner = self.inner.lock().unwrap();
         let top_layer = inner.layers.last_mut().unwrap();
 
         for mutation in mutations.iter() {
-            let mut map = top_layer
-                .layer
-                .entry(mutation.prefix.clone())
-                .or_insert_with(|| BTreeMap::new());
+            let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
 
             for (key, value) in mutation.entries.iter() {
                 map.insert(key.clone(), value.clone());
@@ -186,10 +183,7 @@ impl TreeMapRef {
         let mut inner = self.map.inner.lock().unwrap();
         let mut top_layer = inner.layers.last_mut().unwrap();
 
-        let mut map = top_layer
-            .layer
-            .entry(self.prefix.clone())
-            .or_insert_with(|| BTreeMap::new());
+        let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
         top_layer.dirty.insert(self.prefix.clone());
 
@@ -202,10 +196,7 @@ impl TreeMapRef {
         let mut inner = self.map.inner.lock().unwrap();
         let mut top_layer = inner.layers.last_mut().unwrap();
 
-        let mut map = top_layer
-            .layer
-            .entry(self.prefix.clone())
-            .or_insert_with(|| BTreeMap::new());
+        let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
         top_layer.dirty.insert(self.prefix.clone());
 
