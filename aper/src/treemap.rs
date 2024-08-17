@@ -48,6 +48,10 @@ impl TreeMap {
     pub fn pop_overlay(&self) {
         let mut inner = self.inner.lock().unwrap();
         inner.layers.pop();
+
+        if inner.layers.is_empty() {
+            tracing::error!("popped last overlay");
+        }
     }
 
     pub fn notify_dirty(&self) {

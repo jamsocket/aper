@@ -100,7 +100,9 @@ impl<A: Aper> AperClient<A> {
 
             if let Err(e) = sm.apply(intent) {
                 // reverse changes.
+                tracing::info!("here3");
                 self.map.pop_overlay();
+                tracing::info!("here4");
                 return Err(e);
             }
         }
@@ -126,10 +128,15 @@ impl<A: Aper> AperClient<A> {
         server_version: u64,
     ) {
         // pop speculative overlay
+        // TODO: we need to capture notifications from the speculative overlay being popped, since it could
+        // undo changes that are not re-done.
         self.map.pop_overlay();
         self.verified_server_version = server_version;
 
         self.map.mutate(mutations);
+
+        // push new speculative overlay
+        self.map.push_overlay();
 
         if let Some(version) = client_version {
             self.verified_client_version = version;
@@ -150,9 +157,6 @@ impl<A: Aper> AperClient<A> {
                 self.intent_stack.pop_front();
             }
         }
-
-        // push new speculative overlay
-        self.map.push_overlay();
 
         for speculative_intent in self.intent_stack.iter() {
             // push a working overlay
@@ -200,8 +204,8 @@ impl<A: Aper> AperServer<A> {
     }
 
     pub fn state_snapshot(&self) -> Vec<Mutation> {
-        // self.map.clone().into_mutations()
-        todo!()
+        // this works because the server only has one layer
+        self.map.top_layer_mutations()
     }
 
     pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
