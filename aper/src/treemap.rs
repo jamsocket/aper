@@ -6,19 +6,15 @@ use std::{
 };
 
 #[derive(Default)]
-pub struct TreeMapLayer(BTreeMap<Vec<Bytes>, Arc<Mutex<BTreeMap<Bytes, Option<Bytes>>>>>);
+pub struct TreeMapLayer {
+    layer: BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Option<Bytes>>>,
+}
 
 impl TreeMapLayer {
     pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
-        self.0
+        self.layer
             .iter()
-            .filter_map(|(k, v)| {
-                if v.lock().unwrap().is_empty() {
-                    None
-                } else {
-                    Some(k.clone())
-                }
-            })
+            .filter_map(|(k, v)| if v.is_empty() { None } else { Some(k.clone()) })
             .collect()
     }
 }
@@ -59,10 +55,10 @@ impl TreeMap {
 
         let mut mutations = vec![];
 
-        for (prefix, map) in top_layer.0.iter() {
+        for (prefix, map) in top_layer.layer.iter() {
             let mut entries = vec![];
 
-            for (key, value) in map.lock().unwrap().iter() {
+            for (key, value) in map.iter() {
                 entries.push((key.clone(), value.clone()));
             }
 
@@ -96,15 +92,13 @@ impl TreeMap {
             return;
         };
 
-        for (prefix, map) in top_layer.0.iter() {
+        for (prefix, map) in top_layer.layer.iter() {
             let mut next_map = next_layer
-                .0
+                .layer
                 .entry(prefix.clone())
-                .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
-                .lock()
-                .unwrap();
+                .or_insert_with(|| BTreeMap::new());
 
-            for (key, value) in map.lock().unwrap().iter() {
+            for (key, value) in map.iter() {
                 next_map.insert(key.clone(), value.clone());
             }
         }
@@ -114,8 +108,8 @@ impl TreeMap {
         let inner = self.inner.lock().unwrap();
 
         for layer in inner.layers.iter().rev() {
-            if let Some(map) = layer.0.get(prefix) {
-                if let Some(value) = map.lock().unwrap().get(key) {
+            if let Some(map) = layer.layer.get(prefix) {
+                if let Some(value) = map.get(key) {
                     return value.clone();
                 }
             }
@@ -130,11 +124,9 @@ impl TreeMap {
 
         for mutation in mutations.iter() {
             let mut map = top_layer
-                .0
+                .layer
                 .entry(mutation.prefix.clone())
-                .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
-                .lock()
-                .unwrap();
+                .or_insert_with(|| BTreeMap::new());
 
             for (key, value) in mutation.entries.iter() {
                 map.insert(key.clone(), value.clone());
@@ -172,11 +164,9 @@ impl TreeMapRef {
         let mut top_layer = inner.layers.last_mut().unwrap();
 
         let mut map = top_layer
-            .0
+            .layer
             .entry(self.prefix.clone())
-            .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
-            .lock()
-            .unwrap();
+            .or_insert_with(|| BTreeMap::new());
 
         map.insert(key, Some(value));
     }
@@ -188,11 +178,9 @@ impl TreeMapRef {
         let mut top_layer = inner.layers.last_mut().unwrap();
 
         let mut map = top_layer
-            .0
+            .layer
             .entry(self.prefix.clone())
-            .or_insert_with(|| Arc::new(Mutex::new(BTreeMap::new())))
-            .lock()
-            .unwrap();
+            .or_insert_with(|| BTreeMap::new());
 
         map.insert(key, None);
     }
