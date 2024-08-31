@@ -1,40 +1,100 @@
 # Introduction
 
-**Aper** is a Rust library for representing data that can be read and written to by multiple users in real time.
+**Aper** is a Rust data structure library. Essentially, it lets you create a `struct` that can be synchronized across multiple instances of your program running across a network.
 
-Use-cases of Aper include managing the state of an application with real-time collaboration features, creating
-an timestamped audit trail of an arbitrary data structure, and synchronizing the game state of a multiplayer
-game.
+Use-cases of Aper include:
+- managing the state of an application with real-time collaboration features
+- creating an timestamped audit trail of an arbitrary data structure
+- synchronizing the game state of a multiplayer game.
 
 The core `aper` library implements the underlying data structures and algorithms, but is agnostic to the
-actual mechanism for transfering data on a network. The crates `aper-yew` and `aper-serve` provide a client
+actual mechanism for transfering data on a network. The crates `aper-websocket-client` and `aper-serve` provide a client
 and server implementation aimed at synchronizing state across multiple `WebAssembly` clients using `WebSockets`.
 
-## How it works
+## `AperSync`
 
-For Aper to synchronize state, it must be represented as a **state 
-machine**. This means that:
-1. It implements the `StateMachine` trait, which has two type arguments (`Transition` and `Conflict`) and one method: `apply(&self, t: &Transition)`.
-2. **All** changes to its internal state flow through this `apply` method.
-3. Updates to state are entirely deterministic. They may depend on the current state and any data
-   that is contained in the transition value, and nothing else.
-4. If a conflict arises (i.e. if `apply` returns anything other than `Ok(())`), the state machine is not
-   mutated.
+Aper defines two core traits: `AperSync`, which we'll talk about here, and `Aper`, which we'll talk about soon.
 
-#1 is enforced by Rust's type system, but it's your responsibility to satisfy the other three. In particular,
-accessing the current time, non-determistic random number generators, or external data in `apply` is
-a violation of #3.
+`AperSync` means that the struct can be synchronized *unidirectionally*. An `AperSync` struct does not own its own data; instead, its fields are references into a `TreeMap`. `TreeMap` is a hierarchical map data structure provided by Aper that can be synchronized across a network.
 
-### Keeping State in Sync
+Typically, you will not implement `AperSync` directly, but instead derive it. For example, here's a simple `AperSync` struct that could represent an item in a to-do list:
 
-In principle, the way that Aper keeps state in sync is pretty simple: when a client connects, they receive a
-full copy of the latest copy of the state. Thereafter, they receive a real-time stream of `Transition`s. Every
-client receives the same transitions in the same order, so their states are updated in lockstep. **This is why
-it's important that `apply` is deterministic.** If it were not, states could become divergent even if they
-received the same transition stream.
+```rust
+use aper::{AperSync, data_structures::Atom};
 
-Note that for this model to work, the client can't throw away previous states immediately when a local transition
-happens, because the server might accept a transition from another peer before accepting the one created locally.
-We need the old state in order to replay the transitions in the right order. In order to do this, the client
-keeps the entire chain of transitions from the last transition confirm by the server up to the most recent local
-transition.
+#[derive(AperSync)]
+struct ToDoItem {
+   done: Atom<bool>,
+   name: Atom<String>,
+}
+```
+
+In order to derive `AperSync`, **every field must implement AperSync**. Typically, this means that fields will either be data structures imported from the `aper::data_structures::*` module, or `structs` that you have derived `AperSync` on.
+
+`Atom` is the most basic `AperSync` type; it represents an atomic value with the provided type. Any serde-serializable type can be used, but keep in mind that these values are opaque to the synchronization system and any modifications mean replacing them entirely.
+
+Generally, for compound data structures, you should use more appropriate types. Here's an example of using `AtomMap`:
+
+```rust
+use aper::{AperSync, data_structures::AtomMap};
+
+#[derive(AperSync)]
+struct PhoneBook {
+   name_to_number: AtomMap<String, String>,
+}
+```
+
+The `Atom` in `AtomMap` refers to the fact that the **values** of the map act like `Atom`s: they do not need to implement `AperSync`, but must be (de)serializable.
+
+Aper also provides a type of map where values are `AperSync`. This allows more fine-grained updates to the data structure. For example, you might want to create a todo list by mapping a unique ID to a `ToDoItem`:
+
+```rust
+use aper::{AperSync, data_structures::{Atom, Map}};
+
+#[derive(AperSync)]
+struct ToDoItem {
+   pub done: Atom<bool>,
+   pub name: Atom<String>,
+}
+
+#[derive(AperSync)]
+struct ToDoList {
+   pub items: Map<String, ToDoItem>,
+}
+```
+
+## Using `AperSync` types
+
+`AperSync` structs are constructed by “attaching” them to a `TreeMap`. Every `AperSync` type implicitly has a default
+value, which is what you get when you attach it to an empty `TreeMap`.
+
+When modifying collections of `AperSync` like `Map`, you don't insert new values directly. Instead, you call a method like
+`get_or_create` that creates the value as its default, and then call mutators on the value that is returned, like so:
+
+```rust
+# use aper::{data_structures::{Atom, Map}};
+use aper::{AperSync, TreeMapRef};
+
+# #[derive(AperSync)]
+# struct ToDoItem {
+#    pub done: Atom<bool>,
+#    pub name: Atom<String>,
+# }
+# 
+# #[derive(AperSync)]
+# struct ToDoList {
+#    pub items: Map<String, ToDoItem>,
+# }
+
+fn main() {
+   let treemap = TreeMapRef::default();
+   let todos = ToDoList::attach(treemap);
+
+   let mut todo1 = todos.items.get_or_create(&"todo1".to_string());
+   todo1.name.set("Do laundry".to_string());
+
+   let mut todo2 = todos.items.get_or_create(&"todo2".to_string());
+   todo2.name.set("Wash dishes".to_string());
+   todo2.done.set(true);
+}
+```

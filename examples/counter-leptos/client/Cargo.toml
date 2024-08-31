@@ -1,0 +1,17 @@
+[package]
+name = "counter-client"
+version = "0.1.0"
+authors = ["Paul Butler <paulgb@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aper = {path = "../../../aper"}
+console_error_panic_hook = "0.1.6"
+serde = { version = "1.0.124", features = ["derive"] }
+wasm-bindgen = "0.2.83"
+web-sys = "0.3.48"
+counter-common = {path="../common"}
+leptos = { version = "0.6.14", features = ["csr"] }

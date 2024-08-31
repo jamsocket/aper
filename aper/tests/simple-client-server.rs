@@ -1,9 +1,9 @@
-use aper::{data_structures::atom::Atom, Aper, AperClient, AperServer, Attach, TreeMapRef};
+use aper::{data_structures::atom::Atom, Aper, AperClient, AperServer, AperSync, TreeMapRef};
 use serde::{Deserialize, Serialize};
 
 struct Counter(Atom<u64>);
 
-impl Attach for Counter {
+impl AperSync for Counter {
     fn attach(map: TreeMapRef) -> Self {
         Self(Atom::attach(map))
     }

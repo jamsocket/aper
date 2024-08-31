@@ -1,4 +1,4 @@
-use crate::{Attach, TreeMap, TreeMapRef};
+use crate::{AperSync, TreeMap, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct Atom<T: Serialize + DeserializeOwned + Default> {
@@ -6,7 +6,7 @@ pub struct Atom<T: Serialize + DeserializeOwned + Default> {
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T: Serialize + DeserializeOwned + Default> Attach for Atom<T> {
+impl<T: Serialize + DeserializeOwned + Default> AperSync for Atom<T> {
     fn attach(map: TreeMapRef) -> Self {
         Self {
             map,

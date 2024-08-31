@@ -1,5 +1,5 @@
 use crate::IntentEvent;
-use aper::{Aper, Attach, TreeMap, TreeMapRef};
+use aper::{Aper, AperSync, TreeMap, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
@@ -44,7 +44,7 @@ where
     SM: Aper + Send + Sync + 'static,
     <SM as Aper>::Intent: Send;
 
-impl<SM> Attach for StateMachineContainerProgram<SM>
+impl<SM> AperSync for StateMachineContainerProgram<SM>
 where
     SM: Aper + Send + Sync + 'static,
     SM::Intent: Send,

@@ -9,7 +9,7 @@ use std::{
     fmt::Debug,
 };
 
-pub trait Attach {
+pub trait AperSync {
     fn attach(map: TreeMapRef) -> Self;
 
     fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
@@ -17,7 +17,7 @@ pub trait Attach {
     }
 }
 
-pub trait Aper: Attach {
+pub trait Aper: AperSync {
     type Intent: Clone + Serialize + for<'de> Deserialize<'de> + PartialEq;
     type Error: Debug;
 

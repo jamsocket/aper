@@ -1,12 +1,12 @@
-use crate::{Attach, TreeMapRef};
+use crate::{AperSync, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
-pub struct Map<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> {
+pub struct Map<K: Serialize + DeserializeOwned, V: AperSync> {
     map: TreeMapRef,
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
-impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> Attach for Map<K, V> {
+impl<K: Serialize + DeserializeOwned, V: AperSync> AperSync for Map<K, V> {
     fn attach(map: TreeMapRef) -> Self {
         Self {
             map,
@@ -19,21 +19,14 @@ impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> Attach fo
     }
 }
 
-impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> Map<K, V> {
+impl<K: Serialize + DeserializeOwned, V: AperSync> Map<K, V> {
     pub fn get(&self, key: &K) -> Option<V> {
-        self.map
-            .get(&bincode::serialize(key).unwrap())
-            .map(|bytes| bincode::deserialize(&bytes).unwrap())
+        let key = bincode::serialize(key).unwrap();
+        Some(V::attach(self.map.child(&key)))
     }
 
-    pub fn set(&mut self, key: &K, value: &V) {
-        self.map.set(
-            bincode::serialize(key).unwrap(),
-            bincode::serialize(value).unwrap(),
-        );
-    }
-
-    pub fn delete(&mut self, key: &K) {
-        self.map.delete(bincode::serialize(key).unwrap());
+    pub fn get_or_create(&self, key: &K) -> V {
+        let key = bincode::serialize(key).unwrap();
+        V::attach(self.map.child(&key))
     }
 }

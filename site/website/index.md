@@ -27,25 +27,25 @@ docs</a>
 </div>
 
 ```rust
-use aper::{StateMachine, data_structures::{List, AtomRc}};
-// `List` represents an ordered list.
-// `Atom` wraps a value to make it immutable
-// except by replacement.
+// use aper::{StateMachine, data_structures::{List, AtomRc}};
+// // `List` represents an ordered list.
+// // `Atom` wraps a value to make it immutable
+// // except by replacement.
 
-fn main() {
-    let mut my_list: List<AtomRc<String>> = List::new();
+// fn main() {
+//     let mut my_list: List<AtomRc<String>> = List::new();
     
-    let (_id, transition) = my_list.append(AtomRc::new(
-        "Hello Aper".to_string()));
+//     let (_id, transition) = my_list.append(AtomRc::new(
+//         "Hello Aper".to_string()));
 
-    // `transition` represents the action of adding
-    // "Hello Aper" to the list, but doesn’t actually
-    // modify the data.
+//     // `transition` represents the action of adding
+//     // "Hello Aper" to the list, but doesn’t actually
+//     // modify the data.
 
-    my_list = my_list.apply(&transition).unwrap();
+//     my_list = my_list.apply(&transition).unwrap();
 
-    // Now the transition is applied.
-}
+//     // Now the transition is applied.
+// }
 ```
 
 <br clear="both" />
@@ -56,32 +56,32 @@ fn main() {
 </div>
 
 ```rust
-use aper::{StateMachine, data_structures::{List, Atom}};
+// use aper::{StateMachine, data_structures::{List, Atom}};
 
-fn main() {
-    let mut my_list: List<Atom<u32>> = List::new();
+// fn main() {
+//     let mut my_list: List<Atom<u32>> = List::new();
     
-    let (id1, transition1) = my_list.append(Atom::new(1));
-    let (id2, transition2) = my_list.append(Atom::new(2));
+//     let (id1, transition1) = my_list.append(Atom::new(1));
+//     let (id2, transition2) = my_list.append(Atom::new(2));
 
-    my_list = my_list.apply(&transition2).unwrap();
-    // my_list = [2]
+//     my_list = my_list.apply(&transition2).unwrap();
+//     // my_list = [2]
     
-    my_list = my_list.apply(&transition1).unwrap();
-    // my_list = [2, 1]
+//     my_list = my_list.apply(&transition1).unwrap();
+//     // my_list = [2, 1]
 
-    let (_id3, transition3) = my_list
-        .insert_between(&id2, &id1, Atom::new(3));
+//     let (_id3, transition3) = my_list
+//         .insert_between(&id2, &id1, Atom::new(3));
 
-    let (_id4, transition4) = my_list
-        .insert_between(&id2, &id1, Atom::new(4));
+//     let (_id4, transition4) = my_list
+//         .insert_between(&id2, &id1, Atom::new(4));
 
-    my_list = my_list.apply(&transition4).unwrap();
-    // my_list = [2, 4, 1]
+//     my_list = my_list.apply(&transition4).unwrap();
+//     // my_list = [2, 4, 1]
     
-    my_list = my_list.apply(&transition3).unwrap();
-    // my_list = [2, 4, 3, 1]
-}
+//     my_list = my_list.apply(&transition3).unwrap();
+//     // my_list = [2, 4, 3, 1]
+// }
 ```
 
 <br clear="both" />
@@ -92,39 +92,39 @@ fn main() {
 </div>
 
 ```rust
-use aper::{StateMachine, NeverConflict};
-use serde::{Serialize, Deserialize};
+// use aper::{StateMachine, NeverConflict};
+// use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct Counter {value: i64}
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// struct Counter {value: i64}
 
-#[derive(Serialize, Deserialize,
-    Debug, Clone, PartialEq)]
-enum CounterTransition {
-   Add(i64),
-   Subtract(i64),
-   Reset,
-}
+// #[derive(Serialize, Deserialize,
+//     Debug, Clone, PartialEq)]
+// enum CounterTransition {
+//    Add(i64),
+//    Subtract(i64),
+//    Reset,
+// }
 
-impl StateMachine for Counter {
-    type Transition = CounterTransition;
-    type Conflict = NeverConflict;
+// impl StateMachine for Counter {
+//     type Transition = CounterTransition;
+//     type Conflict = NeverConflict;
 
-    fn apply(&self, event: &CounterTransition)
-            -> Result<Counter, NeverConflict> {
-        match event {
-            CounterTransition::Add(i) => {
-                Ok(Counter {value: self.value + i})
-            }
-            CounterTransition::Subtract(i) => {
-                Ok(Counter {value: self.value - i})
-            }
-            CounterTransition::Reset => {
-                Ok(Counter {value: 0})
-            }
-        }
-    }
-}
+//     fn apply(&self, event: &CounterTransition)
+//             -> Result<Counter, NeverConflict> {
+//         match event {
+//             CounterTransition::Add(i) => {
+//                 Ok(Counter {value: self.value + i})
+//             }
+//             CounterTransition::Subtract(i) => {
+//                 Ok(Counter {value: self.value - i})
+//             }
+//             CounterTransition::Reset => {
+//                 Ok(Counter {value: 0})
+//             }
+//         }
+//     }
+// }
 ```
 
 <br style="clear: both;" />

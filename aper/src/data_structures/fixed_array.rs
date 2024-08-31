@@ -1,4 +1,4 @@
-use crate::{Attach, TreeMapRef};
+use crate::{AperSync, TreeMapRef};
 use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Clone)]
@@ -7,7 +7,7 @@ pub struct FixedArray<const N: u32, T: Serialize + DeserializeOwned + Default> {
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<const N: u32, T: Serialize + DeserializeOwned + Default> Attach for FixedArray<N, T> {
+impl<const N: u32, T: Serialize + DeserializeOwned + Default> AperSync for FixedArray<N, T> {
     fn attach(map: TreeMapRef) -> Self {
         Self {
             map,

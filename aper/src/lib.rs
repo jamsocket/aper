@@ -7,7 +7,7 @@ mod listener;
 mod treemap;
 
 pub use aper::*;
-pub use aper_derive::Attach;
+pub use aper_derive::AperSync;
 use serde::{Deserialize, Serialize};
 pub use treemap::*;
 

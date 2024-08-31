@@ -1,9 +1,9 @@
-use aper::{data_structures::map::Map, Attach, TreeMap, TreeMapRef};
+use aper::{data_structures::atom_map::AtomMap, AperSync, TreeMap, TreeMapRef};
 
 #[test]
 fn test_backtrack() {
     let treemap = TreeMap::default();
-    let mut map = Map::<u8, u8>::attach(TreeMapRef::new_root(&treemap));
+    let mut map = AtomMap::<u8, u8>::attach(TreeMapRef::new_root(&treemap));
 
     {
         map.set(&1, &2);

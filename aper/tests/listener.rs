@@ -1,11 +1,11 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperClient, Attach, Mutation,
+    Aper, AperClient, AperSync, Mutation,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::channel;
 
-#[derive(Attach)]
+#[derive(AperSync)]
 struct SimpleStruct {
     atom_i32: Atom<i32>,
     atom_string: Atom<String>,
@@ -107,7 +107,7 @@ fn test_mutate_listener_simple() {
     assert!(fixed_array_recv.try_recv().is_err());
 }
 
-#[derive(Attach)]
+#[derive(AperSync)]
 struct LinkedFields {
     lhs: Atom<i32>,
     rhs: Atom<i32>,

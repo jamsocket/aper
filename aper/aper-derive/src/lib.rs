@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeSet;
 
-#[proc_macro_derive(Attach)]
+#[proc_macro_derive(AperSync)]
 pub fn attach_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let state = MacroState::from_tokens(input.into());
     let result = state.generate_impl();
@@ -55,7 +55,7 @@ impl MacroState {
                     let field = syn::Ident::new(field, proc_macro2::Span::call_site());
                     let name = Literal::byte_string(field.to_string().as_bytes());
                     quote! {
-                        #field: aper::Attach::attach(treemap.child(#name))
+                        #field: aper::AperSync::attach(treemap.child(#name))
                     }
                 });
                 quote! {
@@ -68,7 +68,7 @@ impl MacroState {
                 let fields = (0..*fields).map(|i| {
                     let i = Literal::byte_string(i.to_be_bytes().as_slice());
                     quote! {
-                        aper::Attach::attach(treemap.child(#i))
+                        aper::AperSync::attach(treemap.child(#i))
                     }
                 });
                 quote! {
@@ -81,7 +81,7 @@ impl MacroState {
         };
 
         quote! {
-            impl aper::Attach for #name {
+            impl aper::AperSync for #name {
                 fn attach(treemap: aper::TreeMapRef) -> Self {
                     #fields
                 }
@@ -104,7 +104,7 @@ mod tests {
         let result = state.generate_impl();
 
         let expected = quote! {
-            impl aper::Attach for MyStruct {
+            impl aper::AperSync for MyStruct {
                 fn attach(treemap: aper::TreeMapRef) -> Self {
                     MyStruct
                 }
@@ -127,11 +127,11 @@ mod tests {
         let result = state.generate_impl();
 
         let expected = quote! {
-            impl aper::Attach for MyStruct {
+            impl aper::AperSync for MyStruct {
                 fn attach(treemap: aper::TreeMapRef) -> Self {
                     MyStruct {
-                        field1: aper::Attach::attach(treemap.child(b"field1")),
-                        field2: aper::Attach::attach(treemap.child(b"field2"))
+                        field1: aper::AperSync::attach(treemap.child(b"field1")),
+                        field2: aper::AperSync::attach(treemap.child(b"field2"))
                     }
                 }
             }
@@ -150,11 +150,11 @@ mod tests {
         let result = state.generate_impl();
 
         let expected = quote! {
-            impl aper::Attach for MyStruct {
+            impl aper::AperSync for MyStruct {
                 fn attach(treemap: aper::TreeMapRef) -> Self {
                     MyStruct(
-                        aper::Attach::attach(treemap.child(b"\0\0\0\0\0\0\0\0")),
-                        aper::Attach::attach(treemap.child(b"\0\0\0\0\0\0\0\x01"))
+                        aper::AperSync::attach(treemap.child(b"\0\0\0\0\0\0\0\0")),
+                        aper::AperSync::attach(treemap.child(b"\0\0\0\0\0\0\0\x01"))
                     )
                 }
             }

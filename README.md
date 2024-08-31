@@ -30,10 +30,10 @@ implements `StateMachine` and has the following properties:
 Here's an example `StateMachine` implementing a counter:
 
 ```rust
-use aper::{StateMachine, NeverConflict};
+use aper::{Aper, AperSync};
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, AperSync)]
 struct Counter { value: i64 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -43,7 +43,7 @@ enum CounterTransition {
     Decrement(i64),
 }
 
-impl StateMachine for Counter {
+impl Aper for Counter {
     type Transition = CounterTransition;
     type Conflict = NeverConflict;
 

@@ -1,10 +1,10 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, Attach, TreeMap, TreeMapRef,
+    Aper, AperSync, TreeMap, TreeMapRef,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Attach)]
+#[derive(AperSync)]
 struct TicTacToe {
     grid: FixedArray<9, Option<TicTacToePlayer>>,
     player: Atom<TicTacToePlayer>,
