@@ -44,7 +44,7 @@ impl BoardComponent {
             PlayerColor::Teal => TEAL,
         };
 
-        return html! {
+        html! {
             <g>
                 <circle
                     r={(CELL_INNER_SIZE/2).to_string()}
@@ -55,12 +55,12 @@ impl BoardComponent {
                     opacity="0.2"
                     mask="url(#hole_shadow)" />
             </g>
-        };
+        }
     }
 
     fn view_holes(&self) -> impl Iterator<Item = Html> {
-        (0..BOARD_COLS as u32).flat_map(|c| {
-            (0..BOARD_ROWS as u32).map(move |r| {
+        (0..BOARD_COLS).flat_map(|c| {
+            (0..BOARD_ROWS).map(move |r| {
                 html! {<circle
                     r={(CELL_HOLE_SIZE/2).to_string()}
                     fill="black"
@@ -74,12 +74,12 @@ impl BoardComponent {
     fn view_hover_zones(&self, context: &yew::Context<Self>) -> Html {
         let set_hover_col = context.link().callback(SetHoverCol);
         let drop_tile = context.props().callback.reform(GameTransition::Drop);
-        let zones = (0..BOARD_COLS as u32).map(move |c| {
+        let zones = (0..BOARD_COLS).map(move |c| {
             html! {
                 <rect
                     x={(CELL_SIZE * c).to_string()}
                     width={CELL_SIZE.to_string()}
-                    height={(CELL_SIZE * BOARD_ROWS as u32).to_string()}
+                    height={(CELL_SIZE * BOARD_ROWS).to_string()}
                     opacity="0"
                     onmouseover={set_hover_col.reform(move |_| Some(c))}
                     onclick={drop_tile.reform(move |_| c as usize)}
@@ -118,7 +118,7 @@ impl BoardComponent {
         let col_groups = (0..BOARD_COLS).map(|col| {
             let discs = (0..BOARD_ROWS).rev().flat_map(|row| {
                 board.get(row, col).map(|p| {
-                    let ty = CELL_SIZE * row as u32 + CELL_SIZE / 2;
+                    let ty = CELL_SIZE * row + CELL_SIZE / 2;
                     let style = format!("transform: translate(0, {}px)", ty);
 
                     html! {
@@ -129,7 +129,7 @@ impl BoardComponent {
                 })
             });
 
-            let tx = CELL_SIZE * col as u32 + CELL_SIZE / 2;
+            let tx = CELL_SIZE * col + CELL_SIZE / 2;
             let transform = format!("translate({} 0)", tx);
 
             html! {
@@ -152,13 +152,13 @@ impl Component for BoardComponent {
     type Message = SetHoverCol;
 
     fn view(&self, context: &yew::Context<Self>) -> Html {
-        let height = BOARD_ROWS as u32 * CELL_SIZE;
-        let width = BOARD_COLS as u32 * CELL_SIZE;
+        let height = BOARD_ROWS * CELL_SIZE;
+        let width = BOARD_COLS * CELL_SIZE;
 
         let svg_width = width + 2 * PADDING_SIDE;
         let svg_height = height + PADDING_TOP + PADDING_BOTTOM;
 
-        return html! {
+        html! {
             <svg width={svg_width.to_string()} height={svg_height.to_string()}>
                 <mask id="board">
                     <rect width={width.to_string()} height={height.to_string()} fill="white" />
@@ -183,7 +183,7 @@ impl Component for BoardComponent {
                     { self.view_hover_zones(context) }
                 </g>
             </svg>
-        };
+        }
     }
 
     fn update(&mut self, _context: &yew::Context<Self>, msg: SetHoverCol) -> bool {

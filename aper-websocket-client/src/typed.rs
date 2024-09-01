@@ -36,7 +36,7 @@ where
     }
 
     pub fn send(&self, message: &Outbound) {
-        let message = Message::Text(serde_json::to_string(message).unwrap());
+        let message = Message::Bytes(bincode::serialize(message).unwrap());
         self.conn.send(&message);
     }
 }

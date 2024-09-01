@@ -1,9 +1,9 @@
-use aper::{data_structures::atom::Atom, Aper, Attach, StoreHandle};
+use aper::{data_structures::atom::Atom, Aper, AperSync, Store};
 use aper_stateroom::{IntentEvent, StateProgram};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Attach)]
+#[derive(AperSync)]
 pub struct Timer {
     pub value: Atom<i64>,
     pub last_increment: Atom<DateTime<Utc>>,
@@ -36,8 +36,8 @@ impl StateProgram for Timer {
     type T = TimerIntent;
 
     fn new() -> Self {
-        let store = StoreHandle::default();
-        Timer::attach(store)
+        let store = Store::default();
+        Timer::attach(store.handle())
     }
 
     fn suspended_event(&self) -> Option<IntentEvent<Self::T>> {

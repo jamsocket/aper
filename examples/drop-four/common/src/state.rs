@@ -1,6 +1,6 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, Attach, StoreHandle,
+    Aper, AperSync, Store,
 };
 use aper_stateroom::{IntentEvent, StateProgram};
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ pub const BOARD_ROWS: u32 = 6;
 pub const BOARD_COLS: u32 = 7;
 pub const BOARD_SIZE: u32 = BOARD_ROWS * BOARD_COLS;
 
-#[derive(Attach, Clone)]
+#[derive(AperSync, Clone)]
 pub struct Board {
     grid: FixedArray<BOARD_SIZE, Option<PlayerColor>>,
 }
@@ -34,13 +34,7 @@ impl Board {
     }
 
     fn lowest_open_row(&self, col: u32) -> Option<u32> {
-        for r in (0..BOARD_ROWS).rev() {
-            if self.get(r, col).is_none() {
-                return Some(r);
-            }
-        }
-
-        None
+        (0..BOARD_ROWS).rev().find(|&r| self.get(r, col).is_none())
     }
 
     fn count_same_from(&self, row: i32, col: i32, row_d: i32, col_d: i32) -> usize {
@@ -72,9 +66,7 @@ impl Board {
     }
 
     fn check_winner_at(&self, row: i32, col: i32) -> Option<PlayerColor> {
-        let Some(player) = self.get(row as u32, col as u32) else {
-            return None;
-        };
+        let player = self.get(row as u32, col as u32)?;
 
         if self.count_same_bidirectional(row, col, 1, 0) >= NEEDED_IN_A_ROW
             || self.count_same_bidirectional(row, col, 0, 1) >= NEEDED_IN_A_ROW
@@ -88,16 +80,11 @@ impl Board {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Default)]
 pub enum PlayerColor {
     Brown,
+    #[default]
     Teal,
-}
-
-impl Default for PlayerColor {
-    fn default() -> PlayerColor {
-        PlayerColor::Teal
-    }
 }
 
 impl PlayerColor {
@@ -116,7 +103,7 @@ impl PlayerColor {
     }
 }
 
-#[derive(Attach)]
+#[derive(AperSync)]
 pub struct PlayerMap {
     pub teal_player: Atom<Option<u32>>,
     pub brown_player: Atom<Option<u32>>,
@@ -141,16 +128,11 @@ impl PlayerMap {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Default)]
 pub enum PlayState {
+    #[default]
     Waiting,
     Playing,
-}
-
-impl Default for PlayState {
-    fn default() -> PlayState {
-        PlayState::Waiting
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
@@ -160,7 +142,7 @@ pub enum GameTransition {
     Reset,
 }
 
-#[derive(Attach)]
+#[derive(AperSync)]
 pub struct DropFourGame {
     play_state: Atom<PlayState>,
     pub next_player: Atom<PlayerColor>,
@@ -202,7 +184,7 @@ impl Aper for DropFourGame {
 
                     if let Some(insert_row) = self.board.lowest_open_row(c as u32) {
                         self.board
-                            .set(insert_row as u32, c as u32, Some(self.next_player.get()));
+                            .set(insert_row, c as u32, Some(self.next_player.get()));
 
                         let winner = self.board.check_winner_at(insert_row as i32, c as i32);
 
@@ -226,8 +208,8 @@ impl StateProgram for DropFourGame {
     type T = GameTransition;
 
     fn new() -> Self {
-        let storeref = StoreHandle::default();
-        Self::attach(storeref)
+        let storeref = Store::default();
+        Self::attach(storeref.handle())
     }
 }
 

@@ -22,9 +22,9 @@ impl GameView {
         callback: &Callback<GameTransition>,
     ) -> Html {
         if Some(client_id) == waiting_player {
-            return html! {
+            html! {
                 <p>{"Waiting for another player."}</p>
-            };
+            }
         } else {
             let message = if waiting_player.is_some() {
                 "One player is waiting to play."
@@ -32,12 +32,12 @@ impl GameView {
                 "Nobody is waiting to play."
             };
 
-            return html! {
+            html! {
                 <div>
                     <button onclick={callback.reform(|_| GameTransition::Join)}>{"Join"}</button>
                     <p>{message}</p>
                 </div>
-            };
+            }
         }
     }
 
@@ -64,7 +64,7 @@ impl GameView {
             format!("You're observing. {} is next.", next_player.name())
         };
 
-        return html! {
+        html! {
             <div>
                 <p>{status_message}</p>
                 <BoardComponent
@@ -84,7 +84,7 @@ impl GameView {
                     }
                 }
             </div>
-        };
+        }
     }
 
     fn view_inner(
@@ -95,7 +95,13 @@ impl GameView {
         match state.state() {
             PlayState::Playing => {
                 let own_color = state.player_map.color_of_player(client_id);
-                Self::view_playing(&state.board, state.next_player.get(), state.winner.get(), own_color, callback)
+                Self::view_playing(
+                    &state.board,
+                    state.next_player.get(),
+                    state.winner.get(),
+                    own_color,
+                    callback,
+                )
             }
             PlayState::Waiting => {
                 Self::view_waiting(state.player_map.teal_player.get(), client_id, callback)

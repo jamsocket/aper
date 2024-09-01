@@ -74,7 +74,7 @@ where
     fn connect(&mut self, client_id: ClientId, ctx: &impl StateroomContext) {
         let ctx = Clone::clone(ctx);
         let callback = move |message: &MessageToClient| {
-            ctx.send_message(client_id, serde_json::to_string(&message).unwrap().as_str());
+            ctx.send_message(client_id, bincode::serialize(&message).unwrap());
         };
 
         let handle = self.connection.connect(callback);
