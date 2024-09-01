@@ -3,7 +3,6 @@ name = "aper-derive"
 version = "0.5.0"
 edition = "2021"
 
-
 [lib]
 proc-macro = true
 
