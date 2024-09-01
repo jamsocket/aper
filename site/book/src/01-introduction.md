@@ -87,8 +87,8 @@ use aper::{AperSync, StoreHandle};
 # }
 
 fn main() {
-   let treemap = StoreHandle::default();
-   let todos = ToDoList::attach(treemap);
+   let store = StoreHandle::default();
+   let todos = ToDoList::attach(store);
 
    let mut todo1 = todos.items.get_or_create(&"todo1".to_string());
    todo1.name.set("Do laundry".to_string());

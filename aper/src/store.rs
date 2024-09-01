@@ -165,7 +165,7 @@ impl Store {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct StoreHandle {
     map: Store,
     prefix: Vec<Bytes>,
@@ -175,12 +175,6 @@ impl StoreHandle {
     pub fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
         let mut inner = self.map.inner.lock().unwrap();
         inner.listeners.listen(self.prefix.clone(), listener);
-    }
-
-    pub fn new_root(map: &Store) -> Self {
-        let prefix = vec![];
-        let map = map.clone();
-        Self { map, prefix }
     }
 
     pub fn get(&self, key: &Bytes) -> Option<Bytes> {

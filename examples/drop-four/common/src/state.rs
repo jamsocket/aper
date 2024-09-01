@@ -226,8 +226,8 @@ impl StateProgram for DropFourGame {
     type T = GameTransition;
 
     fn new() -> Self {
-        let treemapref = StoreHandle::default();
-        Self::attach(treemapref)
+        let storeref = StoreHandle::default();
+        Self::attach(storeref)
     }
 }
 

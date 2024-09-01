@@ -49,8 +49,8 @@ where
     SM: Aper + Send + Sync + 'static,
     SM::Intent: Send,
 {
-    fn attach(treemap: StoreHandle) -> Self {
-        StateMachineContainerProgram(SM::attach(treemap))
+    fn attach(store: StoreHandle) -> Self {
+        StateMachineContainerProgram(SM::attach(store))
     }
 }
 
@@ -76,8 +76,7 @@ where
     type T = SM::Intent;
 
     fn new() -> Self {
-        let treemap = Store::default();
-        let treemap_ref = StoreHandle::new_root(&treemap);
-        StateMachineContainerProgram(SM::attach(treemap_ref))
+        let store = Store::default();
+        StateMachineContainerProgram(SM::attach(store.handle()))
     }
 }

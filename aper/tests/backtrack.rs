@@ -1,9 +1,9 @@
-use aper::{data_structures::atom_map::AtomMap, AperSync, Store, StoreHandle};
+use aper::{data_structures::atom_map::AtomMap, AperSync, Store};
 
 #[test]
 fn test_backtrack() {
-    let treemap = Store::default();
-    let mut map = AtomMap::<u8, u8>::attach(StoreHandle::new_root(&treemap));
+    let store = Store::default();
+    let mut map = AtomMap::<u8, u8>::attach(store.handle());
 
     {
         map.set(&1, &2);
@@ -16,7 +16,7 @@ fn test_backtrack() {
     // add an overlay to the map
 
     {
-        treemap.push_overlay();
+        store.push_overlay();
 
         // existing values are still there
 
@@ -51,7 +51,7 @@ fn test_backtrack() {
     // when we pop the overlay, the original values are restored
 
     {
-        treemap.pop_overlay();
+        store.pop_overlay();
 
         assert_eq!(map.get(&1), Some(2));
         assert_eq!(map.get(&3), Some(4));

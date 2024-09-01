@@ -55,7 +55,7 @@ impl MacroState {
                     let field = syn::Ident::new(field, proc_macro2::Span::call_site());
                     let name = Literal::byte_string(field.to_string().as_bytes());
                     quote! {
-                        #field: aper::AperSync::attach(treemap.child(#name))
+                        #field: aper::AperSync::attach(store.child(#name))
                     }
                 });
                 quote! {
@@ -68,7 +68,7 @@ impl MacroState {
                 let fields = (0..*fields).map(|i| {
                     let i = Literal::byte_string(i.to_be_bytes().as_slice());
                     quote! {
-                        aper::AperSync::attach(treemap.child(#i))
+                        aper::AperSync::attach(store.child(#i))
                     }
                 });
                 quote! {
@@ -82,7 +82,7 @@ impl MacroState {
 
         quote! {
             impl aper::AperSync for #name {
-                fn attach(treemap: aper::StoreHandle) -> Self {
+                fn attach(store: aper::StoreHandle) -> Self {
                     #fields
                 }
             }
@@ -105,7 +105,7 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(treemap: aper::StoreHandle) -> Self {
+                fn attach(store: aper::StoreHandle) -> Self {
                     MyStruct
                 }
             }
@@ -128,10 +128,10 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(treemap: aper::StoreHandle) -> Self {
+                fn attach(store: aper::StoreHandle) -> Self {
                     MyStruct {
-                        field1: aper::AperSync::attach(treemap.child(b"field1")),
-                        field2: aper::AperSync::attach(treemap.child(b"field2"))
+                        field1: aper::AperSync::attach(store.child(b"field1")),
+                        field2: aper::AperSync::attach(store.child(b"field2"))
                     }
                 }
             }
@@ -151,10 +151,10 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(treemap: aper::StoreHandle) -> Self {
+                fn attach(store: aper::StoreHandle) -> Self {
                     MyStruct(
-                        aper::AperSync::attach(treemap.child(b"\0\0\0\0\0\0\0\0")),
-                        aper::AperSync::attach(treemap.child(b"\0\0\0\0\0\0\0\x01"))
+                        aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\0")),
+                        aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\x01"))
                     )
                 }
             }

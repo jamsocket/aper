@@ -74,7 +74,7 @@ impl<A: Aper> AperClient<A> {
     }
 
     pub fn state(&self) -> A {
-        A::attach(StoreHandle::new_root(&self.map))
+        A::attach(self.map.handle())
     }
 
     pub fn verified_client_version(&self) -> u64 {
@@ -96,13 +96,11 @@ impl<A: Aper> AperClient<A> {
         self.map.push_overlay();
 
         {
-            let mut sm = A::attach(StoreHandle::new_root(&self.map));
+            let mut sm = A::attach(self.map.handle());
 
             if let Err(e) = sm.apply(intent) {
                 // reverse changes.
-                tracing::info!("here3");
                 self.map.pop_overlay();
-                tracing::info!("here4");
                 return Err(e);
             }
         }
@@ -161,7 +159,7 @@ impl<A: Aper> AperClient<A> {
         for speculative_intent in self.intent_stack.iter() {
             // push a working overlay
             self.map.push_overlay();
-            let mut sm = A::attach(StoreHandle::new_root(&self.map));
+            let mut sm = A::attach(self.map.handle());
 
             if sm.apply(&speculative_intent.intent).is_err() {
                 // reverse changes.
@@ -211,7 +209,7 @@ impl<A: Aper> AperServer<A> {
     pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
         self.map.push_overlay();
 
-        let mut sm = A::attach(StoreHandle::new_root(&self.map));
+        let mut sm = A::attach(self.map.handle());
 
         if let Err(e) = sm.apply(intent) {
             // reverse changes.
@@ -228,6 +226,6 @@ impl<A: Aper> AperServer<A> {
     }
 
     pub fn state(&self) -> A {
-        A::attach(StoreHandle::new_root(&self.map))
+        A::attach(self.map.handle())
     }
 }

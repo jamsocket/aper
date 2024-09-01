@@ -36,8 +36,8 @@ impl StateProgram for Timer {
     type T = TimerIntent;
 
     fn new() -> Self {
-        let treemap = StoreHandle::default();
-        Timer::attach(treemap)
+        let store = StoreHandle::default();
+        Timer::attach(store)
     }
 
     fn suspended_event(&self) -> Option<IntentEvent<Self::T>> {
