@@ -1,5 +1,5 @@
 [package]
-name = "aper-derive"
+name = "aper_derive"
 version = "0.5.0"
 edition = "2021"
 homepage = "https://aper.dev"
