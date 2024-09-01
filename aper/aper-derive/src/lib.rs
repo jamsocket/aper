@@ -82,7 +82,7 @@ impl MacroState {
 
         quote! {
             impl aper::AperSync for #name {
-                fn attach(store: aper::StoreHandle) -> Self {
+                fn attach(mut store: aper::StoreHandle) -> Self {
                     #fields
                 }
             }
@@ -105,7 +105,7 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(store: aper::StoreHandle) -> Self {
+                fn attach(mut store: aper::StoreHandle) -> Self {
                     MyStruct
                 }
             }
@@ -128,7 +128,7 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(store: aper::StoreHandle) -> Self {
+                fn attach(mut store: aper::StoreHandle) -> Self {
                     MyStruct {
                         field1: aper::AperSync::attach(store.child(b"field1")),
                         field2: aper::AperSync::attach(store.child(b"field2"))
@@ -151,7 +151,7 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(store: aper::StoreHandle) -> Self {
+                fn attach(mut store: aper::StoreHandle) -> Self {
                     MyStruct(
                         aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\0")),
                         aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\x01"))

@@ -20,13 +20,18 @@ impl<K: Serialize + DeserializeOwned, V: AperSync> AperSync for Map<K, V> {
 }
 
 impl<K: Serialize + DeserializeOwned, V: AperSync> Map<K, V> {
-    pub fn get(&self, key: &K) -> Option<V> {
+    pub fn get(&mut self, key: &K) -> Option<V> {
         let key = bincode::serialize(key).unwrap();
         Some(V::attach(self.map.child(&key)))
     }
 
-    pub fn get_or_create(&self, key: &K) -> V {
+    pub fn get_or_create(&mut self, key: &K) -> V {
         let key = bincode::serialize(key).unwrap();
         V::attach(self.map.child(&key))
+    }
+
+    pub fn delete(&mut self, key: &K) {
+        let key = bincode::serialize(key).unwrap();
+        self.map.delete(key);
     }
 }

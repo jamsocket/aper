@@ -16,10 +16,7 @@ pub struct StoreLayer {
 impl StoreLayer {
     /// Return a list of prefixes in this layer.
     pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
-        self.layer
-            .iter()
-            .filter_map(|(k, v)| if v.is_empty() { None } else { Some(k.clone()) })
-            .collect()
+        self.layer.keys().cloned().collect()
     }
 }
 
@@ -43,6 +40,27 @@ pub struct Store {
 }
 
 impl Store {
+    pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
+        let mut result = std::collections::BTreeSet::new();
+        let inner = self.inner.lock().unwrap();
+
+        for layer in inner.layers.iter() {
+            for prefix in layer.prefixes() {
+                result.insert(prefix);
+            }
+        }
+
+        result.into_iter().collect()
+    }
+
+    /// Ensure that a prefix exists (even if it is empty) in the store.
+    pub fn ensure(&self, prefix: &[Bytes]) {
+        let mut inner = self.inner.lock().unwrap();
+        let mut layer = inner.layers.last_mut().unwrap();
+
+        layer.layer.entry(prefix.to_vec()).or_default();
+    }
+
     pub fn push_overlay(&self) {
         let mut inner = self.inner.lock().unwrap();
         inner.layers.push(StoreLayer::default());
@@ -195,7 +213,7 @@ impl StoreHandle {
     }
 
     pub fn delete(&mut self, key: Bytes) {
-        // set the value in the top layer.
+        // delete the value in the top layer.
 
         let mut inner = self.map.inner.lock().unwrap();
         let mut top_layer = inner.layers.last_mut().unwrap();
@@ -207,12 +225,48 @@ impl StoreHandle {
         map.insert(key, None);
     }
 
-    pub fn child(&self, path_part: &[u8]) -> Self {
+    pub fn child(&mut self, path_part: &[u8]) -> Self {
         let mut prefix = self.prefix.clone();
         prefix.push(path_part.to_vec());
+        self.map.ensure(&prefix);
         Self {
             map: self.map.clone(),
             prefix,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn child_creates_prefix() {
+        let store = Store::default();
+        let mut handle = store.handle();
+
+        let mut child_handle = handle.child(b"foo");
+        let _ = child_handle.child(b"bar");
+
+        assert_eq!(
+            store.prefixes(),
+            vec![
+                vec![b"foo".to_vec()],
+                vec![b"foo".to_vec(), b"bar".to_vec()],
+            ]
+        );
+    }
+
+    #[test]
+    fn deleting_parent_deletes_child() {
+        let store = Store::default();
+        let mut handle = store.handle();
+
+        let mut child_handle = handle.child(b"foo");
+        let _ = child_handle.child(b"bar");
+
+        handle.delete(b"foo".to_vec());
+
+        assert_eq!(store.prefixes(), vec![] as Vec<Vec<Bytes>>);
     }
 }
