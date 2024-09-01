@@ -1,15 +1,17 @@
-pub use aper_stateroom::{ClientId, StateMachineContainerProgram, StateProgram, TransitionEvent};
+pub use aper_stateroom::{ClientId, IntentEvent, StateMachineContainerProgram, StateProgram};
 use aper_websocket_client::AperWebSocketStateProgramClient;
 use chrono::Duration;
 use gloo_storage::{SessionStorage, Storage};
+use init_tracing::init_tracing;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::{fmt::Debug, rc::Rc};
 pub use update_interval::UpdateInterval;
 pub use view::{StateProgramViewComponent, StateProgramViewContext};
 use yew::{html, Component, Html, Properties};
 
+mod init_tracing;
 mod update_interval;
 mod view;
 
@@ -40,9 +42,11 @@ pub struct StateProgramComponentProps<V: StateProgramViewComponent> {
 
 impl<V: StateProgramViewComponent> StateProgramComponentProps<V> {
     pub fn new(websocket_url: &str) -> Self {
+        init_tracing();
+
         StateProgramComponentProps {
             websocket_url: get_full_ws_url(websocket_url),
-            _ph: PhantomData::default(),
+            _ph: PhantomData,
         }
     }
 }
@@ -58,14 +62,14 @@ impl<V: StateProgramViewComponent> PartialEq for StateProgramComponentProps<V> {
 #[derive(Debug)]
 pub enum Msg<State: StateProgram> {
     StateTransition(State::T),
-    SetState(Rc<State>, Duration, ClientId),
+    SetState(State, Duration, u32),
     Redraw,
 }
 
 struct InnerState<P: StateProgram> {
-    state: Rc<P>,
+    state: P,
     offset: Duration,
-    client_id: ClientId,
+    client_id: u32,
 }
 
 /// Yew Component which owns a copy of the state as well as a connection to the server,
@@ -97,8 +101,11 @@ impl<V: StateProgramViewComponent> StateProgramComponent<V> {
 
         let url = format!("{}?token={}", context.props().websocket_url, token);
 
-        let client = AperWebSocketStateProgramClient::new(&url, move |state, offset, client_id| {
-            link.send_message(Msg::SetState(state, offset, client_id))
+        let client = AperWebSocketStateProgramClient::new(&url, move |state, client_id| {
+            // TODO!
+            let offset = Duration::zero();
+
+            link.send_message(Msg::SetState(state, offset, client_id));
         })
         .unwrap();
         self.client = Some(client);
@@ -115,7 +122,7 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
         let mut result = Self {
             client: None,
             state: None,
-            _ph: PhantomData::default(),
+            _ph: PhantomData,
         };
 
         result.do_connect(context);
@@ -125,8 +132,8 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
 
     fn update(&mut self, _: &yew::Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::StateTransition(transition) => {
-                self.client.as_mut().unwrap().push_transition(transition);
+            Msg::StateTransition(intent) => {
+                self.client.as_mut().unwrap().push_intent(intent).unwrap();
                 false
             }
             Msg::SetState(state, offset, client_id) => {
@@ -156,7 +163,7 @@ impl<V: StateProgramViewComponent> Component for StateProgramComponent<V> {
                 offset: *offset,
             };
 
-            V::view(state.clone(), context)
+            V::view(state, context)
         } else {
             html! {{"Waiting for initial state."}}
         }

@@ -1,18 +1,15 @@
-use crate::TransitionEvent;
-use aper::StateMachine;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+use crate::IntentEvent;
+use aper::{Aper, AperSync, Store, StoreHandle};
+use serde::{de::DeserializeOwned, Serialize};
 
 /// This trait can be added to a [StateMachine] which takes a [TransitionEvent] as
 /// its transition. Only state machines with this trait can be used directly with
 /// the aper client/server infrastructure.
-pub trait StateProgram:
-    StateMachine<Transition = TransitionEvent<Self::T>> + Send + Sync + 'static
+pub trait StateProgram: Aper<Intent = IntentEvent<Self::T>> + Send + Sync + 'static
 where
     <Self as StateProgram>::T: Unpin + Send + Sync,
 {
-    type T: Debug + Serialize + DeserializeOwned + Clone + PartialEq;
+    type T: Serialize + DeserializeOwned + Clone + PartialEq;
 
     /// A state machine may "suspend" an event which occurs at a specific time in the future.
     /// This is useful for ensuring that the state is updated at a future time regardless of
@@ -33,7 +30,7 @@ where
     ///
     /// Since they are not associated with a particular player, suspended events trigger
     /// `process_event` with a `None` as the player in the [TransitionEvent].
-    fn suspended_event(&self) -> Option<TransitionEvent<Self::T>> {
+    fn suspended_event(&self) -> Option<IntentEvent<Self::T>> {
         None
     }
 
@@ -42,34 +39,44 @@ where
 
 /// A [StateProgram] implementation that can be built from any [StateMachine]. Transitions
 /// are stripped of their metadata and passed down to the underlying state machine.
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(bound = "")]
-pub struct StateMachineContainerProgram<SM: StateMachine>(pub SM)
+pub struct StateMachineContainerProgram<SM>(pub SM)
 where
-    <SM as StateMachine>::Transition: Send;
+    SM: Aper + Send + Sync + 'static,
+    <SM as Aper>::Intent: Send;
 
-impl<SM: StateMachine> StateMachine for StateMachineContainerProgram<SM>
+impl<SM> AperSync for StateMachineContainerProgram<SM>
 where
-    <SM as StateMachine>::Transition: Send + Unpin + Sync,
+    SM: Aper + Send + Sync + 'static,
+    SM::Intent: Send,
 {
-    type Transition = TransitionEvent<SM::Transition>;
-    type Conflict = SM::Conflict;
-
-    fn apply(&self, transition: &Self::Transition) -> Result<Self, Self::Conflict> {
-        Ok(StateMachineContainerProgram(
-            self.0.apply(&transition.transition)?,
-        ))
+    fn attach(store: StoreHandle) -> Self {
+        StateMachineContainerProgram(SM::attach(store))
     }
 }
 
-impl<SM: StateMachine + Default + Send + Sync + 'static> StateProgram
-    for StateMachineContainerProgram<SM>
+impl<SM> Aper for StateMachineContainerProgram<SM>
 where
-    <SM as StateMachine>::Transition: Send + Unpin + Sync,
+    SM: Aper + Send + Sync + 'static,
+    <SM as Aper>::Intent: Send + Unpin + Sync + 'static,
 {
-    type T = SM::Transition;
+    type Intent = IntentEvent<SM::Intent>;
+    type Error = SM::Error;
+
+    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
+        self.0.apply(&intent.intent)?;
+        Ok(())
+    }
+}
+
+impl<SM> StateProgram for StateMachineContainerProgram<SM>
+where
+    SM: Aper + Send + Sync + 'static,
+    <SM as Aper>::Intent: Send + Unpin + Sync + 'static,
+{
+    type T = SM::Intent;
 
     fn new() -> Self {
-        Self::default()
+        let store = Store::default();
+        StateMachineContainerProgram(SM::attach(store.handle()))
     }
 }

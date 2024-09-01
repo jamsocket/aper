@@ -11,4 +11,4 @@ aper-stateroom = {path = "../aper-stateroom"}
 env_logger = "0.11.3"
 stateroom-server = { version="0.4.0" }
 log = "0.4.17"
-stateroom = "0.4.2"
+stateroom = { version="0.4.4", features=["serde"] }

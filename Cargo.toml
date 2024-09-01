@@ -7,7 +7,7 @@ exclude = [
 
 members = [
     "aper",
-    "aper/aper_derive*",
+    "aper/aper-derive*",
     "aper-stateroom",
     "aper-serve",
     "aper-yew",

@@ -1,13 +1,13 @@
-use aper::{NeverConflict, StateMachine};
+use aper::{data_structures::atom::Atom, Aper, AperSync};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(AperSync)]
 pub struct Counter {
-    value: i64,
+    value: Atom<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum CounterTransition {
+pub enum CounterIntent {
     Add(i64),
     Subtract(i64),
     Reset,
@@ -15,28 +15,29 @@ pub enum CounterTransition {
 
 impl Counter {
     pub fn value(&self) -> i64 {
-        self.value
+        self.value.get()
     }
 }
 
-impl StateMachine for Counter {
-    type Transition = CounterTransition;
-    type Conflict = NeverConflict;
+impl Aper for Counter {
+    type Intent = CounterIntent;
+    type Error = ();
 
-    fn apply(&self, event: &CounterTransition) -> Result<Self, NeverConflict> {
-        let mut new_self = self.clone();
+    fn apply(&mut self, event: &CounterIntent) -> Result<(), ()> {
+        let value = self.value.get();
+
         match event {
-            CounterTransition::Add(i) => {
-                new_self.value += i;
+            CounterIntent::Add(i) => {
+                self.value.set(value + i);
             }
-            CounterTransition::Subtract(i) => {
-                new_self.value -= i;
+            CounterIntent::Subtract(i) => {
+                self.value.set(value - i);
             }
-            CounterTransition::Reset => {
-                new_self.value = 0;
+            CounterIntent::Reset => {
+                self.value.set(0);
             }
         }
 
-        Ok(new_self)
+        Ok(())
     }
 }

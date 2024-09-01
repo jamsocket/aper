@@ -1,5 +1,4 @@
 #![recursion_limit = "1024"]
-use aper_stateroom::ClientId;
 use aper_yew::{
     StateProgramComponent, StateProgramComponentProps, StateProgramViewComponent,
     StateProgramViewContext,
@@ -8,7 +7,6 @@ use board_component::BoardComponent;
 use drop_four_common::{
     Board, DropFourGame, GameTransition, PlayState, PlayerColor, BOARD_COLS, BOARD_ROWS,
 };
-use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
@@ -19,14 +17,14 @@ struct GameView;
 
 impl GameView {
     fn view_waiting(
-        waiting_player: Option<ClientId>,
-        client_id: ClientId,
+        waiting_player: Option<u32>,
+        client_id: u32,
         callback: &Callback<GameTransition>,
     ) -> Html {
         if Some(client_id) == waiting_player {
-            return html! {
+            html! {
                 <p>{"Waiting for another player."}</p>
-            };
+            }
         } else {
             let message = if waiting_player.is_some() {
                 "One player is waiting to play."
@@ -34,12 +32,12 @@ impl GameView {
                 "Nobody is waiting to play."
             };
 
-            return html! {
+            html! {
                 <div>
                     <button onclick={callback.reform(|_| GameTransition::Join)}>{"Join"}</button>
                     <p>{message}</p>
                 </div>
-            };
+            }
         }
     }
 
@@ -66,7 +64,7 @@ impl GameView {
             format!("You're observing. {} is next.", next_player.name())
         };
 
-        return html! {
+        html! {
             <div>
                 <p>{status_message}</p>
                 <BoardComponent
@@ -86,27 +84,27 @@ impl GameView {
                     }
                 }
             </div>
-        };
+        }
     }
 
     fn view_inner(
-        state: Rc<DropFourGame>,
-        client_id: ClientId,
+        state: &DropFourGame,
+        client_id: u32,
         callback: &Callback<GameTransition>,
     ) -> Html {
         match state.state() {
-            PlayState::Playing {
-                board,
-                next_player,
-                winner,
-                player_map,
-                ..
-            } => {
-                let own_color = player_map.color_of_player(client_id);
-                Self::view_playing(board, *next_player, *winner, own_color, callback)
+            PlayState::Playing => {
+                let own_color = state.player_map.color_of_player(client_id);
+                Self::view_playing(
+                    &state.board,
+                    state.next_player.get(),
+                    state.winner.get(),
+                    own_color,
+                    callback,
+                )
             }
-            PlayState::Waiting { waiting_player, .. } => {
-                Self::view_waiting(*waiting_player, client_id, callback)
+            PlayState::Waiting => {
+                Self::view_waiting(state.player_map.teal_player.get(), client_id, callback)
             }
         }
     }
@@ -115,7 +113,7 @@ impl GameView {
 impl StateProgramViewComponent for GameView {
     type Program = DropFourGame;
 
-    fn view(state: Rc<Self::Program>, context: StateProgramViewContext<Self::Program>) -> Html {
+    fn view(state: &Self::Program, context: StateProgramViewContext<Self::Program>) -> Html {
         html! {
             <div class="main">
             <h1>{"Drop Four"}</h1>

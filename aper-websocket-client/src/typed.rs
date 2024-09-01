@@ -7,9 +7,7 @@ pub struct TypedWebsocketConnection<Inbound: DeserializeOwned, Outbound: Seriali
 where
     F: Fn(Inbound) + 'static,
 {
-    _ph_inbound: PhantomData<Inbound>,
-    _ph_outbound: PhantomData<Outbound>,
-    _ph_f: PhantomData<F>,
+    _ph: PhantomData<(Inbound, Outbound, F)>,
     conn: WebSocketConnection<Box<dyn Fn(Message)>>,
 }
 
@@ -33,14 +31,12 @@ where
 
         Ok(TypedWebsocketConnection {
             conn,
-            _ph_f: PhantomData::default(),
-            _ph_inbound: PhantomData::default(),
-            _ph_outbound: PhantomData::default(),
+            _ph: PhantomData,
         })
     }
 
     pub fn send(&self, message: &Outbound) {
-        let message = Message::Text(serde_json::to_string(message).unwrap());
+        let message = Message::Bytes(bincode::serialize(message).unwrap());
         self.conn.send(&message);
     }
 }

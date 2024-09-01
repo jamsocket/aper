@@ -1,0 +1,22 @@
+[package]
+name = "counter-client"
+version = "0.1.0"
+authors = ["Paul Butler <paulgb@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aper = {path = "../../../aper"}
+aper-websocket-client = { version="0.4.0", path="../../../aper-websocket-client" }
+aper-stateroom = { version="0.4.0", path="../../../aper-stateroom" }
+console_error_panic_hook = "0.1.6"
+serde = { version = "1.0.124", features = ["derive"] }
+wasm-bindgen = "0.2.83"
+web-sys = "0.3.48"
+counter-common = {path="../common"}
+leptos = { version = "0.6.14", features = ["csr"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+tracing-web = "0.1.3"

@@ -1,21 +1,47 @@
-use aper::{NeverConflict, StateMachine};
-use aper_stateroom::{ClientId, StateProgram, TransitionEvent};
+use aper::{
+    data_structures::{atom::Atom, fixed_array::FixedArray},
+    Aper, AperSync, Store,
+};
+use aper_stateroom::{IntentEvent, StateProgram};
 use serde::{Deserialize, Serialize};
 
-pub const BOARD_ROWS: usize = 6;
-pub const BOARD_COLS: usize = 7;
+pub const BOARD_ROWS: u32 = 6;
+pub const BOARD_COLS: u32 = 7;
+pub const BOARD_SIZE: u32 = BOARD_ROWS * BOARD_COLS;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-pub struct Board(pub [[Option<PlayerColor>; BOARD_COLS]; BOARD_ROWS]);
+#[derive(AperSync, Clone)]
+pub struct Board {
+    grid: FixedArray<BOARD_SIZE, Option<PlayerColor>>,
+}
+
 const NEEDED_IN_A_ROW: usize = 4;
 
 impl Board {
-    fn lowest_open_row(&self, col: usize) -> Option<usize> {
-        (0..BOARD_ROWS).rev().find(|r| self.0[*r][col].is_none())
+    pub fn get(&self, row: u32, col: u32) -> Option<PlayerColor> {
+        self.grid.get(row * BOARD_COLS + col)
+    }
+
+    fn set(&mut self, row: u32, col: u32, value: Option<PlayerColor>) {
+        self.grid.set(row * BOARD_COLS + col, value);
+    }
+
+    fn clear(&mut self) {
+        for i in 0..BOARD_SIZE {
+            if self.grid.get(i).is_some() {
+                self.grid.set(i, None);
+            }
+        }
+    }
+
+    fn lowest_open_row(&self, col: u32) -> Option<u32> {
+        (0..BOARD_ROWS).rev().find(|&r| self.get(r, col).is_none())
     }
 
     fn count_same_from(&self, row: i32, col: i32, row_d: i32, col_d: i32) -> usize {
-        let val = self.0[row as usize][col as usize];
+        let val = self.get(row as u32, col as u32);
+        if val.is_none() {
+            return 0;
+        }
 
         for i in 1..(NEEDED_IN_A_ROW as i32) {
             let rr = row + i * row_d;
@@ -25,12 +51,13 @@ impl Board {
                 || rr >= BOARD_ROWS as i32
                 || cc < 0
                 || cc >= BOARD_COLS as i32
-                || self.0[rr as usize][cc as usize] != val
+                || self.get(rr as u32, cc as u32) != val
             {
                 return i as usize - 1;
             }
         }
-        NEEDED_IN_A_ROW
+
+        NEEDED_IN_A_ROW - 1
     }
 
     fn count_same_bidirectional(&self, row: i32, col: i32, row_d: i32, col_d: i32) -> usize {
@@ -39,22 +66,24 @@ impl Board {
     }
 
     fn check_winner_at(&self, row: i32, col: i32) -> Option<PlayerColor> {
-        let player = self.0[row as usize][col as usize];
+        let player = self.get(row as u32, col as u32)?;
+
         if self.count_same_bidirectional(row, col, 1, 0) >= NEEDED_IN_A_ROW
             || self.count_same_bidirectional(row, col, 0, 1) >= NEEDED_IN_A_ROW
             || self.count_same_bidirectional(row, col, 1, 1) >= NEEDED_IN_A_ROW
             || self.count_same_bidirectional(row, col, 1, -1) >= NEEDED_IN_A_ROW
         {
-            player
+            Some(player)
         } else {
             None
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Default)]
 pub enum PlayerColor {
     Brown,
+    #[default]
     Teal,
 }
 
@@ -74,24 +103,24 @@ impl PlayerColor {
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(AperSync)]
 pub struct PlayerMap {
-    pub teal_player: ClientId,
-    pub brown_player: ClientId,
+    pub teal_player: Atom<Option<u32>>,
+    pub brown_player: Atom<Option<u32>>,
 }
 
 impl PlayerMap {
-    fn id_of_color(&self, color: PlayerColor) -> ClientId {
+    fn id_of_color(&self, color: PlayerColor) -> Option<u32> {
         match color {
-            PlayerColor::Brown => self.brown_player,
-            PlayerColor::Teal => self.teal_player,
+            PlayerColor::Brown => self.brown_player.get(),
+            PlayerColor::Teal => self.teal_player.get(),
         }
     }
 
-    pub fn color_of_player(&self, player_id: ClientId) -> Option<PlayerColor> {
-        if self.brown_player == player_id {
+    pub fn color_of_player(&self, player_id: u32) -> Option<PlayerColor> {
+        if self.brown_player.get() == Some(player_id) {
             Some(PlayerColor::Brown)
-        } else if self.teal_player == player_id {
+        } else if self.teal_player.get() == Some(player_id) {
             Some(PlayerColor::Teal)
         } else {
             None
@@ -99,25 +128,11 @@ impl PlayerMap {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Default)]
 pub enum PlayState {
-    Waiting {
-        waiting_player: Option<ClientId>,
-    },
-    Playing {
-        next_player: PlayerColor,
-        board: Board,
-        player_map: PlayerMap,
-        winner: Option<PlayerColor>,
-    },
-}
-
-impl Default for PlayState {
-    fn default() -> PlayState {
-        PlayState::Waiting {
-            waiting_player: None,
-        }
-    }
+    #[default]
+    Waiting,
+    Playing,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
@@ -127,84 +142,65 @@ pub enum GameTransition {
     Reset,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
-pub struct DropFourGame(PlayState);
+#[derive(AperSync)]
+pub struct DropFourGame {
+    play_state: Atom<PlayState>,
+    pub next_player: Atom<PlayerColor>,
+    pub board: Board,
+    pub player_map: PlayerMap,
+    pub winner: Atom<Option<PlayerColor>>,
+}
 
 impl DropFourGame {
-    pub fn state(&self) -> &PlayState {
-        &self.0
+    pub fn state(&self) -> PlayState {
+        self.play_state.get()
     }
 }
 
-impl StateMachine for DropFourGame {
-    type Transition = TransitionEvent<GameTransition>;
-    type Conflict = NeverConflict;
+impl Aper for DropFourGame {
+    type Intent = IntentEvent<GameTransition>;
+    type Error = ();
 
-    fn apply(&self, event: &Self::Transition) -> Result<Self, NeverConflict> {
-        let mut new_self = self.clone();
-        match event.transition {
+    fn apply(&mut self, event: &Self::Intent) -> Result<(), ()> {
+        match event.intent {
             GameTransition::Join => {
-                if let PlayState::Waiting {
-                    waiting_player: Some(waiting_player),
-                } = new_self.0
-                {
-                    let player_map = PlayerMap {
-                        teal_player: waiting_player,
-                        brown_player: event.client.unwrap(),
-                    };
-
-                    new_self.0 = PlayState::Playing {
-                        next_player: PlayerColor::Teal,
-                        board: Default::default(),
-                        player_map,
-                        winner: None,
-                    }
-                } else if let PlayState::Waiting { .. } = self.0 {
-                    new_self.0 = PlayState::Waiting {
-                        waiting_player: event.client,
+                if PlayState::Waiting == self.state() {
+                    if self.player_map.teal_player.get().is_none() {
+                        self.player_map.teal_player.set(event.client);
+                    } else if self.player_map.brown_player.get().is_none() {
+                        self.player_map.brown_player.set(event.client);
+                        self.play_state.set(PlayState::Playing);
                     }
                 }
             }
             GameTransition::Drop(c) => {
-                if let PlayState::Playing {
-                    board,
-                    next_player,
-                    player_map,
-                    winner,
-                } = &mut new_self.0
-                {
-                    if winner.is_some() {
-                        return Ok(new_self);
+                if PlayState::Playing == self.state() {
+                    if self.winner.get().is_some() {
+                        return Ok(());
                     } // Someone has already won.
-                    if player_map.id_of_color(*next_player) != event.client.unwrap() {
-                        return Ok(new_self);
+                    if self.player_map.id_of_color(self.next_player.get()) != event.client {
+                        return Ok(());
                     } // Play out of turn.
 
-                    if let Some(insert_row) = board.lowest_open_row(c) {
-                        board.0[insert_row][c] = Some(*next_player);
-                        *winner = board.check_winner_at(insert_row as i32, c as i32);
-                        *next_player = next_player.other();
+                    if let Some(insert_row) = self.board.lowest_open_row(c as u32) {
+                        self.board
+                            .set(insert_row, c as u32, Some(self.next_player.get()));
+
+                        let winner = self.board.check_winner_at(insert_row as i32, c as i32);
+
+                        self.winner.set(winner);
+                        self.next_player.set(self.next_player.get().other());
                     }
                 }
             }
             GameTransition::Reset => {
-                if let PlayState::Playing {
-                    winner: Some(winner),
-                    player_map,
-                    ..
-                } = new_self.0
-                {
-                    new_self.0 = PlayState::Playing {
-                        next_player: winner.other(),
-                        board: Default::default(),
-                        player_map,
-                        winner: None,
-                    }
-                }
+                self.board.clear();
+                self.winner.set(None);
+                self.next_player.set(PlayerColor::Teal);
             }
         }
 
-        Ok(new_self)
+        Ok(())
     }
 }
 
@@ -212,82 +208,52 @@ impl StateProgram for DropFourGame {
     type T = GameTransition;
 
     fn new() -> Self {
-        Default::default()
+        let storeref = Store::default();
+        Self::attach(storeref.handle())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use aper_stateroom::ClientId;
-
-    use chrono::{TimeZone, Utc};
-
     use super::GameTransition::{Drop, Join, Reset};
     use super::PlayState::{Playing, Waiting};
     use super::PlayerColor::{Brown, Teal};
+    use chrono::{TimeZone, Utc};
 
     use super::*;
 
     fn expect_disc(game: &DropFourGame, row: usize, col: usize, value: PlayerColor) {
-        let board = match &game.0 {
-            PlayState::Playing { board, .. } => &board.0,
-            _ => panic!("Called .board() on DropFourGame in Waiting state."),
-        };
-
-        assert_eq!(Some(value), board[row][col]);
+        assert_eq!(Some(value), game.board.get(row as u32, col as u32));
     }
 
     #[test]
     fn test_game() {
-        let mut game = DropFourGame::default();
-        let dummy_timestamp = Utc.timestamp_millis(0);
-        let player1: ClientId = 1.into();
-        let player2: ClientId = 2.into();
+        let mut game = DropFourGame::new();
+        let dummy_timestamp = Utc.timestamp_millis_opt(0).unwrap();
+        let player1 = 1;
+        let player2 = 2;
 
-        assert_eq!(
-            Waiting {
-                waiting_player: None
-            },
-            *game.state()
-        );
-        game = game
-            .apply(&TransitionEvent::new(Some(player1), dummy_timestamp, Join))
-            .unwrap();
-        assert_eq!(
-            Waiting {
-                waiting_player: Some(player1)
-            },
-            *game.state()
-        );
+        assert_eq!(Waiting, game.state());
 
-        game = game
-            .apply(&TransitionEvent::new(Some(player2), dummy_timestamp, Join))
+        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Join))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                next_player: Teal,
-                ..
-            }
-        ));
+        assert_eq!(Waiting, game.state());
 
-        game = game
-            .apply(&TransitionEvent::new(
-                Some(player1),
-                dummy_timestamp,
-                Drop(4),
-            ))
+        assert_eq!(Some(player1), game.player_map.teal_player.get(),);
+
+        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Join))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                next_player: Brown,
-                ..
-            }
-        ));
+        assert_eq!(game.state(), Playing,);
+        assert_eq!(Some(player2), game.player_map.brown_player.get(),);
+        assert_eq!(Teal, game.next_player.get(),);
+
+        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(4)))
+            .unwrap();
+
         expect_disc(&game, 5, 4, Teal);
+        assert_eq!(Brown, game.next_player.get(),);
 
         //     v
         // .......
@@ -297,21 +263,10 @@ mod tests {
         // .......
         // ....T..
 
-        game = game
-            .apply(&TransitionEvent::new(
-                Some(player2),
-                dummy_timestamp,
-                Drop(4),
-            ))
+        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Drop(4)))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                next_player: Teal,
-                ..
-            }
-        ));
+        assert_eq!(Teal, game.next_player.get(),);
         expect_disc(&game, 4, 4, Brown);
 
         //     v
@@ -322,21 +277,10 @@ mod tests {
         // ....B..
         // ....T..
 
-        game = game
-            .apply(&TransitionEvent::new(
-                Some(player1),
-                dummy_timestamp,
-                Drop(3),
-            ))
+        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(3)))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                next_player: Brown,
-                ..
-            }
-        ));
+        assert_eq!(Brown, game.next_player.get(),);
         expect_disc(&game, 5, 3, Teal);
 
         //    v
@@ -347,21 +291,10 @@ mod tests {
         // ....B..
         // ...TT..
 
-        game = game
-            .apply(&TransitionEvent::new(
-                Some(player2),
-                dummy_timestamp,
-                Drop(5),
-            ))
+        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Drop(5)))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                next_player: Teal,
-                ..
-            }
-        ));
+        assert_eq!(Teal, game.next_player.get(),);
         expect_disc(&game, 5, 5, Brown);
 
         //      v
@@ -372,21 +305,10 @@ mod tests {
         // ....B..
         // ...TTB.
 
-        game = game
-            .apply(&TransitionEvent::new(
-                Some(player1),
-                dummy_timestamp,
-                Drop(2),
-            ))
+        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(2)))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                next_player: Brown,
-                ..
-            }
-        ));
+        assert_eq!(Brown, game.next_player.get(),);
         expect_disc(&game, 5, 2, Teal);
 
         //   v
@@ -397,21 +319,10 @@ mod tests {
         // ....B..
         // ..TTTB.
 
-        game = game
-            .apply(&TransitionEvent::new(
-                Some(player2),
-                dummy_timestamp,
-                Drop(2),
-            ))
+        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Drop(2)))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                next_player: Teal,
-                ..
-            }
-        ));
+        assert_eq!(Teal, game.next_player.get(),);
         expect_disc(&game, 4, 2, Brown);
 
         //   v
@@ -422,22 +333,12 @@ mod tests {
         // ..B.B..
         // ..TTTB.
 
-        game = game
-            .apply(&TransitionEvent::new(
-                Some(player1),
-                dummy_timestamp,
-                Drop(1),
-            ))
+        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(1)))
             .unwrap();
 
-        assert!(matches!(
-            game.state(),
-            Playing {
-                winner: Some(Teal),
-                ..
-            }
-        ));
+        assert_eq!(Brown, game.next_player.get(),);
         expect_disc(&game, 5, 1, Teal);
+        assert_eq!(Some(Teal), game.winner.get(),);
 
         //  v
         // .......
@@ -447,16 +348,9 @@ mod tests {
         // ..B.B..
         // .TTTTB.
 
-        game = game
-            .apply(&TransitionEvent::new(Some(player1), dummy_timestamp, Reset))
+        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Reset))
             .unwrap();
-        assert!(matches!(
-            game.state(),
-            Playing {
-                winner: None,
-                next_player: Brown,
-                ..
-            }
-        ));
+
+        assert_eq!(None, game.winner.get(),);
     }
 }

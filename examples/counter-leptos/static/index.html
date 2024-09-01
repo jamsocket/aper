@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Aper Project</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script type="module">
+            import init, {entry} from "./client/counter_client.js"
+            async function run() {
+                await init("./client/counter_client_bg.wasm");
+                entry();
+            };
+
+            run();
+    </script>
+</head>
+<body>
+<div class="main"></div>
+</body>
+</html>
