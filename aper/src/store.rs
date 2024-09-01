@@ -22,13 +22,7 @@ pub enum PrefixMap {
 impl PrefixMap {
     fn get(&self, key: &Bytes) -> Option<PrefixMapValue> {
         match self {
-            PrefixMap::Children(children) => {
-                if let Some(value) = children.get(key) {
-                    Some(value.clone())
-                } else {
-                    None
-                }
-            }
+            PrefixMap::Children(children) => children.get(key).cloned(),
             PrefixMap::DeletedPrefixMap => Some(PrefixMapValue::Deleted),
         }
     }
