@@ -270,7 +270,6 @@ impl StoreHandle {
     }
 
     pub fn get(&self, key: &Bytes) -> Option<Bytes> {
-        println!("yy");
         self.map.get(&self.prefix, key)
     }
 

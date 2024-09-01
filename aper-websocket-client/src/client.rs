@@ -2,7 +2,7 @@ use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
 use aper::{
     connection::{ClientConnection, MessageToClient, MessageToServer},
-    AperClient,
+    AperClient, Store,
 };
 use aper_stateroom::{IntentEvent, StateProgram};
 use core::fmt::Debug;
@@ -16,6 +16,7 @@ where
     S: StateProgram,
 {
     conn: Rc<Mutex<ClientConnection<S>>>,
+    store: Store,
 }
 
 impl<S> Debug for AperWebSocketStateProgramClient<S>
@@ -42,9 +43,10 @@ where
         // client message handler needs to have websocket connection; websocket
         // connection needs to be able to send messages to client
 
-        let conn = Rc::new_cyclic(|c: &Weak<Mutex<ClientConnection<S>>>| {
-            let client = AperClient::<S>::new();
+        let client = AperClient::<S>::new();
+        let store = client.store();
 
+        let conn = Rc::new_cyclic(|c: &Weak<Mutex<ClientConnection<S>>>| {
             let d = c.clone();
             let socket_message_callback = move |message: MessageToClient| {
                 let d = d.upgrade().unwrap();
@@ -65,7 +67,11 @@ where
             ))
         });
 
-        Ok(AperWebSocketStateProgramClient { conn })
+        Ok(AperWebSocketStateProgramClient { conn, store })
+    }
+
+    pub fn state(&self) -> S {
+        S::attach(self.store.handle())
     }
 
     pub fn push_intent(&self, intent: S::T) -> Result<(), S::Error> {

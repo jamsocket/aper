@@ -9,6 +9,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 aper = {path = "../../../aper"}
+aper-websocket-client = { version="0.4.0", path="../../../aper-websocket-client" }
+aper-stateroom = { version="0.4.0", path="../../../aper-stateroom" }
 console_error_panic_hook = "0.1.6"
 serde = { version = "1.0.124", features = ["derive"] }
 wasm-bindgen = "0.2.83"

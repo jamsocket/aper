@@ -67,6 +67,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "aper-websocket-client"
+version = "0.4.0"
+dependencies = [
+ "anyhow",
+ "aper",
+ "aper-stateroom",
+ "bincode",
+ "chrono",
+ "js-sys",
+ "serde",
+ "serde_json",
+ "tracing",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "async-recursion"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -276,6 +293,8 @@ name = "counter-client"
 version = "0.1.0"
 dependencies = [
  "aper",
+ "aper-stateroom",
+ "aper-websocket-client",
  "console_error_panic_hook",
  "counter-common",
  "leptos",
