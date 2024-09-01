@@ -6,12 +6,15 @@ use std::{
 };
 
 #[derive(Default)]
-pub struct TreeMapLayer {
+pub struct StoreLayer {
+    /// Map of prefix to direct children at that prefix.
     layer: BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Option<Bytes>>>,
+    /// A set of prefixes that have been modified in this layer.
     dirty: HashSet<Vec<Bytes>>,
 }
 
-impl TreeMapLayer {
+impl StoreLayer {
+    /// Return a list of prefixes in this layer.
     pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
         self.layer
             .iter()
@@ -20,29 +23,29 @@ impl TreeMapLayer {
     }
 }
 
-pub struct TreeMapInner {
-    layers: Vec<TreeMapLayer>,
+pub struct StoreInner {
+    layers: Vec<StoreLayer>,
     listeners: ListenerMap,
 }
 
-impl Default for TreeMapInner {
+impl Default for StoreInner {
     fn default() -> Self {
         Self {
-            layers: vec![TreeMapLayer::default()],
+            layers: vec![StoreLayer::default()],
             listeners: ListenerMap::default(),
         }
     }
 }
 
 #[derive(Clone, Default)]
-pub struct TreeMap {
-    inner: Arc<Mutex<TreeMapInner>>,
+pub struct Store {
+    inner: Arc<Mutex<StoreInner>>,
 }
 
-impl TreeMap {
+impl Store {
     pub fn push_overlay(&self) {
         let mut inner = self.inner.lock().unwrap();
-        inner.layers.push(TreeMapLayer::default());
+        inner.layers.push(StoreLayer::default());
     }
 
     pub fn pop_overlay(&self) {
@@ -153,21 +156,28 @@ impl TreeMap {
             top_layer.dirty.insert(mutation.prefix.clone());
         }
     }
+
+    pub fn handle(&self) -> StoreHandle {
+        StoreHandle {
+            map: self.clone(),
+            prefix: vec![],
+        }
+    }
 }
 
 #[derive(Clone, Default)]
-pub struct TreeMapRef {
-    map: TreeMap,
+pub struct StoreHandle {
+    map: Store,
     prefix: Vec<Bytes>,
 }
 
-impl TreeMapRef {
+impl StoreHandle {
     pub fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
         let mut inner = self.map.inner.lock().unwrap();
         inner.listeners.listen(self.prefix.clone(), listener);
     }
 
-    pub fn new_root(map: &TreeMap) -> Self {
+    pub fn new_root(map: &Store) -> Self {
         let prefix = vec![];
         let map = map.clone();
         Self { map, prefix }

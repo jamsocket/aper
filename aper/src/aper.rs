@@ -1,7 +1,7 @@
 use crate::{
     connection::{ClientConnection, MessageToServer},
-    treemap::TreeMap,
-    Mutation, TreeMapRef,
+    store::Store,
+    Mutation, StoreHandle,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -10,7 +10,7 @@ use std::{
 };
 
 pub trait AperSync {
-    fn attach(map: TreeMapRef) -> Self;
+    fn attach(map: StoreHandle) -> Self;
 
     fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
         // Default implementation does nothing.
@@ -30,7 +30,7 @@ struct SpeculativeIntent<I> {
 }
 
 pub struct AperClient<A: Aper> {
-    map: TreeMap,
+    map: Store,
     intent_stack: VecDeque<SpeculativeIntent<A::Intent>>,
 
     /// The next unused client version number for this client.
@@ -52,7 +52,7 @@ impl<A: Aper> Default for AperClient<A> {
 
 impl<A: Aper> AperClient<A> {
     pub fn new() -> Self {
-        let map = TreeMap::default();
+        let map = Store::default();
         // add an overlay for speculative (local) changes
         map.push_overlay();
 
@@ -74,7 +74,7 @@ impl<A: Aper> AperClient<A> {
     }
 
     pub fn state(&self) -> A {
-        A::attach(TreeMapRef::new_root(&self.map))
+        A::attach(StoreHandle::new_root(&self.map))
     }
 
     pub fn verified_client_version(&self) -> u64 {
@@ -96,7 +96,7 @@ impl<A: Aper> AperClient<A> {
         self.map.push_overlay();
 
         {
-            let mut sm = A::attach(TreeMapRef::new_root(&self.map));
+            let mut sm = A::attach(StoreHandle::new_root(&self.map));
 
             if let Err(e) = sm.apply(intent) {
                 // reverse changes.
@@ -161,7 +161,7 @@ impl<A: Aper> AperClient<A> {
         for speculative_intent in self.intent_stack.iter() {
             // push a working overlay
             self.map.push_overlay();
-            let mut sm = A::attach(TreeMapRef::new_root(&self.map));
+            let mut sm = A::attach(StoreHandle::new_root(&self.map));
 
             if sm.apply(&speculative_intent.intent).is_err() {
                 // reverse changes.
@@ -177,7 +177,7 @@ impl<A: Aper> AperClient<A> {
 }
 
 pub struct AperServer<A: Aper> {
-    map: TreeMap,
+    map: Store,
     version: u64,
     _phantom: std::marker::PhantomData<A>,
 }
@@ -190,7 +190,7 @@ impl<A: Aper> Default for AperServer<A> {
 
 impl<A: Aper> AperServer<A> {
     pub fn new() -> Self {
-        let map = TreeMap::default();
+        let map = Store::default();
 
         Self {
             map,
@@ -211,7 +211,7 @@ impl<A: Aper> AperServer<A> {
     pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
         self.map.push_overlay();
 
-        let mut sm = A::attach(TreeMapRef::new_root(&self.map));
+        let mut sm = A::attach(StoreHandle::new_root(&self.map));
 
         if let Err(e) = sm.apply(intent) {
             // reverse changes.
@@ -228,6 +228,6 @@ impl<A: Aper> AperServer<A> {
     }
 
     pub fn state(&self) -> A {
-        A::attach(TreeMapRef::new_root(&self.map))
+        A::attach(StoreHandle::new_root(&self.map))
     }
 }

@@ -1,6 +1,6 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, Attach, TreeMapRef,
+    Aper, Attach, StoreHandle,
 };
 use aper_stateroom::{IntentEvent, StateProgram};
 use serde::{Deserialize, Serialize};
@@ -226,7 +226,7 @@ impl StateProgram for DropFourGame {
     type T = GameTransition;
 
     fn new() -> Self {
-        let treemapref = TreeMapRef::default();
+        let treemapref = StoreHandle::default();
         Self::attach(treemapref)
     }
 }

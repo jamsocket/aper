@@ -1,4 +1,4 @@
-use aper::{data_structures::atom::Atom, Aper, Attach, TreeMapRef};
+use aper::{data_structures::atom::Atom, Aper, Attach, StoreHandle};
 use aper_stateroom::{IntentEvent, StateProgram};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,7 @@ impl StateProgram for Timer {
     type T = TimerIntent;
 
     fn new() -> Self {
-        let treemap = TreeMapRef::default();
+        let treemap = StoreHandle::default();
         Timer::attach(treemap)
     }
 

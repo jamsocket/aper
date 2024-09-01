@@ -1,14 +1,14 @@
-use crate::{AperSync, TreeMapRef};
+use crate::{AperSync, StoreHandle};
 use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Clone)]
 pub struct FixedArray<const N: u32, T: Serialize + DeserializeOwned + Default> {
-    map: TreeMapRef,
+    map: StoreHandle,
     _phantom: std::marker::PhantomData<T>,
 }
 
 impl<const N: u32, T: Serialize + DeserializeOwned + Default> AperSync for FixedArray<N, T> {
-    fn attach(map: TreeMapRef) -> Self {
+    fn attach(map: StoreHandle) -> Self {
         Self {
             map,
             _phantom: std::marker::PhantomData,
@@ -46,7 +46,7 @@ impl<const N: u32, T: Serialize + DeserializeOwned + Default> FixedArray<N, T> {
 }
 
 pub struct FixedArrayIterator<T: Serialize + DeserializeOwned + Default> {
-    tree_ref: TreeMapRef,
+    tree_ref: StoreHandle,
     index: u32,
     stop: u32,
     _phantom: std::marker::PhantomData<T>,

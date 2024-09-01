@@ -1,13 +1,13 @@
-use crate::{AperSync, TreeMapRef};
+use crate::{AperSync, StoreHandle};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct Map<K: Serialize + DeserializeOwned, V: AperSync> {
-    map: TreeMapRef,
+    map: StoreHandle,
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
 impl<K: Serialize + DeserializeOwned, V: AperSync> AperSync for Map<K, V> {
-    fn attach(map: TreeMapRef) -> Self {
+    fn attach(map: StoreHandle) -> Self {
         Self {
             map,
             _phantom: std::marker::PhantomData,

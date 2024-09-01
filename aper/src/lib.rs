@@ -4,12 +4,12 @@ mod aper;
 pub mod connection;
 pub mod data_structures;
 mod listener;
-mod treemap;
+mod store;
 
 pub use aper::*;
 pub use aper_derive::AperSync;
 use serde::{Deserialize, Serialize};
-pub use treemap::*;
+pub use store::*;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Mutation {

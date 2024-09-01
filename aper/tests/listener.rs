@@ -36,8 +36,6 @@ impl Aper for SimpleStruct {
 
 #[test]
 fn test_apply_listener() {
-    // let map = TreeMapRef::new();
-    // let mut st = DummyStruct::attach(map);
     let mut client: AperClient<SimpleStruct> = aper::AperClient::new();
 
     let (atom_i32_send, atom_i32_recv) = channel();

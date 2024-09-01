@@ -82,7 +82,7 @@ impl MacroState {
 
         quote! {
             impl aper::AperSync for #name {
-                fn attach(treemap: aper::TreeMapRef) -> Self {
+                fn attach(treemap: aper::StoreHandle) -> Self {
                     #fields
                 }
             }
@@ -105,7 +105,7 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(treemap: aper::TreeMapRef) -> Self {
+                fn attach(treemap: aper::StoreHandle) -> Self {
                     MyStruct
                 }
             }
@@ -128,7 +128,7 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(treemap: aper::TreeMapRef) -> Self {
+                fn attach(treemap: aper::StoreHandle) -> Self {
                     MyStruct {
                         field1: aper::AperSync::attach(treemap.child(b"field1")),
                         field2: aper::AperSync::attach(treemap.child(b"field2"))
@@ -151,7 +151,7 @@ mod tests {
 
         let expected = quote! {
             impl aper::AperSync for MyStruct {
-                fn attach(treemap: aper::TreeMapRef) -> Self {
+                fn attach(treemap: aper::StoreHandle) -> Self {
                     MyStruct(
                         aper::AperSync::attach(treemap.child(b"\0\0\0\0\0\0\0\0")),
                         aper::AperSync::attach(treemap.child(b"\0\0\0\0\0\0\0\x01"))

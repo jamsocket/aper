@@ -15,7 +15,7 @@ and server implementation aimed at synchronizing state across multiple `WebAssem
 
 Aper defines two core traits: `AperSync`, which we'll talk about here, and `Aper`, which we'll talk about soon.
 
-`AperSync` means that the struct can be synchronized *unidirectionally*. An `AperSync` struct does not own its own data; instead, its fields are references into a `TreeMap`. `TreeMap` is a hierarchical map data structure provided by Aper that can be synchronized across a network.
+`AperSync` means that the struct can be synchronized *unidirectionally*. An `AperSync` struct does not own its own data; instead, its fields are references into a `Store`. `Store` is a hierarchical map data structure provided by Aper that can be synchronized across a network.
 
 Typically, you will not implement `AperSync` directly, but instead derive it. For example, here's a simple `AperSync` struct that could represent an item in a to-do list:
 
@@ -65,15 +65,15 @@ struct ToDoList {
 
 ## Using `AperSync` types
 
-`AperSync` structs are constructed by “attaching” them to a `TreeMap`. Every `AperSync` type implicitly has a default
-value, which is what you get when you attach it to an empty `TreeMap`.
+`AperSync` structs are constructed by “attaching” them to a `Store`. Every `AperSync` type implicitly has a default
+value, which is what you get when you attach it to an empty `Store`.
 
 When modifying collections of `AperSync` like `Map`, you don't insert new values directly. Instead, you call a method like
 `get_or_create` that creates the value as its default, and then call mutators on the value that is returned, like so:
 
 ```rust
 # use aper::{data_structures::{Atom, Map}};
-use aper::{AperSync, TreeMapRef};
+use aper::{AperSync, StoreHandle};
 
 # #[derive(AperSync)]
 # struct ToDoItem {
@@ -87,7 +87,7 @@ use aper::{AperSync, TreeMapRef};
 # }
 
 fn main() {
-   let treemap = TreeMapRef::default();
+   let treemap = StoreHandle::default();
    let todos = ToDoList::attach(treemap);
 
    let mut todo1 = todos.items.get_or_create(&"todo1".to_string());
