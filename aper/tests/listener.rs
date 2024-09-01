@@ -133,10 +133,6 @@ impl Aper for LinkedFields {
     type Error = ();
 
     fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
-        println!("apply: {:?}", intent);
-        println!("lhs: {:?}", self.lhs.get());
-        println!("rhs: {:?}", self.rhs.get());
-
         match intent {
             LinkedFieldIntent::SetLhs(value) => self.lhs.set(*value),
             LinkedFieldIntent::SetRhs(value) => self.rhs.set(*value),
@@ -169,13 +165,14 @@ fn test_mutate_listener_incidental() {
     assert_eq!(1, st.lhs.get());
     assert_eq!(1, st.sum.get());
 
+    client.mutate(&vec![], None, 1);
+
     assert!(lhs_recv.try_recv().is_ok());
     assert!(rhs_recv.try_recv().is_err());
     assert!(sum_recv.try_recv().is_ok());
 
     // now mutate the rhs, which should cause the sum to be recomputed
 
-    println!("mutating rhs");
     client.mutate(
         &vec![create_mutation(
             vec![b"rhs"],
@@ -187,10 +184,6 @@ fn test_mutate_listener_incidental() {
         None,
         1,
     );
-    println!("done mutating rhs");
-
-    // TODO: this should not cause a failure, but does?
-    // let st = client.state();
 
     assert_eq!(26, st.rhs.get());
     assert_eq!(27, st.sum.get());

@@ -20,16 +20,16 @@ pub enum PrefixMap {
 }
 
 impl PrefixMap {
-    fn get(&self, key: &Bytes) -> Option<Bytes> {
+    fn get(&self, key: &Bytes) -> Option<PrefixMapValue> {
         match self {
             PrefixMap::Children(children) => {
-                if let Some(PrefixMapValue::Value(value)) = children.get(key) {
+                if let Some(value) = children.get(key) {
                     Some(value.clone())
                 } else {
                     None
                 }
             }
-            PrefixMap::DeletedPrefixMap => None,
+            PrefixMap::DeletedPrefixMap => Some(PrefixMapValue::Deleted),
         }
     }
 
@@ -212,12 +212,14 @@ impl Store {
 
         for layer in inner.layers.iter().rev() {
             if let Some(map) = layer.layer.get(prefix) {
-                println!("yy {:?} {:?}", prefix, key);
-                return map.get(key);
+                if let Some(value) = map.get(key) {
+                    match value {
+                        PrefixMapValue::Value(value) => return Some(value.clone()),
+                        PrefixMapValue::Deleted => return None,
+                    }
+                }
             }
         }
-
-        println!("xx {:?} {:?}", prefix, key);
 
         None
     }

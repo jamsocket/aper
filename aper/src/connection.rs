@@ -92,8 +92,6 @@ impl<A: Aper> ClientConnection<A> {
     }
 
     pub fn receive(&mut self, message: &MessageToClient) {
-        println!("Received message: {:?}", message);
-
         match &message.message {
             MessageToClientType::Apply {
                 mutations,

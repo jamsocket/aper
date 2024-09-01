@@ -135,11 +135,7 @@ impl<A: Aper> AperClient<A> {
         self.store.pop_overlay();
         self.verified_server_version = server_version;
 
-        println!("mutate called; before: {:?}", self.store);
-
         self.store.mutate(mutations);
-
-        println!("mutate called; after: {:?}", self.store);
 
         // push new speculative overlay
         self.store.push_overlay();
@@ -167,6 +163,7 @@ impl<A: Aper> AperClient<A> {
         for speculative_intent in self.intent_stack.iter() {
             // push a working overlay
             self.store.push_overlay();
+
             let mut sm = A::attach(self.store.handle());
 
             if sm.apply(&speculative_intent.intent).is_err() {
