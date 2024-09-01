@@ -23,7 +23,7 @@ impl<T: Serialize + DeserializeOwned + Default> Atom<T> {
     pub fn get(&self) -> T {
         self.map
             .get(&vec![])
-            .map(|bytes| bincode::deserialize(&bytes).unwrap())
+            .map(|bytes| bincode::deserialize(&bytes).expect("Couldn't deserialize"))
             .unwrap_or_default()
     }
 

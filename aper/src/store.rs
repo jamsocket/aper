@@ -1,4 +1,7 @@
-use crate::{listener::ListenerMap, Bytes, Mutation};
+use crate::{
+    listener::{self, ListenerMap},
+    Bytes, Mutation,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
@@ -61,30 +64,30 @@ pub struct StoreLayer {
 }
 
 pub struct StoreInner {
-    layers: Vec<StoreLayer>,
-    listeners: ListenerMap,
+    layers: Mutex<Vec<StoreLayer>>,
+    listeners: Mutex<ListenerMap>,
 }
 
 impl Default for StoreInner {
     fn default() -> Self {
         Self {
-            layers: vec![StoreLayer::default()],
-            listeners: ListenerMap::default(),
+            layers: Mutex::new(vec![StoreLayer::default()]),
+            listeners: Mutex::new(ListenerMap::default()),
         }
     }
 }
 
 #[derive(Clone, Default)]
 pub struct Store {
-    inner: Arc<Mutex<StoreInner>>,
+    inner: Arc<StoreInner>,
 }
 
 impl Store {
     pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
         let mut result = std::collections::BTreeSet::new();
-        let inner = self.inner.lock().unwrap();
+        let layers = self.inner.layers.lock().unwrap();
 
-        for layer in inner.layers.iter() {
+        for layer in layers.iter() {
             for (prefix, value) in layer.layer.iter() {
                 match value {
                     PrefixMap::Children(_) => {
@@ -102,43 +105,48 @@ impl Store {
 
     /// Ensure that a prefix exists (even if it is empty) in the store.
     pub fn ensure(&self, prefix: &[Bytes]) {
-        let mut inner = self.inner.lock().unwrap();
-        let mut layer = inner.layers.last_mut().unwrap();
+        let mut layers = self.inner.layers.lock().unwrap();
+        let mut layer = layers.last_mut().unwrap();
 
         layer.layer.entry(prefix.to_vec()).or_default();
     }
 
     pub fn push_overlay(&self) {
-        let mut inner = self.inner.lock().unwrap();
-        inner.layers.push(StoreLayer::default());
+        let mut layers = self.inner.layers.lock().unwrap();
+        layers.push(StoreLayer::default());
     }
 
     pub fn pop_overlay(&self) {
-        let mut inner = self.inner.lock().unwrap();
-        inner.layers.pop();
+        let mut layers = self.inner.layers.lock().unwrap();
+        layers.pop();
 
-        if inner.layers.is_empty() {
+        if layers.is_empty() {
             tracing::error!("popped last overlay");
         }
     }
 
     pub fn notify_dirty(&self) {
         let mut dirty_prefixes = HashSet::new();
-        let mut inner = self.inner.lock().unwrap();
 
-        for layer in inner.layers.iter_mut() {
-            let new_prefixes = std::mem::take(&mut layer.dirty);
-            dirty_prefixes.extend(new_prefixes.into_iter());
+        {
+            // Collect dirty prefixes in an anonymous scope, so that the lock is released before
+            // listeners are alerted.
+            let mut layers = self.inner.layers.lock().unwrap();
+            for layer in layers.iter_mut() {
+                let new_prefixes = std::mem::take(&mut layer.dirty);
+                dirty_prefixes.extend(new_prefixes.into_iter());
+            }
         }
 
+        let mut listeners = self.inner.listeners.lock().unwrap();
         for prefix in dirty_prefixes.iter() {
-            inner.listeners.alert(prefix);
+            listeners.alert(prefix);
         }
     }
 
     pub fn top_layer_mutations(&self) -> Vec<Mutation> {
-        let mut inner = self.inner.lock().unwrap();
-        let top_layer = inner.layers.last().unwrap();
+        let mut layers = self.inner.layers.lock().unwrap();
+        let top_layer = layers.last().unwrap();
 
         let mut mutations = vec![];
 
@@ -153,19 +161,19 @@ impl Store {
     }
 
     pub fn alert(&self, prefix: &Vec<Bytes>) {
-        let mut inner = self.inner.lock().unwrap();
-        inner.listeners.alert(prefix);
+        let mut listeners = self.inner.listeners.lock().unwrap();
+        listeners.alert(prefix);
     }
 
     pub fn combine_down(&self) {
-        let mut inner = self.inner.lock().unwrap();
+        let mut layers = self.inner.layers.lock().unwrap();
 
-        let Some(top_layer) = inner.layers.pop() else {
+        let Some(top_layer) = layers.pop() else {
             return;
         };
 
         // Combine the top layer with the next layer.
-        let Some(next_layer) = inner.layers.last_mut() else {
+        let Some(next_layer) = layers.last_mut() else {
             return;
         };
 
@@ -202,9 +210,9 @@ impl Store {
     }
 
     pub fn get(&self, prefix: &Vec<Bytes>, key: &Bytes) -> Option<Bytes> {
-        let inner = self.inner.lock().unwrap();
+        let layers = self.inner.layers.lock().unwrap();
 
-        for layer in inner.layers.iter().rev() {
+        for layer in layers.iter().rev() {
             if let Some(map) = layer.layer.get(prefix) {
                 if let Some(value) = map.get(key) {
                     match value {
@@ -219,8 +227,8 @@ impl Store {
     }
 
     pub fn mutate(&self, mutations: &[Mutation]) {
-        let mut inner = self.inner.lock().unwrap();
-        let top_layer = inner.layers.last_mut().unwrap();
+        let mut layers = self.inner.layers.lock().unwrap();
+        let top_layer = layers.last_mut().unwrap();
 
         for mutation in mutations.iter() {
             match &mutation.entries {
@@ -257,19 +265,20 @@ pub struct StoreHandle {
 
 impl StoreHandle {
     pub fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
-        let mut inner = self.map.inner.lock().unwrap();
-        inner.listeners.listen(self.prefix.clone(), listener);
+        let mut listeners = self.map.inner.listeners.lock().unwrap();
+        listeners.listen(self.prefix.clone(), listener);
     }
 
     pub fn get(&self, key: &Bytes) -> Option<Bytes> {
+        println!("yy");
         self.map.get(&self.prefix, key)
     }
 
     pub fn set(&mut self, key: Bytes, value: Bytes) {
         // set the value in the top layer.
 
-        let mut inner = self.map.inner.lock().unwrap();
-        let mut top_layer = inner.layers.last_mut().unwrap();
+        let mut layers = self.map.inner.layers.lock().unwrap();
+        let mut top_layer = layers.last_mut().unwrap();
 
         let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
@@ -281,8 +290,8 @@ impl StoreHandle {
     pub fn delete(&mut self, key: Bytes) {
         // delete the value in the top layer.
 
-        let mut inner = self.map.inner.lock().unwrap();
-        let mut top_layer = inner.layers.last_mut().unwrap();
+        let mut layers = self.map.inner.layers.lock().unwrap();
+        let mut top_layer = layers.last_mut().unwrap();
 
         let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
@@ -305,15 +314,15 @@ impl StoreHandle {
         let mut prefix = self.prefix.clone();
         prefix.push(path_part.to_vec());
 
-        let mut inner = self.map.inner.lock().unwrap();
-        let mut top_layer = inner.layers.last_mut().unwrap();
+        let mut layers = self.map.inner.layers.lock().unwrap();
+        let mut top_layer = layers.last_mut().unwrap();
 
         // When we delete a prefix, we delete not only that prefix but all of the prefixes under it.
         // TODO: This is a bit expensive, in order to make a trade-off that reads are faster. Is the balance optimal?
 
         let mut prefixes_to_delete = HashSet::new();
 
-        for layer in inner.layers.iter() {
+        for layer in layers.iter() {
             for (pfx, val) in layer.layer.iter() {
                 if pfx.starts_with(&prefix) {
                     prefixes_to_delete.insert(pfx.clone());
@@ -321,7 +330,7 @@ impl StoreHandle {
             }
         }
 
-        let mut top_layer = inner.layers.last_mut().unwrap();
+        let mut top_layer = layers.last_mut().unwrap();
 
         for pfx in prefixes_to_delete.iter() {
             top_layer
@@ -334,9 +343,9 @@ impl StoreHandle {
 
 impl Debug for Store {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let inner = self.inner.lock().unwrap();
+        let layers = self.inner.layers.lock().unwrap();
 
-        for (i, layer) in inner.layers.iter().enumerate() {
+        for (i, layer) in layers.iter().enumerate() {
             writeln!(f, "Layer {}", i)?;
             for (prefix, map) in layer.layer.iter() {
                 writeln!(f, "  {:?} -> {:?}", prefix, map)?;

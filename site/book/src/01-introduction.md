@@ -73,7 +73,7 @@ When modifying collections of `AperSync` like `Map`, you don't insert new values
 
 ```rust
 # use aper::{data_structures::{Atom, Map}};
-use aper::{AperSync, StoreHandle};
+use aper::{AperSync, Store};
 
 # #[derive(AperSync)]
 # struct ToDoItem {
@@ -87,8 +87,8 @@ use aper::{AperSync, StoreHandle};
 # }
 
 fn main() {
-   let store = StoreHandle::default();
-   let todos = ToDoList::attach(store);
+   let store = Store::default();
+   let mut todos = ToDoList::attach(store.handle());
 
    let mut todo1 = todos.items.get_or_create(&"todo1".to_string());
    todo1.name.set("Do laundry".to_string());

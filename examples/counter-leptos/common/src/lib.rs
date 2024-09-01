@@ -1,9 +1,9 @@
-use aper::{data_structures::atom::Atom, Aper, Attach};
+use aper::{data_structures::atom::Atom, Aper, AperSync};
 use serde::{Deserialize, Serialize};
 
-#[derive(Attach)]
+#[derive(AperSync)]
 pub struct Counter {
-    value: Atom<i64>,
+    pub value: Atom<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
