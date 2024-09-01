@@ -104,7 +104,7 @@ checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
 
 [[package]]
 name = "aper"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "aper-derive",
  "bincode",
@@ -125,7 +125,7 @@ dependencies = [
 
 [[package]]
 name = "aper-derive"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -146,7 +146,7 @@ dependencies = [
 
 [[package]]
 name = "aper-stateroom"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "aper",
  "bincode",
@@ -159,7 +159,7 @@ dependencies = [
 
 [[package]]
 name = "aper-websocket-client"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "aper",
@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "aper-yew"
-version = "0.3.0"
+version = "0.5.0"
 dependencies = [
  "aper",
  "aper-stateroom",
