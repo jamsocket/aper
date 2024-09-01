@@ -14,7 +14,7 @@ pub use store::*;
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Mutation {
     pub prefix: Vec<Bytes>,
-    pub entries: Vec<(Bytes, Option<Bytes>)>,
+    pub entries: PrefixMap,
 }
 
 pub type Bytes = Vec<u8>;

@@ -1,23 +1,69 @@
 use crate::{listener::ListenerMap, Bytes, Mutation};
+use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
     collections::{BTreeMap, HashSet},
+    fmt::{Debug, Formatter},
     sync::{Arc, Mutex},
 };
+
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+pub enum PrefixMapValue {
+    Value(Bytes),
+    Deleted,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub enum PrefixMap {
+    Children(BTreeMap<Bytes, PrefixMapValue>),
+    DeletedPrefixMap,
+}
+
+impl PrefixMap {
+    fn get(&self, key: &Bytes) -> Option<Bytes> {
+        match self {
+            PrefixMap::Children(children) => {
+                if let Some(PrefixMapValue::Value(value)) = children.get(key) {
+                    Some(value.clone())
+                } else {
+                    None
+                }
+            }
+            PrefixMap::DeletedPrefixMap => None,
+        }
+    }
+
+    fn insert(&mut self, key: Bytes, value: PrefixMapValue) {
+        match self {
+            PrefixMap::Children(children) => {
+                children.insert(key, value);
+            }
+            PrefixMap::DeletedPrefixMap => {
+                if value == PrefixMapValue::Deleted {
+                    // the prefix map is deleted, so we don't need to delete the value.
+                    return;
+                }
+
+                let mut new_children = BTreeMap::new();
+                new_children.insert(key, value);
+                *self = PrefixMap::Children(new_children);
+            }
+        }
+    }
+}
+
+impl Default for PrefixMap {
+    fn default() -> Self {
+        Self::Children(BTreeMap::new())
+    }
+}
 
 #[derive(Default)]
 pub struct StoreLayer {
     /// Map of prefix to direct children at that prefix.
-    layer: BTreeMap<Vec<Bytes>, BTreeMap<Bytes, Option<Bytes>>>,
+    layer: BTreeMap<Vec<Bytes>, PrefixMap>,
     /// A set of prefixes that have been modified in this layer.
     dirty: HashSet<Vec<Bytes>>,
-}
-
-impl StoreLayer {
-    /// Return a list of prefixes in this layer.
-    pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
-        self.layer.keys().cloned().collect()
-    }
 }
 
 pub struct StoreInner {
@@ -45,8 +91,15 @@ impl Store {
         let inner = self.inner.lock().unwrap();
 
         for layer in inner.layers.iter() {
-            for prefix in layer.prefixes() {
-                result.insert(prefix);
+            for (prefix, value) in layer.layer.iter() {
+                match value {
+                    PrefixMap::Children(_) => {
+                        result.insert(prefix.clone());
+                    }
+                    PrefixMap::DeletedPrefixMap => {
+                        result.remove(prefix);
+                    }
+                }
             }
         }
 
@@ -95,20 +148,10 @@ impl Store {
 
         let mut mutations = vec![];
 
-        for (prefix, map) in top_layer.layer.iter() {
-            let mut entries = vec![];
-
-            for (key, value) in map.iter() {
-                entries.push((key.clone(), value.clone()));
-            }
-
-            if entries.is_empty() {
-                continue;
-            }
-
+        for (prefix, entries) in top_layer.layer.iter() {
             mutations.push(Mutation {
                 prefix: prefix.clone(),
-                entries,
+                entries: entries.clone(),
             });
         }
 
@@ -133,13 +176,31 @@ impl Store {
         };
 
         for (prefix, map) in top_layer.layer.iter() {
-            let mut next_map = next_layer
-                .layer
-                .entry(prefix.clone())
-                .or_insert_with(BTreeMap::new);
+            match map {
+                PrefixMap::Children(children) => {
+                    let entry = next_layer
+                        .layer
+                        .entry(prefix.clone())
+                        .or_insert_with(|| PrefixMap::Children(BTreeMap::new()));
 
-            for (key, value) in map.iter() {
-                next_map.insert(key.clone(), value.clone());
+                    match entry {
+                        PrefixMap::Children(next_children) => {
+                            for (key, value) in children.iter() {
+                                next_children.insert(key.clone(), value.clone());
+                            }
+                        }
+                        PrefixMap::DeletedPrefixMap => {
+                            next_layer
+                                .layer
+                                .insert(prefix.clone(), PrefixMap::Children(children.clone()));
+                        }
+                    }
+                }
+                PrefixMap::DeletedPrefixMap => {
+                    next_layer
+                        .layer
+                        .insert(prefix.clone(), PrefixMap::DeletedPrefixMap);
+                }
             }
         }
 
@@ -151,11 +212,12 @@ impl Store {
 
         for layer in inner.layers.iter().rev() {
             if let Some(map) = layer.layer.get(prefix) {
-                if let Some(value) = map.get(key) {
-                    return value.clone();
-                }
+                println!("yy {:?} {:?}", prefix, key);
+                return map.get(key);
             }
         }
+
+        println!("xx {:?} {:?}", prefix, key);
 
         None
     }
@@ -165,10 +227,18 @@ impl Store {
         let top_layer = inner.layers.last_mut().unwrap();
 
         for mutation in mutations.iter() {
-            let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
+            match &mutation.entries {
+                PrefixMap::DeletedPrefixMap => {
+                    let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
+                    *map = PrefixMap::DeletedPrefixMap;
+                }
+                PrefixMap::Children(children) => {
+                    let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
 
-            for (key, value) in mutation.entries.iter() {
-                map.insert(key.clone(), value.clone());
+                    for (key, value) in children.iter() {
+                        map.insert(key.clone(), value.clone());
+                    }
+                }
             }
 
             top_layer.dirty.insert(mutation.prefix.clone());
@@ -209,7 +279,7 @@ impl StoreHandle {
 
         top_layer.dirty.insert(self.prefix.clone());
 
-        map.insert(key, Some(value));
+        map.insert(key, PrefixMapValue::Value(value));
     }
 
     pub fn delete(&mut self, key: Bytes) {
@@ -222,7 +292,7 @@ impl StoreHandle {
 
         top_layer.dirty.insert(self.prefix.clone());
 
-        map.insert(key, None);
+        map.insert(key, PrefixMapValue::Deleted);
     }
 
     pub fn child(&mut self, path_part: &[u8]) -> Self {
@@ -233,6 +303,51 @@ impl StoreHandle {
             map: self.map.clone(),
             prefix,
         }
+    }
+
+    pub fn delete_child(&mut self, path_part: &[u8]) {
+        let mut prefix = self.prefix.clone();
+        prefix.push(path_part.to_vec());
+
+        let mut inner = self.map.inner.lock().unwrap();
+        let mut top_layer = inner.layers.last_mut().unwrap();
+
+        // When we delete a prefix, we delete not only that prefix but all of the prefixes under it.
+        // TODO: This is a bit expensive, in order to make a trade-off that reads are faster. Is the balance optimal?
+
+        let mut prefixes_to_delete = HashSet::new();
+
+        for layer in inner.layers.iter() {
+            for (pfx, val) in layer.layer.iter() {
+                if pfx.starts_with(&prefix) {
+                    prefixes_to_delete.insert(pfx.clone());
+                }
+            }
+        }
+
+        let mut top_layer = inner.layers.last_mut().unwrap();
+
+        for pfx in prefixes_to_delete.iter() {
+            top_layer
+                .layer
+                .insert(pfx.clone(), PrefixMap::DeletedPrefixMap);
+            top_layer.dirty.insert(pfx.clone());
+        }
+    }
+}
+
+impl Debug for Store {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let inner = self.inner.lock().unwrap();
+
+        for (i, layer) in inner.layers.iter().enumerate() {
+            writeln!(f, "Layer {}", i)?;
+            for (prefix, map) in layer.layer.iter() {
+                writeln!(f, "  {:?} -> {:?}", prefix, map)?;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -265,7 +380,7 @@ mod test {
         let mut child_handle = handle.child(b"foo");
         let _ = child_handle.child(b"bar");
 
-        handle.delete(b"foo".to_vec());
+        handle.delete_child(b"foo".as_slice());
 
         assert_eq!(store.prefixes(), vec![] as Vec<Vec<Bytes>>);
     }

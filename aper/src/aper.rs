@@ -30,7 +30,7 @@ struct SpeculativeIntent<I> {
 }
 
 pub struct AperClient<A: Aper> {
-    map: Store,
+    store: Store,
     intent_stack: VecDeque<SpeculativeIntent<A::Intent>>,
 
     /// The next unused client version number for this client.
@@ -57,12 +57,16 @@ impl<A: Aper> AperClient<A> {
         map.push_overlay();
 
         Self {
-            map,
+            store: map,
             intent_stack: VecDeque::new(),
             next_client_version: 1,
             verified_client_version: 0,
             verified_server_version: 0,
         }
+    }
+
+    pub fn store(&self) -> Store {
+        self.store.clone()
     }
 
     pub fn connect<F: Fn(MessageToServer) + 'static, FS: Fn(A, u32) + 'static>(
@@ -74,7 +78,7 @@ impl<A: Aper> AperClient<A> {
     }
 
     pub fn state(&self) -> A {
-        A::attach(self.map.handle())
+        A::attach(self.store.handle())
     }
 
     pub fn verified_client_version(&self) -> u64 {
@@ -93,14 +97,14 @@ impl<A: Aper> AperClient<A> {
 
     /// Apply a mutation to the local client state.
     pub fn apply(&mut self, intent: &A::Intent) -> Result<u64, A::Error> {
-        self.map.push_overlay();
+        self.store.push_overlay();
 
         {
-            let mut sm = A::attach(self.map.handle());
+            let mut sm = A::attach(self.store.handle());
 
             if let Err(e) = sm.apply(intent) {
                 // reverse changes.
-                self.map.pop_overlay();
+                self.store.pop_overlay();
                 return Err(e);
             }
         }
@@ -112,8 +116,8 @@ impl<A: Aper> AperClient<A> {
         });
         self.next_client_version += 1;
 
-        self.map.combine_down();
-        self.map.notify_dirty();
+        self.store.combine_down();
+        self.store.notify_dirty();
 
         Ok(version)
     }
@@ -128,13 +132,17 @@ impl<A: Aper> AperClient<A> {
         // pop speculative overlay
         // TODO: we need to capture notifications from the speculative overlay being popped, since it could
         // undo changes that are not re-done.
-        self.map.pop_overlay();
+        self.store.pop_overlay();
         self.verified_server_version = server_version;
 
-        self.map.mutate(mutations);
+        println!("mutate called; before: {:?}", self.store);
+
+        self.store.mutate(mutations);
+
+        println!("mutate called; after: {:?}", self.store);
 
         // push new speculative overlay
-        self.map.push_overlay();
+        self.store.push_overlay();
 
         if let Some(version) = client_version {
             self.verified_client_version = version;
@@ -158,19 +166,19 @@ impl<A: Aper> AperClient<A> {
 
         for speculative_intent in self.intent_stack.iter() {
             // push a working overlay
-            self.map.push_overlay();
-            let mut sm = A::attach(self.map.handle());
+            self.store.push_overlay();
+            let mut sm = A::attach(self.store.handle());
 
             if sm.apply(&speculative_intent.intent).is_err() {
                 // reverse changes.
-                self.map.pop_overlay();
+                self.store.pop_overlay();
                 continue;
             }
 
-            self.map.combine_down();
+            self.store.combine_down();
         }
 
-        self.map.notify_dirty();
+        self.store.notify_dirty();
     }
 }
 

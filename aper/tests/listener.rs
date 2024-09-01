@@ -1,9 +1,9 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperClient, AperSync, Mutation,
+    Aper, AperClient, AperSync, Mutation, PrefixMap, PrefixMapValue,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::mpsc::channel;
+use std::{collections::BTreeMap, sync::mpsc::channel};
 
 #[derive(AperSync)]
 struct SimpleStruct {
@@ -32,6 +32,13 @@ impl Aper for SimpleStruct {
 
         Ok(())
     }
+}
+
+fn create_mutation(prefix: Vec<&[u8]>, entries: Vec<(Vec<u8>, PrefixMapValue)>) -> Mutation {
+    let entries = entries.into_iter().collect::<BTreeMap<_, _>>();
+    let entries = PrefixMap::Children(entries);
+    let prefix = prefix.iter().map(|x| x.to_vec()).collect();
+    Mutation { prefix, entries }
 }
 
 #[test]
@@ -90,10 +97,13 @@ fn test_mutate_listener_simple() {
         .listen(move || fixed_array_send.send(()).is_ok());
 
     client.mutate(
-        &vec![Mutation {
-            prefix: vec![b"atom_i32".to_vec()],
-            entries: vec![(b"".to_vec(), Some(42i32.to_le_bytes().to_vec()))],
-        }],
+        &vec![create_mutation(
+            vec![b"atom_i32"],
+            vec![(
+                b"".to_vec(),
+                PrefixMapValue::Value(42i32.to_le_bytes().to_vec()),
+            )],
+        )],
         None,
         1,
     );
@@ -123,6 +133,10 @@ impl Aper for LinkedFields {
     type Error = ();
 
     fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
+        println!("apply: {:?}", intent);
+        println!("lhs: {:?}", self.lhs.get());
+        println!("rhs: {:?}", self.rhs.get());
+
         match intent {
             LinkedFieldIntent::SetLhs(value) => self.lhs.set(*value),
             LinkedFieldIntent::SetRhs(value) => self.rhs.set(*value),
@@ -161,17 +175,22 @@ fn test_mutate_listener_incidental() {
 
     // now mutate the rhs, which should cause the sum to be recomputed
 
+    println!("mutating rhs");
     client.mutate(
-        &vec![Mutation {
-            prefix: vec![b"rhs".to_vec()],
-            entries: vec![(b"".to_vec(), Some(26i32.to_le_bytes().to_vec()))],
-        }],
+        &vec![create_mutation(
+            vec![b"rhs"],
+            vec![(
+                b"".to_vec(),
+                PrefixMapValue::Value(26i32.to_le_bytes().to_vec()),
+            )],
+        )],
         None,
         1,
     );
+    println!("done mutating rhs");
 
-    // TODO: we shouldn't need to reconstruct the state, but we do because the state refers to a specific layer.
-    let st = client.state();
+    // TODO: this should not cause a failure, but does?
+    // let st = client.state();
 
     assert_eq!(26, st.rhs.get());
     assert_eq!(27, st.sum.get());
