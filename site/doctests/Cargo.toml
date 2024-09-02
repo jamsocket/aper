@@ -9,4 +9,5 @@ publish = false
 aper = { path = "../../aper" }
 doc-comment = "0.3.3"
 serde = { version = "1.0.123", features = ["derive"] }
+uuid = { version = "1.10.0", features = ["v4", "serde"] }
 

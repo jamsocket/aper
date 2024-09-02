@@ -1,100 +1,39 @@
 # Introduction
 
-**Aper** is a Rust data structure library. Essentially, it lets you create a `struct` that can be synchronized across multiple instances of your program running across a network.
+**Aper** is a Rust data synchronization library. Fundamentally, Aper lets you create a `struct` that can be synchronized across multiple instances of your program, possibly running across a network.
 
 Use-cases of Aper include:
 - managing the state of an application with real-time collaboration features
 - creating an timestamped audit trail of an arbitrary data structure
 - synchronizing the game state of a multiplayer game.
 
-The core `aper` library implements the underlying data structures and algorithms, but is agnostic to the
-actual mechanism for transfering data on a network. The crates `aper-websocket-client` and `aper-serve` provide a client
-and server implementation aimed at synchronizing state across multiple `WebAssembly` clients using `WebSockets`.
+The core `Aper` library is not tied to a particular transport, but works nicely with WebSocket. The `aper-websocket-client` and `aper-serve` crates define WebAssembly-based client and server libraries for Aper data structures.
 
-## `AperSync`
+## Design Goals
 
-Aper defines two core traits: `AperSync`, which we'll talk about here, and `Aper`, which we'll talk about soon.
+Aper is designed for **server-authoritative** synchronization, where one instance of an Aper program is considered the “server”, and others are ”clients”.
 
-`AperSync` means that the struct can be synchronized *unidirectionally*. An `AperSync` struct does not own its own data; instead, its fields are references into a `Store`. `Store` is a hierarchical map data structure provided by Aper that can be synchronized across a network.
+This is in contrast to conflict-free replicated data types (CRDTs), which are designed to work in peer-to-peer environments. A design goal of Aper is to allow developers to take full advantage of the server authority, which makes it possible to enforce data invariants.
 
-Typically, you will not implement `AperSync` directly, but instead derive it. For example, here's a simple `AperSync` struct that could represent an item in a to-do list:
+The other guiding goals of Aper are:
 
-```rust
-use aper::{AperSync, data_structures::Atom};
+- Local (optimistic) updates should be fast.
+- Data synchronization concerns should not live in application code.
 
-#[derive(AperSync)]
-struct ToDoItem {
-   done: Atom<bool>,
-   name: Atom<String>,
-}
-```
+Aper is designed for structured/nested data. It is not optimized for long, flat sequences like text.
 
-In order to derive `AperSync`, **every field must implement AperSync**. Typically, this means that fields will either be data structures imported from the `aper::data_structures::*` module, or `structs` that you have derived `AperSync` on.
+## Overview
 
-`Atom` is the most basic `AperSync` type; it represents an atomic value with the provided type. Any serde-serializable type can be used, but keep in mind that these values are opaque to the synchronization system and any modifications mean replacing them entirely.
+Aper provides a number of traits and structs that are key to understanding Aper.
 
-Generally, for compound data structures, you should use more appropriate types. Here's an example of using `AtomMap`:
+The **`Store`** struct is the core data store in Aper. Aper knows how to synchronize a `Store` *one-way* across a network, i.e. from the server to clients.
 
-```rust
-use aper::{AperSync, data_structures::AtomMap};
+The **`AperSync`** trait designates a struct that expects to be stored in a `Store`. An `AperSync` struct is really just a reference into some data in the store, along with associated methods for interpreting it as Rust types.
 
-#[derive(AperSync)]
-struct PhoneBook {
-   name_to_number: AtomMap<String, String>,
-}
-```
+Since a `Store` can be synchronized by Aper, and `AperSync` is just a reference to data in a `Store`, `AperSync` types can be synchronized.
 
-The `Atom` in `AtomMap` refers to the fact that the **values** of the map act like `Atom`s: they do not need to implement `AperSync`, but must be (de)serializable.
+But that synchronization is only one-way: from server to clients. Generally, clients will also want to modify the data, which is where the `Aper` trait comes in.
 
-Aper also provides a type of map where values are `AperSync`. This allows more fine-grained updates to the data structure. For example, you might want to create a todo list by mapping a unique ID to a `ToDoItem`:
+The **`Aper`** trait designates a struct as being *bidirectionally* synchronizable. It defines a set of actions (called *intents*) that can be performed on the store to update it.
 
-```rust
-use aper::{AperSync, data_structures::{Atom, Map}};
-
-#[derive(AperSync)]
-struct ToDoItem {
-   pub done: Atom<bool>,
-   pub name: Atom<String>,
-}
-
-#[derive(AperSync)]
-struct ToDoList {
-   pub items: Map<String, ToDoItem>,
-}
-```
-
-## Using `AperSync` types
-
-`AperSync` structs are constructed by “attaching” them to a `Store`. Every `AperSync` type implicitly has a default
-value, which is what you get when you attach it to an empty `Store`.
-
-When modifying collections of `AperSync` like `Map`, you don't insert new values directly. Instead, you call a method like
-`get_or_create` that creates the value as its default, and then call mutators on the value that is returned, like so:
-
-```rust
-# use aper::{data_structures::{Atom, Map}};
-use aper::{AperSync, Store};
-
-# #[derive(AperSync)]
-# struct ToDoItem {
-#    pub done: Atom<bool>,
-#    pub name: Atom<String>,
-# }
-# 
-# #[derive(AperSync)]
-# struct ToDoList {
-#    pub items: Map<String, ToDoItem>,
-# }
-
-fn main() {
-   let store = Store::default();
-   let mut todos = ToDoList::attach(store.handle());
-
-   let mut todo1 = todos.items.get_or_create(&"todo1".to_string());
-   todo1.name.set("Do laundry".to_string());
-
-   let mut todo2 = todos.items.get_or_create(&"todo2".to_string());
-   todo2.name.set("Wash dishes".to_string());
-   todo2.done.set(true);
-}
-```
+**`AperClient`** and **`AperServer`** provide a “sans-I/O” client/server sync protocol, implemented for the client- and server-side respectively. Typically, you will not use them directly from application code, but instead use crates like `aper-websocket-client` that use them in combination with a particular I/O library.

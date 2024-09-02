@@ -33,5 +33,5 @@ impl<K: Serialize + DeserializeOwned, V: AperSync> Map<K, V> {
     pub fn delete(&mut self, key: &K) {
         let key = bincode::serialize(key).unwrap();
         self.map.delete_child(&key);
-    }
+    }   
 }
