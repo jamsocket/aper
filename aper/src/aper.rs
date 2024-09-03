@@ -1,7 +1,7 @@
 use crate::{
     connection::{ClientConnection, MessageToServer},
-    store::Store,
-    Mutation, StoreHandle,
+    store::{Store, StoreHandle},
+    Mutation,
 };
 use serde::{Deserialize, Serialize};
 use std::{
