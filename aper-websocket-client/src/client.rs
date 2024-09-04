@@ -32,7 +32,7 @@ impl<S> AperWebSocketStateProgramClient<S>
 where
     S: StateProgram,
 {
-    pub fn new<F>(url: &str, state_callback: F) -> Result<Self>
+    pub fn new<F>(url: &str) -> Result<Self>
     where
         F: Fn(S, u32) + 'static,
     {
@@ -63,7 +63,6 @@ where
             Mutex::new(ClientConnection::new(
                 client,
                 message_callback,
-                state_callback,
             ))
         });
 

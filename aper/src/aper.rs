@@ -66,12 +66,11 @@ impl<A: Aper> AperClient<A> {
         self.store.clone()
     }
 
-    pub fn connect<F: Fn(MessageToServer) + 'static, FS: Fn(A, u32) + 'static>(
+    pub fn connect<F: Fn(MessageToServer) + 'static>(
         self,
         message_callback: F,
-        state_callback: FS,
     ) -> ClientConnection<A> {
-        ClientConnection::new(self, message_callback, state_callback)
+        ClientConnection::new(self, message_callback)
     }
 
     pub fn state(&self) -> A {
