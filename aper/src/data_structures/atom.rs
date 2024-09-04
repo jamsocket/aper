@@ -1,4 +1,5 @@
 use crate::{AperSync, StoreHandle};
+use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct Atom<T: Serialize + DeserializeOwned + Default> {
@@ -22,12 +23,15 @@ impl<T: Serialize + DeserializeOwned + Default> AperSync for Atom<T> {
 impl<T: Serialize + DeserializeOwned + Default> Atom<T> {
     pub fn get(&self) -> T {
         self.map
-            .get(&vec![])
+            .get(&Bytes::new())
             .map(|bytes| bincode::deserialize(&bytes).expect("Couldn't deserialize"))
             .unwrap_or_default()
     }
 
     pub fn set(&mut self, value: T) {
-        self.map.set(vec![], bincode::serialize(&value).unwrap());
+        self.map.set(
+            Bytes::new(),
+            Bytes::from(bincode::serialize(&value).unwrap()),
+        );
     }
 }

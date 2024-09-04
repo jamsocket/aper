@@ -58,9 +58,9 @@ impl StoreHandle {
         map.insert(key, PrefixMapValue::Deleted);
     }
 
-    pub fn child(&mut self, path_part: &[u8]) -> Self {
+    pub fn child(&mut self, path_part: Bytes) -> Self {
         let mut prefix = self.prefix.clone();
-        prefix.push(path_part.to_vec());
+        prefix.push(path_part);
         self.map.ensure(&prefix);
         Self {
             map: self.map.clone(),
@@ -68,9 +68,9 @@ impl StoreHandle {
         }
     }
 
-    pub fn delete_child(&mut self, path_part: &[u8]) {
+    pub fn delete_child(&mut self, path_part: Bytes) {
         let mut prefix = self.prefix.clone();
-        prefix.push(path_part.to_vec());
+        prefix.push(path_part);
 
         let mut layers = self.map.inner.layers.write().unwrap();
 

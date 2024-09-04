@@ -1,6 +1,6 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperClient, AperSync, Mutation, PrefixMap, PrefixMapValue,
+    Aper, AperClient, AperSync, Bytes, Mutation, PrefixMap, PrefixMapValue,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, sync::mpsc::channel};
@@ -35,9 +35,12 @@ impl Aper for SimpleStruct {
 }
 
 fn create_mutation(prefix: Vec<&[u8]>, entries: Vec<(Vec<u8>, PrefixMapValue)>) -> Mutation {
-    let entries = entries.into_iter().collect::<BTreeMap<_, _>>();
+    let entries = entries
+        .into_iter()
+        .map(|(k, v)| (Bytes::from(k.to_vec()), v))
+        .collect::<BTreeMap<Bytes, _>>();
     let entries = PrefixMap::Children(entries);
-    let prefix = prefix.iter().map(|x| x.to_vec()).collect();
+    let prefix = prefix.iter().map(|x| Bytes::from(x.to_vec())).collect();
     Mutation { prefix, entries }
 }
 
@@ -101,7 +104,7 @@ fn test_mutate_listener_simple() {
             vec![b"atom_i32"],
             vec![(
                 b"".to_vec(),
-                PrefixMapValue::Value(42i32.to_le_bytes().to_vec()),
+                PrefixMapValue::Value(Bytes::from(42i32.to_le_bytes().to_vec())),
             )],
         )],
         None,
@@ -178,7 +181,7 @@ fn test_mutate_listener_incidental() {
             vec![b"rhs"],
             vec![(
                 b"".to_vec(),
-                PrefixMapValue::Value(26i32.to_le_bytes().to_vec()),
+                PrefixMapValue::Value(Bytes::from(26i32.to_le_bytes().to_vec())),
             )],
         )],
         None,

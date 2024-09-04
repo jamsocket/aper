@@ -8,6 +8,7 @@ mod store;
 
 pub use aper::*;
 pub use aper_derive::AperSync;
+pub use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 pub use store::*;
 
@@ -16,5 +17,3 @@ pub struct Mutation {
     pub prefix: Vec<Bytes>,
     pub entries: PrefixMap,
 }
-
-pub type Bytes = Vec<u8>;

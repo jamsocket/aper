@@ -1,4 +1,5 @@
 use crate::{AperSync, StoreHandle, StoreIterator};
+use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct AtomMap<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> {
@@ -22,19 +23,20 @@ impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> AperSync 
 impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> AtomMap<K, V> {
     pub fn get(&self, key: &K) -> Option<V> {
         self.map
-            .get(&bincode::serialize(key).unwrap())
+            .get(&Bytes::from(bincode::serialize(key).unwrap()))
             .map(|bytes| bincode::deserialize(&bytes).unwrap())
     }
 
     pub fn set(&mut self, key: &K, value: &V) {
         self.map.set(
-            bincode::serialize(key).unwrap(),
-            bincode::serialize(value).unwrap(),
+            Bytes::from(bincode::serialize(key).unwrap()),
+            Bytes::from(bincode::serialize(value).unwrap()),
         );
     }
 
     pub fn delete(&mut self, key: &K) {
-        self.map.delete(bincode::serialize(key).unwrap());
+        self.map
+            .delete(Bytes::from(bincode::serialize(key).unwrap()));
     }
 
     pub fn iter(&self) -> AtomMapIter<K, V> {

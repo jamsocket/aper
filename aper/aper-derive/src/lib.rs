@@ -55,7 +55,9 @@ impl MacroState {
                     let field = syn::Ident::new(field, proc_macro2::Span::call_site());
                     let name = Literal::byte_string(field.to_string().as_bytes());
                     quote! {
-                        #field: aper::AperSync::attach(store.child(#name))
+                        #field: aper::AperSync::attach(store.child(
+                            aper::Bytes::from_static(#name)
+                        ))
                     }
                 });
                 quote! {
@@ -68,7 +70,9 @@ impl MacroState {
                 let fields = (0..*fields).map(|i| {
                     let i = Literal::byte_string(i.to_be_bytes().as_slice());
                     quote! {
-                        aper::AperSync::attach(store.child(#i))
+                        aper::AperSync::attach(store.child(
+                            aper::Bytes::from_static(#i)
+                        ))
                     }
                 });
                 quote! {

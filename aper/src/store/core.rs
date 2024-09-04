@@ -216,8 +216,8 @@ mod test {
         let store = Store::default();
         let mut handle = store.handle();
 
-        let mut child_handle = handle.child(b"foo");
-        let _ = child_handle.child(b"bar");
+        let mut child_handle = handle.child(Bytes::from_static(b"foo"));
+        let _ = child_handle.child(Bytes::from_static(b"bar"));
 
         assert_eq!(
             store.prefixes(),
@@ -233,10 +233,10 @@ mod test {
         let store = Store::default();
         let mut handle = store.handle();
 
-        let mut child_handle = handle.child(b"foo");
-        let _ = child_handle.child(b"bar");
+        let mut child_handle = handle.child(Bytes::from_static(b"foo"));
+        let _ = child_handle.child(Bytes::from_static(b"bar"));
 
-        handle.delete_child(b"foo".as_slice());
+        handle.delete_child(Bytes::from_static(b"foo"));
 
         assert_eq!(store.prefixes(), vec![] as Vec<Vec<Bytes>>);
     }
