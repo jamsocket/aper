@@ -1,6 +1,7 @@
 use super::{core::StoreLayer, PrefixMap, PrefixMapValue};
 use crate::Bytes;
 use self_cell::self_cell;
+use std::cell::RefCell;
 use std::collections::btree_map::Iter as BTreeMapIter;
 use std::collections::BinaryHeap;
 use std::{marker::PhantomData, sync::MutexGuard};
@@ -94,7 +95,7 @@ impl<'a> Iterator for StoreIteratorInner<'a> {
 }
 
 self_cell! {
-    struct StoreIterator<'a> {
+    pub struct StoreIterator<'a> {
         owner: MutexGuard<'a, Vec<StoreLayer>>,
 
         #[covariant]
@@ -102,8 +103,16 @@ self_cell! {
     }
 }
 
+impl<'a> Iterator for StoreIterator<'a> {
+    type Item = (&'a Bytes, &'a Bytes);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+
 impl<'a> StoreIterator<'a> {
-    fn from_guard(prefix: Vec<Bytes>, guard: MutexGuard<'a, Vec<StoreLayer>>) -> Self {
+    pub fn from_guard(prefix: Vec<Bytes>, guard: MutexGuard<'a, Vec<StoreLayer>>) -> Self {
         StoreIterator::new(guard, |guard| {
             let mut iters = Vec::new();
 

@@ -1,4 +1,4 @@
-use crate::{AperSync, StoreHandle};
+use crate::{AperSync, StoreHandle, StoreIterator};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct AtomMap<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> {
@@ -35,5 +35,31 @@ impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> AtomMap<K
 
     pub fn delete(&mut self, key: &K) {
         self.map.delete(bincode::serialize(key).unwrap());
+    }
+
+    pub fn iter(&self) -> AtomMapIter<K, V> {
+        AtomMapIter {
+            iter: self.map.iter(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+pub struct AtomMapIter<'a, K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> {
+    iter: StoreIterator<'a>,
+    _phantom: std::marker::PhantomData<(K, V)>,
+}
+
+impl<'a, K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> Iterator
+    for AtomMapIter<'a, K, V>
+{
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // TODO: wrong
+        let n = self.iter.next()?;
+        let key = bincode::deserialize(&n.0).unwrap();
+        let value = bincode::deserialize(&n.1).unwrap();
+        Some((key, value))
     }
 }

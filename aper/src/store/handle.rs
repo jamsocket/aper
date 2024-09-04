@@ -1,5 +1,6 @@
 use super::{
     core::Store,
+    iter::StoreIterator,
     prefix_map::{PrefixMap, PrefixMapValue},
 };
 use crate::{
@@ -101,6 +102,10 @@ impl StoreHandle {
                 .insert(pfx.clone(), PrefixMap::DeletedPrefixMap);
             top_layer.dirty.insert(pfx.clone());
         }
+    }
+
+    pub fn iter(&self) -> StoreIterator {
+        StoreIterator::from_guard(self.prefix.clone(), self.map.inner.layers.lock().unwrap())
     }
 }
 
