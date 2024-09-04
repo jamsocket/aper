@@ -1,26 +1,25 @@
 use super::{core::StoreLayer, PrefixMap, PrefixMapValue};
 use crate::Bytes;
 use self_cell::self_cell;
+use std::collections::btree_map::Iter as BTreeMapIter;
 use std::collections::BinaryHeap;
 use std::{marker::PhantomData, sync::MutexGuard};
-use std::collections::btree_map::Iter as BTreeMapIter;
 
 struct PeekedIterator<'a> {
     next_value: (&'a Bytes, &'a PrefixMapValue),
+    layer_rank: usize,
     rest: BTreeMapIter<'a, Bytes, PrefixMapValue>,
 }
 
 impl<'a> PartialEq for PeekedIterator<'a> {
     fn eq(&self, other: &Self) -> bool {
-        self.next_value == other.next_value
+        false
     }
 }
 
 impl<'a> PartialOrd for PeekedIterator<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        // NOTE: we invert the order here, because we want the smallest value to be at the top of the heap.
-
-        other.next_value.partial_cmp(&self.next_value)
+        Some(self.cmp(other))
     }
 }
 
@@ -28,28 +27,35 @@ impl<'a> Eq for PeekedIterator<'a> {}
 
 impl<'a> Ord for PeekedIterator<'a> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.next_value.cmp(&self.next_value)
+        // NOTE: we invert the order of next_value here, because we want the smallest value to be at the top of the heap.
+        // If two layers have the same key, we break the tie by layer rank.
+        (other.next_value.0, self.layer_rank).cmp(&(self.next_value.0, other.layer_rank))
     }
 }
 
 struct StoreIteratorInner<'a> {
     iters: BinaryHeap<PeekedIterator<'a>>,
+    last_key: Option<Bytes>,
 }
 
 impl<'a> StoreIteratorInner<'a> {
     fn new(iters: impl Iterator<Item = BTreeMapIter<'a, Bytes, PrefixMapValue>>) -> Self {
         let mut heap = BinaryHeap::new();
 
-        for mut iter in iters {
+        for (layer_rank, mut iter) in iters.enumerate() {
             if let Some(next) = iter.next() {
                 heap.push(PeekedIterator {
                     next_value: next.clone(),
+                    layer_rank,
                     rest: iter,
                 });
             }
         }
 
-        StoreIteratorInner { iters: heap }
+        StoreIteratorInner {
+            iters: heap,
+            last_key: None,
+        }
     }
 }
 
@@ -57,14 +63,27 @@ impl<'a> Iterator for StoreIteratorInner<'a> {
     type Item = (&'a Bytes, &'a PrefixMapValue);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let PeekedIterator { next_value, mut rest } = self.iters.pop()?;
+        let next_value = loop {
+            let PeekedIterator {
+                next_value,
+                layer_rank,
+                mut rest,
+            } = self.iters.pop()?;
 
-        if let Some(next) = rest.next() {
-            self.iters.push(PeekedIterator {
-                next_value: next.clone(),
-                rest,
-            });
+            if let Some(next) = rest.next() {
+                self.iters.push(PeekedIterator {
+                    next_value: next.clone(),
+                    layer_rank,
+                    rest,
+                });
+            };
+
+            if self.last_key != Some(next_value.0.clone()) {
+                break next_value;
+            }
         };
+
+        self.last_key = Some(next_value.0.clone());
 
         Some(next_value)
     }
@@ -118,9 +137,7 @@ mod test {
     fn multiple_empty_layers() {
         let v1 = BTreeMap::new();
         let v2 = BTreeMap::new();
-        let iter_inner = StoreIteratorInner::new(
-            vec![v1.iter(), v2.iter()].into_iter(),
-        );
+        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
         let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
         assert_eq!(d, Vec::new());
     }
@@ -136,13 +153,17 @@ mod test {
 
         let iter_inner = StoreIteratorInner::new(vec![v1.iter()].into_iter());
         let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
-        assert_eq!(d, vec![
-            (&Bytes::from("key1"), &PrefixMapValue::Value(Bytes::from("abc"))),
-        ]);
+        assert_eq!(
+            d,
+            vec![(
+                &Bytes::from("key1"),
+                &PrefixMapValue::Value(Bytes::from("abc"))
+            ),]
+        );
     }
 
     #[test]
-    fn no_nonempty_layers_no_overlap() {
+    fn two_nonempty_layers_no_overlap() {
         let mut v1 = BTreeMap::new();
 
         v1.insert(
@@ -163,10 +184,49 @@ mod test {
 
         let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
         let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
-        assert_eq!(d, vec![
-            (&Bytes::from("key1"), &PrefixMapValue::Value(Bytes::from("abc"))),
-            (&Bytes::from("key3"), &PrefixMapValue::Value(Bytes::from("abc"))),
-            (&Bytes::from("key5"), &PrefixMapValue::Value(Bytes::from("abc"))),
-        ]);
+        assert_eq!(
+            d,
+            vec![
+                (
+                    &Bytes::from("key1"),
+                    &PrefixMapValue::Value(Bytes::from("abc"))
+                ),
+                (
+                    &Bytes::from("key3"),
+                    &PrefixMapValue::Value(Bytes::from("abc"))
+                ),
+                (
+                    &Bytes::from("key5"),
+                    &PrefixMapValue::Value(Bytes::from("abc"))
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn two_nonempty_layers_overlap() {
+        let mut v1 = BTreeMap::new();
+
+        v1.insert(
+            Bytes::from("overlapping-key"),
+            PrefixMapValue::Value(Bytes::from("erased value")),
+        );
+
+        let mut v2 = BTreeMap::new();
+
+        v2.insert(
+            Bytes::from("overlapping-key"),
+            PrefixMapValue::Value(Bytes::from("intended value")),
+        );
+
+        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
+        let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
+        assert_eq!(
+            d,
+            vec![(
+                &Bytes::from("overlapping-key"),
+                &PrefixMapValue::Value(Bytes::from("intended value"))
+            ),]
+        );
     }
 }
