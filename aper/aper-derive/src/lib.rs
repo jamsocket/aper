@@ -134,8 +134,8 @@ mod tests {
             impl aper::AperSync for MyStruct {
                 fn attach(mut store: aper::StoreHandle) -> Self {
                     MyStruct {
-                        field1: aper::AperSync::attach(store.child(b"field1")),
-                        field2: aper::AperSync::attach(store.child(b"field2"))
+                        field1: aper::AperSync::attach(store.child(aper::Bytes::from_static(b"field1"))),
+                        field2: aper::AperSync::attach(store.child(aper::Bytes::from_static(b"field2")))
                     }
                 }
             }
@@ -157,8 +157,8 @@ mod tests {
             impl aper::AperSync for MyStruct {
                 fn attach(mut store: aper::StoreHandle) -> Self {
                     MyStruct(
-                        aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\0")),
-                        aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\x01"))
+                        aper::AperSync::attach(store.child(aper::Bytes::from_static(b"\0\0\0\0\0\0\0\0"))),
+                        aper::AperSync::attach(store.child(aper::Bytes::from_static(b"\0\0\0\0\0\0\0\x01")))
                     )
                 }
             }

@@ -1,9 +1,7 @@
-use super::{core::StoreLayer, PrefixMap, PrefixMapValue};
+use super::PrefixMapValue;
 use crate::Bytes;
-use self_cell::self_cell;
 use std::collections::btree_map::Iter as BTreeMapIter;
 use std::collections::BinaryHeap;
-use std::sync::RwLockReadGuard;
 
 struct PeekedIterator<'a> {
     next_value: (&'a Bytes, &'a PrefixMapValue),
@@ -27,109 +25,72 @@ impl<'a> Eq for PeekedIterator<'a> {}
 
 impl<'a> Ord for PeekedIterator<'a> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        // NOTE: we invert the order of next_value here, because we want the smallest value to be at the top of the heap.
-        // If two layers have the same key, we break the tie by layer rank.
-        (other.next_value.0, self.layer_rank).cmp(&(self.next_value.0, other.layer_rank))
+        println!("self: {:?}, other: {:?}", self.next_value, other.next_value);
+        let result =
+            (self.next_value.0, self.layer_rank).cmp(&(other.next_value.0, other.layer_rank));
+        println!("result: {:?}", result);
+        result
     }
 }
 
-struct StoreIteratorInner<'a> {
-    iters: BinaryHeap<PeekedIterator<'a>>,
-    last_key: Option<Bytes>,
+pub struct StoreIterator {
+    inner: Vec<(Bytes, Bytes)>,
 }
 
-impl<'a> StoreIteratorInner<'a> {
-    fn new(iters: impl Iterator<Item = BTreeMapIter<'a, Bytes, PrefixMapValue>>) -> Self {
-        let mut heap = BinaryHeap::new();
+impl StoreIterator {
+    pub fn new<'a>(iter: impl Iterator<Item = BTreeMapIter<'a, Bytes, PrefixMapValue>>) -> Self {
+        let mut inner = Vec::new();
 
-        for (layer_rank, mut iter) in iters.enumerate() {
-            if let Some(next) = iter.next() {
+        let mut heap = BinaryHeap::new();
+        for (layer_rank, mut iter) in iter.enumerate() {
+            let next_value = iter.next_back();
+            if let Some((key, value)) = next_value {
+                println!("pushing... {:?}", key);
                 heap.push(PeekedIterator {
-                    next_value: next.clone(),
+                    next_value: (&key, value),
                     layer_rank,
                     rest: iter,
                 });
             }
         }
 
-        StoreIteratorInner {
-            iters: heap,
-            last_key: None,
-        }
-    }
-}
+        let mut last_key: Option<Bytes> = None;
+        while let Some(mut peeked) = heap.pop() {
+            println!("aa {:?}", peeked.next_value.0);
 
-impl<'a> Iterator for StoreIteratorInner<'a> {
-    type Item = (&'a Bytes, &'a Bytes);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next_value = loop {
-            let PeekedIterator {
-                next_value,
-                layer_rank,
-                mut rest,
-            } = self.iters.pop()?;
-
-            if let Some(next) = rest.next() {
-                self.iters.push(PeekedIterator {
-                    next_value: next.clone(),
-                    layer_rank,
-                    rest,
-                });
-            };
-
-            if self.last_key == Some(next_value.0.clone()) {
+            if last_key.as_ref() == Some(peeked.next_value.0) {
+                // we have already encountered this key; skip it.
                 continue;
             }
 
-            self.last_key = Some(next_value.0.clone());
-
-            if let PrefixMapValue::Value(value) = next_value.1 {
-                break (next_value.0, value);
+            match peeked.next_value {
+                (key, PrefixMapValue::Value(value)) => {
+                    inner.push((key.clone(), value.clone()));
+                }
+                (_key, PrefixMapValue::Deleted) => {}
             }
-        };
 
-        Some(next_value)
+            last_key = Some(peeked.next_value.0.clone());
+
+            let next_value = peeked.rest.next_back();
+            if let Some(next_value) = next_value {
+                heap.push(PeekedIterator {
+                    next_value,
+                    layer_rank: peeked.layer_rank,
+                    rest: peeked.rest,
+                });
+            }
+        }
+
+        Self { inner }
     }
 }
 
-self_cell! {
-    pub struct StoreIterator<'a> {
-        owner: RwLockReadGuard<'a, Vec<StoreLayer>>,
-
-        #[covariant]
-        dependent: StoreIteratorInner,
-    }
-}
-
-impl<'a> Iterator for StoreIterator<'a> {
-    type Item = (&'a Bytes, &'a Bytes);
+impl Iterator for StoreIterator {
+    type Item = (Bytes, Bytes);
 
     fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-    }
-}
-
-impl<'a> StoreIterator<'a> {
-    pub fn from_guard(prefix: Vec<Bytes>, guard: RwLockReadGuard<'a, Vec<StoreLayer>>) -> Self {
-        StoreIterator::new(guard, |guard| {
-            let mut iters = Vec::new();
-
-            for layer in guard.iter() {
-                match layer.layer.get(&prefix) {
-                    None => continue,
-                    Some(PrefixMap::DeletedPrefixMap) => {
-                        iters.clear();
-                        continue;
-                    }
-                    Some(PrefixMap::Children(map)) => {
-                        iters.push(map.iter());
-                    }
-                }
-            }
-
-            StoreIteratorInner::new(iters.into_iter())
-        })
+        self.inner.pop()
     }
 }
 
@@ -140,8 +101,8 @@ mod test {
 
     #[test]
     fn no_layers() {
-        let iter_inner = StoreIteratorInner::new(Vec::new().into_iter());
-        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        let iter_inner = StoreIterator::new(Vec::new().into_iter());
+        let d: Vec<(Bytes, Bytes)> = iter_inner.collect();
         assert_eq!(d, Vec::new());
     }
 
@@ -149,8 +110,8 @@ mod test {
     fn multiple_empty_layers() {
         let v1 = BTreeMap::new();
         let v2 = BTreeMap::new();
-        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
-        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        let iter_inner = StoreIterator::new(vec![v1.iter(), v2.iter()].into_iter());
+        let d: Vec<(Bytes, Bytes)> = iter_inner.collect();
         assert_eq!(d, Vec::new());
     }
 
@@ -163,9 +124,9 @@ mod test {
             PrefixMapValue::Value(Bytes::from("abc")),
         );
 
-        let iter_inner = StoreIteratorInner::new(vec![v1.iter()].into_iter());
-        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
-        assert_eq!(d, vec![(&Bytes::from("key1"), &Bytes::from("abc")),]);
+        let iter_inner = StoreIterator::new(vec![v1.iter()].into_iter());
+        let d: Vec<(Bytes, Bytes)> = iter_inner.collect();
+        assert_eq!(d, vec![(Bytes::from("key1"), Bytes::from("abc")),]);
     }
 
     #[test]
@@ -188,14 +149,14 @@ mod test {
             PrefixMapValue::Value(Bytes::from("abc")),
         );
 
-        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
-        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        let iter_inner = StoreIterator::new(vec![v1.iter(), v2.iter()].into_iter());
+        let d: Vec<(Bytes, Bytes)> = iter_inner.collect();
         assert_eq!(
             d,
             vec![
-                (&Bytes::from("key1"), &Bytes::from("abc")),
-                (&Bytes::from("key3"), &Bytes::from("abc")),
-                (&Bytes::from("key5"), &Bytes::from("abc")),
+                (Bytes::from("key1"), Bytes::from("abc")),
+                (Bytes::from("key3"), Bytes::from("abc")),
+                (Bytes::from("key5"), Bytes::from("abc")),
             ]
         );
     }
@@ -216,13 +177,13 @@ mod test {
             PrefixMapValue::Value(Bytes::from("intended value")),
         );
 
-        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
-        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        let iter_inner = StoreIterator::new(vec![v1.iter(), v2.iter()].into_iter());
+        let d: Vec<(Bytes, Bytes)> = iter_inner.collect();
         assert_eq!(
             d,
             vec![(
-                &Bytes::from("overlapping-key"),
-                &Bytes::from("intended value")
+                Bytes::from("overlapping-key"),
+                Bytes::from("intended value")
             ),]
         );
     }
@@ -240,8 +201,8 @@ mod test {
 
         v2.insert(Bytes::from("deleted-key"), PrefixMapValue::Deleted);
 
-        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
-        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        let iter_inner = StoreIterator::new(vec![v1.iter(), v2.iter()].into_iter());
+        let d: Vec<(Bytes, Bytes)> = iter_inner.collect();
         assert_eq!(d, vec![]);
     }
 
@@ -262,11 +223,11 @@ mod test {
             PrefixMapValue::Value(Bytes::from("recreated value")),
         );
 
-        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter(), v3.iter()].into_iter());
-        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        let iter_inner = StoreIterator::new(vec![v1.iter(), v2.iter(), v3.iter()].into_iter());
+        let d: Vec<(Bytes, Bytes)> = iter_inner.collect();
         assert_eq!(
             d,
-            vec![(&Bytes::from("deleted-key"), &Bytes::from("recreated value")),]
+            vec![(Bytes::from("deleted-key"), Bytes::from("recreated value")),]
         );
     }
 }

@@ -98,7 +98,17 @@ impl StoreHandle {
     }
 
     pub fn iter(&self) -> StoreIterator {
-        StoreIterator::from_guard(self.prefix.clone(), self.map.inner.layers.read().unwrap())
+        let layers = self.map.inner.layers.read().unwrap();
+
+        let iter = layers.iter().flat_map(|layer| {
+            let map = layer.layer.get(&self.prefix)?;
+            match map {
+                PrefixMap::Children(map) => Some(map.iter()),
+                PrefixMap::DeletedPrefixMap => None,
+            }
+        });
+
+        StoreIterator::new(iter)
     }
 }
 

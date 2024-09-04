@@ -47,13 +47,13 @@ impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> AtomMap<K
     }
 }
 
-pub struct AtomMapIter<'a, K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> {
-    iter: StoreIterator<'a>,
+pub struct AtomMapIter<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> {
+    iter: StoreIterator,
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
-impl<'a, K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> Iterator
-    for AtomMapIter<'a, K, V>
+impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> Iterator
+    for AtomMapIter<K, V>
 {
     type Item = (K, V);
 
