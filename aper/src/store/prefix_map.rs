@@ -10,7 +10,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum PrefixMapValue {
     Value(Bytes),
     Deleted,
