@@ -60,7 +60,7 @@ impl<'a> StoreIteratorInner<'a> {
 }
 
 impl<'a> Iterator for StoreIteratorInner<'a> {
-    type Item = (&'a Bytes, &'a PrefixMapValue);
+    type Item = (&'a Bytes, &'a Bytes);
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_value = loop {
@@ -78,12 +78,16 @@ impl<'a> Iterator for StoreIteratorInner<'a> {
                 });
             };
 
-            if self.last_key != Some(next_value.0.clone()) {
-                break next_value;
+            if self.last_key == Some(next_value.0.clone()) {
+                continue;
+            }
+
+            self.last_key = Some(next_value.0.clone());
+
+            if let PrefixMapValue::Value(value) = next_value.1 {
+                break (next_value.0, value);
             }
         };
-
-        self.last_key = Some(next_value.0.clone());
 
         Some(next_value)
     }
@@ -129,7 +133,7 @@ mod test {
     #[test]
     fn no_layers() {
         let iter_inner = StoreIteratorInner::new(Vec::new().into_iter());
-        let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
+        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
         assert_eq!(d, Vec::new());
     }
 
@@ -138,7 +142,7 @@ mod test {
         let v1 = BTreeMap::new();
         let v2 = BTreeMap::new();
         let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
-        let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
+        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
         assert_eq!(d, Vec::new());
     }
 
@@ -152,14 +156,8 @@ mod test {
         );
 
         let iter_inner = StoreIteratorInner::new(vec![v1.iter()].into_iter());
-        let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
-        assert_eq!(
-            d,
-            vec![(
-                &Bytes::from("key1"),
-                &PrefixMapValue::Value(Bytes::from("abc"))
-            ),]
-        );
+        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        assert_eq!(d, vec![(&Bytes::from("key1"), &Bytes::from("abc")),]);
     }
 
     #[test]
@@ -183,22 +181,13 @@ mod test {
         );
 
         let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
-        let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
+        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
         assert_eq!(
             d,
             vec![
-                (
-                    &Bytes::from("key1"),
-                    &PrefixMapValue::Value(Bytes::from("abc"))
-                ),
-                (
-                    &Bytes::from("key3"),
-                    &PrefixMapValue::Value(Bytes::from("abc"))
-                ),
-                (
-                    &Bytes::from("key5"),
-                    &PrefixMapValue::Value(Bytes::from("abc"))
-                ),
+                (&Bytes::from("key1"), &Bytes::from("abc")),
+                (&Bytes::from("key3"), &Bytes::from("abc")),
+                (&Bytes::from("key5"), &Bytes::from("abc")),
             ]
         );
     }
@@ -220,13 +209,31 @@ mod test {
         );
 
         let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
-        let d: Vec<(&Bytes, &PrefixMapValue)> = iter_inner.collect();
+        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
         assert_eq!(
             d,
             vec![(
                 &Bytes::from("overlapping-key"),
-                &PrefixMapValue::Value(Bytes::from("intended value"))
+                &Bytes::from("intended value")
             ),]
         );
+    }
+
+    #[test]
+    fn two_nonempty_layers_deletion() {
+        let mut v1 = BTreeMap::new();
+
+        v1.insert(
+            Bytes::from("deleted-key"),
+            PrefixMapValue::Value(Bytes::from("erased value")),
+        );
+
+        let mut v2 = BTreeMap::new();
+
+        v2.insert(Bytes::from("deleted-key"), PrefixMapValue::Deleted);
+
+        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter()].into_iter());
+        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        assert_eq!(d, vec![]);
     }
 }
