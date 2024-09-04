@@ -3,7 +3,7 @@ use crate::Bytes;
 use self_cell::self_cell;
 use std::collections::btree_map::Iter as BTreeMapIter;
 use std::collections::BinaryHeap;
-use std::sync::MutexGuard;
+use std::sync::RwLockReadGuard;
 
 struct PeekedIterator<'a> {
     next_value: (&'a Bytes, &'a PrefixMapValue),
@@ -95,7 +95,7 @@ impl<'a> Iterator for StoreIteratorInner<'a> {
 
 self_cell! {
     pub struct StoreIterator<'a> {
-        owner: MutexGuard<'a, Vec<StoreLayer>>,
+        owner: RwLockReadGuard<'a, Vec<StoreLayer>>,
 
         #[covariant]
         dependent: StoreIteratorInner,
@@ -111,7 +111,7 @@ impl<'a> Iterator for StoreIterator<'a> {
 }
 
 impl<'a> StoreIterator<'a> {
-    pub fn from_guard(prefix: Vec<Bytes>, guard: MutexGuard<'a, Vec<StoreLayer>>) -> Self {
+    pub fn from_guard(prefix: Vec<Bytes>, guard: RwLockReadGuard<'a, Vec<StoreLayer>>) -> Self {
         StoreIterator::new(guard, |guard| {
             let mut iters = Vec::new();
 

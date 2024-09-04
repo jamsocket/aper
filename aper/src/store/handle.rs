@@ -35,7 +35,7 @@ impl StoreHandle {
     pub fn set(&mut self, key: Bytes, value: Bytes) {
         // set the value in the top layer.
 
-        let mut layers = self.map.inner.layers.lock().unwrap();
+        let mut layers = self.map.inner.layers.write().unwrap();
         let top_layer = layers.last_mut().unwrap();
 
         let map = top_layer.layer.entry(self.prefix.clone()).or_default();
@@ -48,7 +48,7 @@ impl StoreHandle {
     pub fn delete(&mut self, key: Bytes) {
         // delete the value in the top layer.
 
-        let mut layers = self.map.inner.layers.lock().unwrap();
+        let mut layers = self.map.inner.layers.write().unwrap();
         let top_layer = layers.last_mut().unwrap();
 
         let map = top_layer.layer.entry(self.prefix.clone()).or_default();
@@ -72,7 +72,7 @@ impl StoreHandle {
         let mut prefix = self.prefix.clone();
         prefix.push(path_part.to_vec());
 
-        let mut layers = self.map.inner.layers.lock().unwrap();
+        let mut layers = self.map.inner.layers.write().unwrap();
 
         // When we delete a prefix, we delete not only that prefix but all of the prefixes under it.
         // TODO: This is a bit expensive, in order to make a trade-off that reads are faster. Is the balance optimal?
@@ -98,13 +98,13 @@ impl StoreHandle {
     }
 
     pub fn iter(&self) -> StoreIterator {
-        StoreIterator::from_guard(self.prefix.clone(), self.map.inner.layers.lock().unwrap())
+        StoreIterator::from_guard(self.prefix.clone(), self.map.inner.layers.read().unwrap())
     }
 }
 
 impl Debug for Store {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let layers = self.inner.layers.lock().unwrap();
+        let layers = self.inner.layers.read().unwrap();
 
         for (i, layer) in layers.iter().enumerate() {
             writeln!(f, "Layer {}", i)?;
