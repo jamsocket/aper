@@ -236,4 +236,29 @@ mod test {
         let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
         assert_eq!(d, vec![]);
     }
+
+    #[test]
+    fn undeleted_key() {
+        let mut v1 = BTreeMap::new();
+        v1.insert(
+            Bytes::from("deleted-key"),
+            PrefixMapValue::Value(Bytes::from("erased value")),
+        );
+
+        let mut v2 = BTreeMap::new();
+        v2.insert(Bytes::from("deleted-key"), PrefixMapValue::Deleted);
+
+        let mut v3 = BTreeMap::new();
+        v3.insert(
+            Bytes::from("deleted-key"),
+            PrefixMapValue::Value(Bytes::from("recreated value")),
+        );
+
+        let iter_inner = StoreIteratorInner::new(vec![v1.iter(), v2.iter(), v3.iter()].into_iter());
+        let d: Vec<(&Bytes, &Bytes)> = iter_inner.collect();
+        assert_eq!(
+            d,
+            vec![(&Bytes::from("deleted-key"), &Bytes::from("recreated value")),]
+        );
+    }
 }
