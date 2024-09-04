@@ -58,10 +58,32 @@ impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> Iterator
     type Item = (K, V);
 
     fn next(&mut self) -> Option<Self::Item> {
-        // TODO: wrong
         let n = self.iter.next()?;
         let key = bincode::deserialize(&n.0).unwrap();
         let value = bincode::deserialize(&n.1).unwrap();
         Some((key, value))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn atom_map_iter() {
+        let store = crate::Store::default();
+        let mut map = AtomMap::<String, String>::attach(store.handle());
+
+        map.set(&"h-insert".to_string(), &"b".to_string());
+        map.set(&"a-insert".to_string(), &"a".to_string());
+        map.set(&"z-insert".to_string(), &"c".to_string());
+        map.set(&"f-insert".to_string(), &"d".to_string());
+
+        let mut iter = map.iter();
+
+        assert_eq!(iter.next(), Some(("a-insert".to_string(), "a".to_string())));
+        assert_eq!(iter.next(), Some(("f-insert".to_string(), "d".to_string())));
+        assert_eq!(iter.next(), Some(("h-insert".to_string(), "b".to_string())));
+        assert_eq!(iter.next(), Some(("z-insert".to_string(), "c".to_string())));
     }
 }
