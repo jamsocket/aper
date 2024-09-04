@@ -1,5 +1,6 @@
 mod core;
 mod handle;
+mod iter;
 mod prefix_map;
 
 pub use core::Store;
