@@ -2,16 +2,10 @@ use super::{
     handle::StoreHandle,
     prefix_map::{PrefixMap, PrefixMapValue},
 };
-use crate::{
-    listener::{self, ListenerMap},
-    Bytes, Mutation,
-};
-use serde::{Deserialize, Serialize};
+use crate::{listener::ListenerMap, Bytes, Mutation};
 use std::{
-    cell::RefCell,
     collections::{BTreeMap, HashSet},
-    fmt::{Debug, Formatter},
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
 };
 
 #[derive(Default)]
@@ -23,14 +17,14 @@ pub struct StoreLayer {
 }
 
 pub struct StoreInner {
-    pub(crate) layers: Mutex<Vec<StoreLayer>>,
+    pub(crate) layers: RwLock<Vec<StoreLayer>>,
     pub(crate) listeners: Mutex<ListenerMap>,
 }
 
 impl Default for StoreInner {
     fn default() -> Self {
         Self {
-            layers: Mutex::new(vec![StoreLayer::default()]),
+            layers: RwLock::new(vec![StoreLayer::default()]),
             listeners: Mutex::new(ListenerMap::default()),
         }
     }
@@ -44,7 +38,7 @@ pub struct Store {
 impl Store {
     pub fn prefixes(&self) -> Vec<Vec<Bytes>> {
         let mut result = std::collections::BTreeSet::new();
-        let layers = self.inner.layers.lock().unwrap();
+        let layers = self.inner.layers.read().unwrap();
 
         for layer in layers.iter() {
             for (prefix, value) in layer.layer.iter() {
@@ -64,19 +58,19 @@ impl Store {
 
     /// Ensure that a prefix exists (even if it is empty) in the store.
     pub fn ensure(&self, prefix: &[Bytes]) {
-        let mut layers = self.inner.layers.lock().unwrap();
-        let mut layer = layers.last_mut().unwrap();
+        let mut layers = self.inner.layers.write().unwrap();
+        let layer = layers.last_mut().unwrap();
 
         layer.layer.entry(prefix.to_vec()).or_default();
     }
 
     pub fn push_overlay(&self) {
-        let mut layers = self.inner.layers.lock().unwrap();
+        let mut layers = self.inner.layers.write().unwrap();
         layers.push(StoreLayer::default());
     }
 
     pub fn pop_overlay(&self) {
-        let mut layers = self.inner.layers.lock().unwrap();
+        let mut layers = self.inner.layers.write().unwrap();
         layers.pop();
 
         if layers.is_empty() {
@@ -90,7 +84,7 @@ impl Store {
         {
             // Collect dirty prefixes in an anonymous scope, so that the lock is released before
             // listeners are alerted.
-            let mut layers = self.inner.layers.lock().unwrap();
+            let mut layers = self.inner.layers.write().unwrap();
             for layer in layers.iter_mut() {
                 let new_prefixes = std::mem::take(&mut layer.dirty);
                 dirty_prefixes.extend(new_prefixes.into_iter());
@@ -104,7 +98,7 @@ impl Store {
     }
 
     pub fn top_layer_mutations(&self) -> Vec<Mutation> {
-        let mut layers = self.inner.layers.lock().unwrap();
+        let layers = self.inner.layers.write().unwrap();
         let top_layer = layers.last().unwrap();
 
         let mut mutations = vec![];
@@ -125,7 +119,7 @@ impl Store {
     }
 
     pub fn combine_down(&self) {
-        let mut layers = self.inner.layers.lock().unwrap();
+        let mut layers = self.inner.layers.write().unwrap();
 
         let Some(top_layer) = layers.pop() else {
             return;
@@ -169,7 +163,7 @@ impl Store {
     }
 
     pub fn get(&self, prefix: &Vec<Bytes>, key: &Bytes) -> Option<Bytes> {
-        let layers = self.inner.layers.lock().unwrap();
+        let layers = self.inner.layers.read().unwrap();
 
         for layer in layers.iter().rev() {
             if let Some(map) = layer.layer.get(prefix) {
@@ -186,17 +180,17 @@ impl Store {
     }
 
     pub fn mutate(&self, mutations: &[Mutation]) {
-        let mut layers = self.inner.layers.lock().unwrap();
+        let mut layers = self.inner.layers.write().unwrap();
         let top_layer = layers.last_mut().unwrap();
 
         for mutation in mutations.iter() {
             match &mutation.entries {
                 PrefixMap::DeletedPrefixMap => {
-                    let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
+                    let map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
                     *map = PrefixMap::DeletedPrefixMap;
                 }
                 PrefixMap::Children(children) => {
-                    let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
+                    let map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
 
                     for (key, value) in children.iter() {
                         map.insert(key.clone(), value.clone());
@@ -222,8 +216,8 @@ mod test {
         let store = Store::default();
         let mut handle = store.handle();
 
-        let mut child_handle = handle.child(b"foo");
-        let _ = child_handle.child(b"bar");
+        let mut child_handle = handle.child(Bytes::from_static(b"foo"));
+        let _ = child_handle.child(Bytes::from_static(b"bar"));
 
         assert_eq!(
             store.prefixes(),
@@ -239,10 +233,10 @@ mod test {
         let store = Store::default();
         let mut handle = store.handle();
 
-        let mut child_handle = handle.child(b"foo");
-        let _ = child_handle.child(b"bar");
+        let mut child_handle = handle.child(Bytes::from_static(b"foo"));
+        let _ = child_handle.child(Bytes::from_static(b"bar"));
 
-        handle.delete_child(b"foo".as_slice());
+        handle.delete_child(Bytes::from_static(b"foo"));
 
         assert_eq!(store.prefixes(), vec![] as Vec<Vec<Bytes>>);
     }

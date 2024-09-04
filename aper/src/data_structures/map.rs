@@ -1,4 +1,5 @@
 use crate::{AperSync, StoreHandle};
+use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct Map<K: Serialize + DeserializeOwned, V: AperSync> {
@@ -22,16 +23,16 @@ impl<K: Serialize + DeserializeOwned, V: AperSync> AperSync for Map<K, V> {
 impl<K: Serialize + DeserializeOwned, V: AperSync> Map<K, V> {
     pub fn get(&mut self, key: &K) -> Option<V> {
         let key = bincode::serialize(key).unwrap();
-        Some(V::attach(self.map.child(&key)))
+        Some(V::attach(self.map.child(Bytes::from(key))))
     }
 
     pub fn get_or_create(&mut self, key: &K) -> V {
         let key = bincode::serialize(key).unwrap();
-        V::attach(self.map.child(&key))
+        V::attach(self.map.child(Bytes::from(key)))
     }
 
     pub fn delete(&mut self, key: &K) {
         let key = bincode::serialize(key).unwrap();
-        self.map.delete_child(&key);
+        self.map.delete_child(Bytes::from(key));
     }
 }

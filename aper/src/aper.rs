@@ -4,15 +4,12 @@ use crate::{
     Mutation,
 };
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashSet, VecDeque},
-    fmt::Debug,
-};
+use std::{collections::VecDeque, fmt::Debug};
 
 pub trait AperSync {
     fn attach(map: StoreHandle) -> Self;
 
-    fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, listener: F) {
+    fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, _listener: F) {
         // Default implementation does nothing.
     }
 }

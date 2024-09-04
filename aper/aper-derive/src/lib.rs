@@ -55,7 +55,9 @@ impl MacroState {
                     let field = syn::Ident::new(field, proc_macro2::Span::call_site());
                     let name = Literal::byte_string(field.to_string().as_bytes());
                     quote! {
-                        #field: aper::AperSync::attach(store.child(#name))
+                        #field: aper::AperSync::attach(store.child(
+                            aper::Bytes::from_static(#name)
+                        ))
                     }
                 });
                 quote! {
@@ -68,7 +70,9 @@ impl MacroState {
                 let fields = (0..*fields).map(|i| {
                     let i = Literal::byte_string(i.to_be_bytes().as_slice());
                     quote! {
-                        aper::AperSync::attach(store.child(#i))
+                        aper::AperSync::attach(store.child(
+                            aper::Bytes::from_static(#i)
+                        ))
                     }
                 });
                 quote! {
@@ -130,8 +134,8 @@ mod tests {
             impl aper::AperSync for MyStruct {
                 fn attach(mut store: aper::StoreHandle) -> Self {
                     MyStruct {
-                        field1: aper::AperSync::attach(store.child(b"field1")),
-                        field2: aper::AperSync::attach(store.child(b"field2"))
+                        field1: aper::AperSync::attach(store.child(aper::Bytes::from_static(b"field1"))),
+                        field2: aper::AperSync::attach(store.child(aper::Bytes::from_static(b"field2")))
                     }
                 }
             }
@@ -153,8 +157,8 @@ mod tests {
             impl aper::AperSync for MyStruct {
                 fn attach(mut store: aper::StoreHandle) -> Self {
                     MyStruct(
-                        aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\0")),
-                        aper::AperSync::attach(store.child(b"\0\0\0\0\0\0\0\x01"))
+                        aper::AperSync::attach(store.child(aper::Bytes::from_static(b"\0\0\0\0\0\0\0\0"))),
+                        aper::AperSync::attach(store.child(aper::Bytes::from_static(b"\0\0\0\0\0\0\0\x01")))
                     )
                 }
             }

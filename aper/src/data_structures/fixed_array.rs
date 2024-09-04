@@ -1,4 +1,5 @@
 use crate::{AperSync, StoreHandle};
+use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Clone)]
@@ -22,7 +23,7 @@ impl<const N: u32, T: Serialize + DeserializeOwned + Default> AperSync for Fixed
 
 impl<const N: u32, T: Serialize + DeserializeOwned + Default> FixedArray<N, T> {
     pub fn get(&self, index: u32) -> T {
-        if let Some(bytes) = self.map.get(&index.to_be_bytes().to_vec()) {
+        if let Some(bytes) = self.map.get(&Bytes::from(index.to_be_bytes().to_vec())) {
             bincode::deserialize(&bytes).unwrap()
         } else {
             T::default()
@@ -31,8 +32,9 @@ impl<const N: u32, T: Serialize + DeserializeOwned + Default> FixedArray<N, T> {
 
     pub fn set(&mut self, index: u32, value: T) {
         assert!(index < N);
-        let value = bincode::serialize(&value).unwrap();
-        self.map.set(index.to_be_bytes().to_vec(), value);
+        let value = Bytes::from(bincode::serialize(&value).unwrap());
+        self.map
+            .set(Bytes::from(index.to_be_bytes().to_vec()), value);
     }
 
     pub fn iter(&self) -> FixedArrayIterator<T> {
@@ -61,7 +63,7 @@ impl<T: Serialize + DeserializeOwned + Default> Iterator for FixedArrayIterator<
         }
 
         let key = self.index.to_be_bytes().to_vec();
-        let value = self.tree_ref.get(&key);
+        let value = self.tree_ref.get(&Bytes::from(key));
         self.index += 1;
 
         Some(

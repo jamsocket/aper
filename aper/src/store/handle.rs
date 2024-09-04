@@ -1,17 +1,12 @@
 use super::{
     core::Store,
+    iter::StoreIterator,
     prefix_map::{PrefixMap, PrefixMapValue},
 };
-use crate::{
-    listener::{self, ListenerMap},
-    Bytes, Mutation,
-};
-use serde::{Deserialize, Serialize};
+use crate::Bytes;
 use std::{
-    cell::RefCell,
-    collections::{BTreeMap, HashSet},
+    collections::HashSet,
     fmt::{Debug, Formatter},
-    sync::{Arc, Mutex},
 };
 
 #[derive(Clone)]
@@ -40,10 +35,10 @@ impl StoreHandle {
     pub fn set(&mut self, key: Bytes, value: Bytes) {
         // set the value in the top layer.
 
-        let mut layers = self.map.inner.layers.lock().unwrap();
-        let mut top_layer = layers.last_mut().unwrap();
+        let mut layers = self.map.inner.layers.write().unwrap();
+        let top_layer = layers.last_mut().unwrap();
 
-        let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
+        let map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
         top_layer.dirty.insert(self.prefix.clone());
 
@@ -53,19 +48,19 @@ impl StoreHandle {
     pub fn delete(&mut self, key: Bytes) {
         // delete the value in the top layer.
 
-        let mut layers = self.map.inner.layers.lock().unwrap();
-        let mut top_layer = layers.last_mut().unwrap();
+        let mut layers = self.map.inner.layers.write().unwrap();
+        let top_layer = layers.last_mut().unwrap();
 
-        let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
+        let map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
         top_layer.dirty.insert(self.prefix.clone());
 
         map.insert(key, PrefixMapValue::Deleted);
     }
 
-    pub fn child(&mut self, path_part: &[u8]) -> Self {
+    pub fn child(&mut self, path_part: Bytes) -> Self {
         let mut prefix = self.prefix.clone();
-        prefix.push(path_part.to_vec());
+        prefix.push(path_part);
         self.map.ensure(&prefix);
         Self {
             map: self.map.clone(),
@@ -73,12 +68,11 @@ impl StoreHandle {
         }
     }
 
-    pub fn delete_child(&mut self, path_part: &[u8]) {
+    pub fn delete_child(&mut self, path_part: Bytes) {
         let mut prefix = self.prefix.clone();
-        prefix.push(path_part.to_vec());
+        prefix.push(path_part);
 
-        let mut layers = self.map.inner.layers.lock().unwrap();
-        let mut top_layer = layers.last_mut().unwrap();
+        let mut layers = self.map.inner.layers.write().unwrap();
 
         // When we delete a prefix, we delete not only that prefix but all of the prefixes under it.
         // TODO: This is a bit expensive, in order to make a trade-off that reads are faster. Is the balance optimal?
@@ -86,14 +80,14 @@ impl StoreHandle {
         let mut prefixes_to_delete = HashSet::new();
 
         for layer in layers.iter() {
-            for (pfx, val) in layer.layer.iter() {
+            for (pfx, _) in layer.layer.iter() {
                 if pfx.starts_with(&prefix) {
                     prefixes_to_delete.insert(pfx.clone());
                 }
             }
         }
 
-        let mut top_layer = layers.last_mut().unwrap();
+        let top_layer = layers.last_mut().unwrap();
 
         for pfx in prefixes_to_delete.iter() {
             top_layer
@@ -102,11 +96,25 @@ impl StoreHandle {
             top_layer.dirty.insert(pfx.clone());
         }
     }
+
+    pub fn iter(&self) -> StoreIterator {
+        let layers = self.map.inner.layers.read().unwrap();
+
+        let iter = layers.iter().flat_map(|layer| {
+            let map = layer.layer.get(&self.prefix)?;
+            match map {
+                PrefixMap::Children(map) => Some(map.iter()),
+                PrefixMap::DeletedPrefixMap => None,
+            }
+        });
+
+        StoreIterator::new(iter)
+    }
 }
 
 impl Debug for Store {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let layers = self.inner.layers.lock().unwrap();
+        let layers = self.inner.layers.read().unwrap();
 
         for (i, layer) in layers.iter().enumerate() {
             writeln!(f, "Layer {}", i)?;
