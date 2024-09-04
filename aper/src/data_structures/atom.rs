@@ -1,4 +1,4 @@
-use crate::{AperSync, Store, StoreHandle};
+use crate::{AperSync, StoreHandle};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub struct Atom<T: Serialize + DeserializeOwned + Default> {

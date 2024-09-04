@@ -4,11 +4,7 @@ use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::Borrow,
-    cell::RefCell,
-    sync::{
-        atomic::{AtomicU32, AtomicU64},
-        Arc, Mutex,
-    },
+    sync::{atomic::AtomicU32, Arc, Mutex},
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -226,7 +222,7 @@ impl<A: Aper> ServerHandle<A> {
                     }
                 }
             }
-            MessageToServer::RequestState { latest_version } => {
+            MessageToServer::RequestState { .. } => {
                 let server = self.server.lock().unwrap();
                 let c = server.borrow();
                 let mutations = c.state_snapshot();

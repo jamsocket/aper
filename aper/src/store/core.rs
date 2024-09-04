@@ -2,15 +2,9 @@ use super::{
     handle::StoreHandle,
     prefix_map::{PrefixMap, PrefixMapValue},
 };
-use crate::{
-    listener::{self, ListenerMap},
-    Bytes, Mutation,
-};
-use serde::{Deserialize, Serialize};
+use crate::{listener::ListenerMap, Bytes, Mutation};
 use std::{
-    cell::RefCell,
     collections::{BTreeMap, HashSet},
-    fmt::{Debug, Formatter},
     sync::{Arc, Mutex},
 };
 
@@ -65,7 +59,7 @@ impl Store {
     /// Ensure that a prefix exists (even if it is empty) in the store.
     pub fn ensure(&self, prefix: &[Bytes]) {
         let mut layers = self.inner.layers.lock().unwrap();
-        let mut layer = layers.last_mut().unwrap();
+        let layer = layers.last_mut().unwrap();
 
         layer.layer.entry(prefix.to_vec()).or_default();
     }
@@ -104,7 +98,7 @@ impl Store {
     }
 
     pub fn top_layer_mutations(&self) -> Vec<Mutation> {
-        let mut layers = self.inner.layers.lock().unwrap();
+        let layers = self.inner.layers.lock().unwrap();
         let top_layer = layers.last().unwrap();
 
         let mut mutations = vec![];
@@ -192,11 +186,11 @@ impl Store {
         for mutation in mutations.iter() {
             match &mutation.entries {
                 PrefixMap::DeletedPrefixMap => {
-                    let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
+                    let map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
                     *map = PrefixMap::DeletedPrefixMap;
                 }
                 PrefixMap::Children(children) => {
-                    let mut map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
+                    let map = top_layer.layer.entry(mutation.prefix.clone()).or_default();
 
                     for (key, value) in children.iter() {
                         map.insert(key.clone(), value.clone());

@@ -1,10 +1,9 @@
 use super::{core::StoreLayer, PrefixMap, PrefixMapValue};
 use crate::Bytes;
 use self_cell::self_cell;
-use std::cell::RefCell;
 use std::collections::btree_map::Iter as BTreeMapIter;
 use std::collections::BinaryHeap;
-use std::{marker::PhantomData, sync::MutexGuard};
+use std::sync::MutexGuard;
 
 struct PeekedIterator<'a> {
     next_value: (&'a Bytes, &'a PrefixMapValue),
@@ -13,7 +12,7 @@ struct PeekedIterator<'a> {
 }
 
 impl<'a> PartialEq for PeekedIterator<'a> {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, _other: &Self) -> bool {
         false
     }
 }

@@ -3,16 +3,10 @@ use super::{
     iter::StoreIterator,
     prefix_map::{PrefixMap, PrefixMapValue},
 };
-use crate::{
-    listener::{self, ListenerMap},
-    Bytes, Mutation,
-};
-use serde::{Deserialize, Serialize};
+use crate::Bytes;
 use std::{
-    cell::RefCell,
-    collections::{BTreeMap, HashSet},
+    collections::HashSet,
     fmt::{Debug, Formatter},
-    sync::{Arc, Mutex},
 };
 
 #[derive(Clone)]
@@ -42,9 +36,9 @@ impl StoreHandle {
         // set the value in the top layer.
 
         let mut layers = self.map.inner.layers.lock().unwrap();
-        let mut top_layer = layers.last_mut().unwrap();
+        let top_layer = layers.last_mut().unwrap();
 
-        let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
+        let map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
         top_layer.dirty.insert(self.prefix.clone());
 
@@ -55,9 +49,9 @@ impl StoreHandle {
         // delete the value in the top layer.
 
         let mut layers = self.map.inner.layers.lock().unwrap();
-        let mut top_layer = layers.last_mut().unwrap();
+        let top_layer = layers.last_mut().unwrap();
 
-        let mut map = top_layer.layer.entry(self.prefix.clone()).or_default();
+        let map = top_layer.layer.entry(self.prefix.clone()).or_default();
 
         top_layer.dirty.insert(self.prefix.clone());
 
@@ -79,7 +73,6 @@ impl StoreHandle {
         prefix.push(path_part.to_vec());
 
         let mut layers = self.map.inner.layers.lock().unwrap();
-        let mut top_layer = layers.last_mut().unwrap();
 
         // When we delete a prefix, we delete not only that prefix but all of the prefixes under it.
         // TODO: This is a bit expensive, in order to make a trade-off that reads are faster. Is the balance optimal?
@@ -87,14 +80,14 @@ impl StoreHandle {
         let mut prefixes_to_delete = HashSet::new();
 
         for layer in layers.iter() {
-            for (pfx, val) in layer.layer.iter() {
+            for (pfx, _) in layer.layer.iter() {
                 if pfx.starts_with(&prefix) {
                     prefixes_to_delete.insert(pfx.clone());
                 }
             }
         }
 
-        let mut top_layer = layers.last_mut().unwrap();
+        let top_layer = layers.last_mut().unwrap();
 
         for pfx in prefixes_to_delete.iter() {
             top_layer
