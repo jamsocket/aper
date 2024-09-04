@@ -34,28 +34,21 @@ checksum = "b3d1d046238990b9cf5bcde22a3fb3584ee5cf65fb2765f454ed428c7a0063da"
 
 [[package]]
 name = "aper"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
- "aper-derive",
+ "aper_derive",
  "bincode",
+ "bytes",
  "chrono",
  "dashmap 6.0.1",
+ "self_cell",
  "serde",
  "tracing",
 ]
 
 [[package]]
-name = "aper-derive"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "aper-stateroom"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "aper",
  "bincode",
@@ -68,7 +61,7 @@ dependencies = [
 
 [[package]]
 name = "aper-websocket-client"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "aper",
@@ -81,6 +74,15 @@ dependencies = [
  "tracing",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "aper_derive"
+version = "0.5.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -162,6 +164,9 @@ name = "bytes"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8318a53db07bb3f8dca91a600466bdb3f2eaadeedfdbcf02e1accbad9271ba50"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "camino"

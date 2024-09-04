@@ -1,4 +1,4 @@
-use crate::{Aper, AperClient, AperServer};
+use crate::{Aper, AperClient, AperServer, Store};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -64,6 +64,10 @@ impl<A: Aper> ClientConnection<A> {
 
     pub fn state(&self) -> A {
         self.client.state()
+    }
+
+    pub fn store(&self) -> Store {
+        self.client.store()
     }
 
     /// Send an intent to the server, and apply it speculatively to the local state.

@@ -16,7 +16,6 @@ fn App() -> impl IntoView {
     let client_program =
         AperWebSocketStateProgramClient::<StateMachineContainerProgram<Counter>>::new(
             url,
-            move |_, _| {},
         )
         .unwrap();
 
@@ -33,7 +32,7 @@ fn App() -> impl IntoView {
     view! {
         <button
             on:click=move |_| {
-                client_program.push_intent(CounterIntent::Add(1)).unwrap();
+                client_program.apply(CounterIntent::Add(1)).unwrap();
             }
         >
             "Click me: "
