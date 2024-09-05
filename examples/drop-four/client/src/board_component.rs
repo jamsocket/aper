@@ -120,9 +120,10 @@ impl BoardComponent {
                 board.get(row, col).map(|p| {
                     let ty = CELL_SIZE * row + CELL_SIZE / 2;
                     let style = format!("transform: translate(0, {}px)", ty);
+                    let key = format!("{}-{}", row, col);
 
                     html! {
-                        <g style={style} class="disc">
+                        <g style={style} class="disc" key={key}>
                             { self.view_disc(p, 0) }
                         </g>
                     }

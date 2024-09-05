@@ -46,28 +46,21 @@ checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
 
 [[package]]
 name = "aper"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
- "aper-derive",
+ "aper_derive",
  "bincode",
+ "bytes",
  "chrono",
  "dashmap",
+ "self_cell",
  "serde",
  "tracing",
 ]
 
 [[package]]
-name = "aper-derive"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.72",
-]
-
-[[package]]
 name = "aper-stateroom"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "aper",
  "bincode",
@@ -80,7 +73,7 @@ dependencies = [
 
 [[package]]
 name = "aper-websocket-client"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "aper",
@@ -97,7 +90,7 @@ dependencies = [
 
 [[package]]
 name = "aper-yew"
-version = "0.3.0"
+version = "0.5.0"
 dependencies = [
  "aper",
  "aper-stateroom",
@@ -117,6 +110,15 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "yew",
+]
+
+[[package]]
+name = "aper_derive"
+version = "0.5.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.72",
 ]
 
 [[package]]
@@ -178,6 +180,9 @@ name = "bytes"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8318a53db07bb3f8dca91a600466bdb3f2eaadeedfdbcf02e1accbad9271ba50"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cc"
@@ -1155,6 +1160,12 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "self_cell"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d369a96f978623eb3dc28807c4852d6cc617fed53da5d3c400feff1ef34a714a"
 
 [[package]]
 name = "serde"
