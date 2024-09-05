@@ -11,7 +11,7 @@ Aper supports optimistic updates and arbitrary business logic, making it useful 
 
 ## Introduction
 
-(More docs coming soon)
+(More docs coming soon, [peek at a WIP here](https://github.com/jamsocket/aper/tree/main/site/book/src))
 
 Types marked with the `AperSync` trait can be stored in the `Store`, Aper's synchronizable data store.
 Aper includes several data structures that implement `AperSync` in the `aper::data_structures` module, which
