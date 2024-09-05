@@ -1,7 +1,7 @@
 use crate::{
     connection::{ClientConnection, MessageToServer},
     store::{Store, StoreHandle},
-    Mutation,
+    IntentEvent, Mutation,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, fmt::Debug};
@@ -14,15 +14,15 @@ pub trait AperSync {
     }
 }
 
-pub trait Aper: AperSync {
+pub trait Aper: AperSync + 'static {
     type Intent: Clone + Serialize + for<'de> Deserialize<'de> + PartialEq;
     type Error: Debug;
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error>;
+    fn apply(&mut self, intent: &IntentEvent<Self::Intent>) -> Result<(), Self::Error>;
 }
 
 struct SpeculativeIntent<I> {
-    intent: I,
+    intent: IntentEvent<I>,
     version: u64,
 }
 
@@ -92,7 +92,7 @@ impl<A: Aper> AperClient<A> {
     }
 
     /// Apply a mutation to the local client state.
-    pub fn apply(&mut self, intent: &A::Intent) -> Result<u64, A::Error> {
+    pub fn apply(&mut self, intent: &IntentEvent<A::Intent>) -> Result<u64, A::Error> {
         self.store.push_overlay();
 
         {
@@ -207,7 +207,7 @@ impl<A: Aper> AperServer<A> {
         self.map.top_layer_mutations()
     }
 
-    pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
+    pub fn apply(&mut self, intent: &IntentEvent<A::Intent>) -> Result<Vec<Mutation>, A::Error> {
         self.map.push_overlay();
 
         let mut sm = A::attach(self.map.handle());

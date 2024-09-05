@@ -2,9 +2,8 @@ use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
 use aper::{
     connection::{ClientConnection, MessageToClient, MessageToServer},
-    AperClient, Store,
+    Aper, AperClient, IntentEvent, Store,
 };
-use aper_stateroom::{IntentEvent, StateProgram};
 use core::fmt::Debug;
 use std::{
     rc::{Rc, Weak},
@@ -14,21 +13,21 @@ use std::{
 #[derive(Clone)]
 pub struct AperWebSocketStateProgramClient<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
     conn: Rc<Mutex<ClientConnection<S>>>,
 }
 
 pub struct IntentApplier<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
     conn: Rc<Mutex<ClientConnection<S>>>,
 }
 
 impl<S> Clone for IntentApplier<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
     fn clone(&self) -> Self {
         IntentApplier {
@@ -39,9 +38,9 @@ where
 
 impl<S> IntentApplier<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
-    pub fn apply(&self, intent: S::WrappedIntent) {
+    pub fn apply(&self, intent: S::Intent) {
         let mut conn = self.conn.lock().unwrap();
 
         let client = conn.client_id;
@@ -59,7 +58,7 @@ where
 
 impl<S> Debug for AperWebSocketStateProgramClient<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AperWebSocketStateProgramClient").finish()
@@ -68,7 +67,7 @@ where
 
 impl<S> AperWebSocketStateProgramClient<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
     pub fn new(url: &str) -> Result<Self> {
         // callback is called when the state changes
@@ -115,7 +114,7 @@ where
         S::attach(store.handle())
     }
 
-    pub fn apply(&self, intent: S::WrappedIntent) -> Result<(), S::Error> {
+    pub fn apply(&self, intent: S::Intent) -> Result<(), S::Error> {
         let mut conn = self.conn.lock().unwrap();
 
         let client = conn.client_id;

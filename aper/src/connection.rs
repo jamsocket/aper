@@ -1,4 +1,4 @@
-use crate::{Aper, AperClient, AperServer, Store};
+use crate::{Aper, AperClient, AperServer, IntentEvent, Store};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -71,7 +71,7 @@ impl<A: Aper> ClientConnection<A> {
     }
 
     /// Send an intent to the server, and apply it speculatively to the local state.
-    pub fn apply(&mut self, intent: &A::Intent) -> Result<(), A::Error> {
+    pub fn apply(&mut self, intent: &IntentEvent<A::Intent>) -> Result<(), A::Error> {
         let version = self.client.apply(intent)?;
         let intent = bincode::serialize(intent).unwrap();
         (self.message_callback)(MessageToServer::Intent {

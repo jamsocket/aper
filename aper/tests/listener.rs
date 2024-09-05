@@ -1,6 +1,6 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperClient, AperSync, Bytes, Mutation, PrefixMap, PrefixMapValue,
+    Aper, AperClient, AperSync, Bytes, IntentEvent, Mutation, PrefixMap, PrefixMapValue,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, sync::mpsc::channel};
@@ -23,8 +23,8 @@ impl Aper for SimpleStruct {
     type Intent = SimpleIntent;
     type Error = ();
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
-        match intent {
+    fn apply(&mut self, event: &IntentEvent<Self::Intent>) -> Result<(), Self::Error> {
+        match &event.intent {
             SimpleIntent::SetAtomI32(value) => self.atom_i32.set(*value),
             SimpleIntent::SetAtomString(value) => self.atom_string.set(value.clone()),
             SimpleIntent::SetFixedArray(index, value) => self.fixed_array.set(*index, *value),
