@@ -11,7 +11,7 @@ mod state_program;
 
 pub struct AperStateroomService<P: StateProgram> {
     connection: ServerConnection<P>,
-    suspended_event: Option<IntentEvent<P::T>>,
+    suspended_event: Option<IntentEvent<P::WrappedIntent>>,
     client_connections: HashMap<ClientId, ServerHandle<P>>,
 
     /// Pseudo-connection for sending timer events.
@@ -65,7 +65,7 @@ impl<P: StateProgram> AperStateroomService<P> {
 
 impl<P: StateProgram> StateroomService for AperStateroomService<P>
 where
-    P::T: Unpin + Send + Sync + 'static,
+    P::WrappedIntent: Unpin + Send + Sync + 'static,
 {
     fn init(&mut self, ctx: &impl StateroomContext) {
         self.update_suspended_event(ctx);

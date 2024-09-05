@@ -41,7 +41,7 @@ impl<S> IntentApplier<S>
 where
     S: StateProgram,
 {
-    pub fn apply(&self, intent: S::T) {
+    pub fn apply(&self, intent: S::WrappedIntent) {
         let mut conn = self.conn.lock().unwrap();
 
         let client = conn.client_id;
@@ -115,7 +115,7 @@ where
         S::attach(store.handle())
     }
 
-    pub fn apply(&self, intent: S::T) -> Result<(), S::Error> {
+    pub fn apply(&self, intent: S::WrappedIntent) -> Result<(), S::Error> {
         let mut conn = self.conn.lock().unwrap();
 
         let client = conn.client_id;
