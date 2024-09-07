@@ -1,8 +1,7 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperSync, Store,
+    Aper, AperSync, IntentEvent,
 };
-use aper_stateroom::{IntentEvent, StateProgram};
 use serde::{Deserialize, Serialize};
 
 pub const BOARD_ROWS: u32 = 6;
@@ -103,7 +102,7 @@ impl PlayerColor {
     }
 }
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 pub struct PlayerMap {
     pub teal_player: Atom<Option<u32>>,
     pub brown_player: Atom<Option<u32>>,
@@ -142,29 +141,23 @@ pub enum GameTransition {
     Reset,
 }
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 pub struct DropFourGame {
-    play_state: Atom<PlayState>,
+    pub play_state: Atom<PlayState>,
     pub next_player: Atom<PlayerColor>,
     pub board: Board,
     pub player_map: PlayerMap,
     pub winner: Atom<Option<PlayerColor>>,
 }
 
-impl DropFourGame {
-    pub fn state(&self) -> PlayState {
-        self.play_state.get()
-    }
-}
-
 impl Aper for DropFourGame {
-    type Intent = IntentEvent<GameTransition>;
+    type Intent = GameTransition;
     type Error = ();
 
-    fn apply(&mut self, event: &Self::Intent) -> Result<(), ()> {
+    fn apply(&mut self, event: &IntentEvent<Self::Intent>) -> Result<(), ()> {
         match event.intent {
             GameTransition::Join => {
-                if PlayState::Waiting == self.state() {
+                if PlayState::Waiting == self.play_state.get() {
                     if self.player_map.teal_player.get().is_none() {
                         self.player_map.teal_player.set(event.client);
                     } else if self.player_map.brown_player.get().is_none() {
@@ -174,7 +167,7 @@ impl Aper for DropFourGame {
                 }
             }
             GameTransition::Drop(c) => {
-                if PlayState::Playing == self.state() {
+                if PlayState::Playing == self.play_state.get() {
                     if self.winner.get().is_some() {
                         return Ok(());
                     } // Someone has already won.
@@ -204,23 +197,22 @@ impl Aper for DropFourGame {
     }
 }
 
-impl StateProgram for DropFourGame {
-    type T = GameTransition;
-
-    fn new() -> Self {
-        let storeref = Store::default();
-        Self::attach(storeref.handle())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::GameTransition::{Drop, Join, Reset};
     use super::PlayState::{Playing, Waiting};
     use super::PlayerColor::{Brown, Teal};
+    use aper::Store;
     use chrono::{TimeZone, Utc};
 
     use super::*;
+
+    impl DropFourGame {
+        fn new() -> Self {
+            let storeref = Store::default();
+            Self::attach(storeref.handle())
+        }
+    }
 
     fn expect_disc(game: &DropFourGame, row: usize, col: usize, value: PlayerColor) {
         assert_eq!(Some(value), game.board.get(row as u32, col as u32));
@@ -233,19 +225,19 @@ mod tests {
         let player1 = 1;
         let player2 = 2;
 
-        assert_eq!(Waiting, game.state());
+        assert_eq!(Waiting, game.play_state.get());
 
         game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Join))
             .unwrap();
 
-        assert_eq!(Waiting, game.state());
+        assert_eq!(Waiting, game.play_state.get());
 
         assert_eq!(Some(player1), game.player_map.teal_player.get(),);
 
         game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Join))
             .unwrap();
 
-        assert_eq!(game.state(), Playing,);
+        assert_eq!(game.play_state.get(), Playing,);
         assert_eq!(Some(player2), game.player_map.brown_player.get(),);
         assert_eq!(Teal, game.next_player.get(),);
 

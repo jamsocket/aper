@@ -53,4 +53,8 @@ impl<T: Aper> YewAperClient<T> {
             let _ = client.apply(intent);
         })
     }
+
+    pub fn client_id(&self) -> Option<u32> {
+        self.client.client_id()
+    }
 }

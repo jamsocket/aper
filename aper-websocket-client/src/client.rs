@@ -85,4 +85,8 @@ where
 
         conn.apply(intent)
     }
+
+    pub fn client_id(&self) -> Option<u32> {
+        self.conn.lock().unwrap().client_id()
+    }
 }
