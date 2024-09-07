@@ -98,7 +98,7 @@ impl Store {
     }
 
     pub fn top_layer_mutations(&self) -> Vec<Mutation> {
-        let layers = self.inner.layers.write().unwrap();
+        let layers = self.inner.layers.read().unwrap();
         let top_layer = layers.last().unwrap();
 
         let mut mutations = vec![];

@@ -24,7 +24,7 @@ where
 {
     fn eq(&self, _other: &Self) -> bool {
         // only equal if they are the same instance
-        self.conn.as_ref() as *const _ == _other.conn.as_ref() as *const _
+        std::ptr::eq(self.conn.as_ref(), _other.conn.as_ref())
     }
 }
 

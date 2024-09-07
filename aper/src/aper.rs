@@ -102,7 +102,7 @@ impl<A: Aper> AperClient<A> {
         {
             let mut sm = A::attach(self.store.handle());
 
-            if let Err(e) = sm.apply(&intent) {
+            if let Err(e) = sm.apply(intent) {
                 // reverse changes.
                 self.store.pop_overlay();
                 return Err(e);

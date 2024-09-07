@@ -106,7 +106,7 @@ fn test_mutate_listener_simple() {
         .listen(move || fixed_array_send.send(()).is_ok());
 
     client.mutate(
-        &vec![create_mutation(
+        &[create_mutation(
             vec![b"atom_i32"],
             vec![(
                 b"".to_vec(),
@@ -176,7 +176,7 @@ fn test_mutate_listener_incidental() {
     assert_eq!(1, st.lhs.get());
     assert_eq!(1, st.sum.get());
 
-    client.mutate(&vec![], None, 1);
+    client.mutate(&[], None, 1);
 
     assert!(lhs_recv.try_recv().is_ok());
     assert!(rhs_recv.try_recv().is_err());
@@ -185,7 +185,7 @@ fn test_mutate_listener_incidental() {
     // now mutate the rhs, which should cause the sum to be recomputed
 
     client.mutate(
-        &vec![create_mutation(
+        &[create_mutation(
             vec![b"rhs"],
             vec![(
                 b"".to_vec(),
