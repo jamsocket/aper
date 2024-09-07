@@ -6,6 +6,12 @@ pub struct FakeSend<T> {
     pub value: T,
 }
 
+impl<T> FakeSend<T> {
+    pub fn new(value: T) -> Self {
+        FakeSend { value }
+    }
+}
+
 unsafe impl<T> Send for FakeSend<T> {}
 unsafe impl<T> Sync for FakeSend<T> {}
 
