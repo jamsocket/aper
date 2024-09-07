@@ -4,7 +4,7 @@ use aper::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct TicTacToe {
     grid: FixedArray<9, Option<TicTacToePlayer>>,
     player: Atom<TicTacToePlayer>,

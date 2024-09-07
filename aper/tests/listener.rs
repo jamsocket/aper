@@ -5,7 +5,7 @@ use aper::{
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, sync::mpsc::channel};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct SimpleStruct {
     atom_i32: Atom<i32>,
     atom_string: Atom<String>,
@@ -124,7 +124,7 @@ fn test_mutate_listener_simple() {
     assert!(fixed_array_recv.try_recv().is_err());
 }
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct LinkedFields {
     lhs: Atom<i32>,
     rhs: Atom<i32>,

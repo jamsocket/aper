@@ -3,6 +3,7 @@ use aper::{
 };
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone)]
 struct Counter(Atom<u64>);
 
 impl AperSync for Counter {

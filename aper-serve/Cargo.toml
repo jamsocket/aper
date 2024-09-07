@@ -1,0 +1,14 @@
+[package]
+name = "aper-serve"
+version = "0.2.2"
+edition = "2018"
+repository = "https://github.com/drifting-in-space/aper"
+publish = false
+
+[dependencies]
+aper = { path = "../aper" }
+aper-stateroom = {path = "../aper-stateroom"}
+env_logger = "0.11.3"
+stateroom-server = { version="0.4.0" }
+log = "0.4.17"
+stateroom = { version="0.4.4", features=["serde"] }

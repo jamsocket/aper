@@ -9,7 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 aper = {path = "../../../aper"}
-aper-yew = {path = "../../../aper-yew"}
+aper-websocket-client = {path = "../../../aper-websocket-client"}
 console_error_panic_hook = "0.1.6"
 serde = { version = "1.0.124", features = ["derive"] }
 wasm-bindgen = "0.2.83"

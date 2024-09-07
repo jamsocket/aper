@@ -9,5 +9,7 @@ members = [
     "aper",
     "aper/aper-derive*",
     "aper-websocket-client",
+    "aper-serve",
+    "aper-stateroom",
     "site/doctests",
 ]

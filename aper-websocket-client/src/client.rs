@@ -11,11 +11,21 @@ use std::{
 };
 
 #[derive(Clone)]
-pub struct AperWebSocketStateProgramClient<S>
+pub struct AperWebSocketClient<S>
 where
     S: Aper,
 {
     conn: Rc<Mutex<ClientConnection<S>>>,
+}
+
+impl<T> PartialEq for AperWebSocketClient<T>
+where
+    T: Aper,
+{
+    fn eq(&self, _other: &Self) -> bool {
+        // only equal if they are the same instance
+        self as *const _ == _other as *const _
+    }
 }
 
 pub struct IntentApplier<S>
@@ -49,7 +59,7 @@ where
     }
 }
 
-impl<S> Debug for AperWebSocketStateProgramClient<S>
+impl<S> Debug for AperWebSocketClient<S>
 where
     S: Aper,
 {
@@ -58,7 +68,7 @@ where
     }
 }
 
-impl<S> AperWebSocketStateProgramClient<S>
+impl<S> AperWebSocketClient<S>
 where
     S: Aper,
 {
@@ -89,7 +99,7 @@ where
             Mutex::new(ClientConnection::new(client, message_callback))
         });
 
-        Ok(AperWebSocketStateProgramClient { conn })
+        Ok(AperWebSocketClient { conn })
     }
 
     pub fn intent_applier(&self) -> IntentApplier<S> {

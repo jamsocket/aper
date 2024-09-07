@@ -2,10 +2,21 @@ use crate::{AperSync, StoreHandle};
 use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 
-#[derive(Clone)]
 pub struct FixedArray<const N: u32, T: Serialize + DeserializeOwned + Default> {
     map: StoreHandle,
     _phantom: std::marker::PhantomData<T>,
+}
+
+impl<const N: u32, T> Clone for FixedArray<N, T>
+where
+    T: Serialize + DeserializeOwned + Default,
+{
+    fn clone(&self) -> Self {
+        Self {
+            map: self.map.clone(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
 }
 
 impl<const N: u32, T: Serialize + DeserializeOwned + Default> AperSync for FixedArray<N, T> {

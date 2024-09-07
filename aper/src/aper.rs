@@ -6,7 +6,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, fmt::Debug};
 
-pub trait AperSync {
+pub trait AperSync: Clone {
     fn attach(map: StoreHandle) -> Self;
 
     fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, _listener: F) {
@@ -19,6 +19,10 @@ pub trait Aper: AperSync + 'static {
     type Error: Debug;
 
     fn apply(&mut self, intent: &IntentEvent<Self::Intent>) -> Result<(), Self::Error>;
+
+    fn suspended_event(&self) -> Option<IntentEvent<Self::Intent>> {
+        None
+    }
 }
 
 struct SpeculativeIntent<I> {
