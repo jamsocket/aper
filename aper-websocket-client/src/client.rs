@@ -24,7 +24,7 @@ where
 {
     fn eq(&self, _other: &Self) -> bool {
         // only equal if they are the same instance
-        self as *const _ == _other as *const _
+        self.conn.as_ref() as *const _ == _other.conn.as_ref() as *const _
     }
 }
 

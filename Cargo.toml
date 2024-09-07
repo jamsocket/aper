@@ -11,5 +11,5 @@ members = [
     "aper-websocket-client",
     "aper-serve",
     "aper-stateroom",
-    "site/doctests",
+    "site/doctests", "aper-yew",
 ]

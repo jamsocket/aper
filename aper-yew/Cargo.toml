@@ -1,0 +1,9 @@
+[package]
+version = "0.5.0"
+name = "aper-yew"
+edition = "2021"
+
+[dependencies]
+yew = "0.21.0"
+aper = { path = "../aper" }
+aper-websocket-client = { path = "../aper-websocket-client" }

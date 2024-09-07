@@ -88,6 +88,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aper-yew"
+version = "0.5.0"
+dependencies = [
+ "aper",
+ "aper-websocket-client",
+ "yew",
+]
+
+[[package]]
 name = "aper_derive"
 version = "0.5.0"
 dependencies = [
@@ -201,7 +210,7 @@ name = "counter-client"
 version = "0.1.0"
 dependencies = [
  "aper",
- "aper-websocket-client",
+ "aper-yew",
  "console_error_panic_hook",
  "counter-common",
  "serde",
