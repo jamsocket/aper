@@ -1,4 +1,4 @@
-use crate::{Aper, AperClient, AperServer, IntentEvent, Store};
+use crate::{Aper, AperClient, AperServer, Store};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -41,7 +41,7 @@ pub struct MessageToClient {
 pub struct ClientConnection<A: Aper> {
     client: AperClient<A>,
     message_callback: Box<dyn Fn(MessageToServer)>,
-    pub client_id: Option<u32>,
+    client_id: Option<u32>,
 }
 
 impl<A: Aper> ClientConnection<A> {
@@ -62,6 +62,10 @@ impl<A: Aper> ClientConnection<A> {
         }
     }
 
+    pub fn client_id(&self) -> Option<u32> {
+        self.client_id
+    }
+
     pub fn state(&self) -> A {
         self.client.state()
     }
@@ -71,9 +75,10 @@ impl<A: Aper> ClientConnection<A> {
     }
 
     /// Send an intent to the server, and apply it speculatively to the local state.
-    pub fn apply(&mut self, intent: &IntentEvent<A::Intent>) -> Result<(), A::Error> {
-        let version = self.client.apply(intent)?;
-        let intent = bincode::serialize(intent).unwrap();
+    pub fn apply(&mut self, intent: A::Intent) -> Result<(), A::Error> {
+        let intent = crate::IntentEvent::new(self.client_id, Utc::now(), intent);
+        let version = self.client.apply(&intent)?;
+        let intent = bincode::serialize(&intent).unwrap();
         (self.message_callback)(MessageToServer::Intent {
             intent,
             client_version: version,

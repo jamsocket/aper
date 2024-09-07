@@ -60,21 +60,27 @@ fn test_apply_listener() {
     st.fixed_array
         .listen(move || fixed_array_send.send(()).is_ok());
 
-    client.apply(&SimpleIntent::SetAtomI32(42)).unwrap();
+    client
+        .apply(&IntentEvent::simple(SimpleIntent::SetAtomI32(42)))
+        .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_ok());
     assert!(atom_string_recv.try_recv().is_err());
     assert!(fixed_array_recv.try_recv().is_err());
 
     client
-        .apply(&SimpleIntent::SetAtomString("hello".to_string()))
+        .apply(&IntentEvent::simple(SimpleIntent::SetAtomString(
+            "hello".to_string(),
+        )))
         .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_err());
     assert!(atom_string_recv.try_recv().is_ok());
     assert!(fixed_array_recv.try_recv().is_err());
 
-    client.apply(&SimpleIntent::SetFixedArray(0, 42)).unwrap();
+    client
+        .apply(&IntentEvent::simple(SimpleIntent::SetFixedArray(0, 42)))
+        .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_err());
     assert!(atom_string_recv.try_recv().is_err());
@@ -135,8 +141,8 @@ impl Aper for LinkedFields {
     type Intent = LinkedFieldIntent;
     type Error = ();
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
-        match intent {
+    fn apply(&mut self, intent: &IntentEvent<Self::Intent>) -> Result<(), Self::Error> {
+        match &intent.intent {
             LinkedFieldIntent::SetLhs(value) => self.lhs.set(*value),
             LinkedFieldIntent::SetRhs(value) => self.rhs.set(*value),
         }
@@ -163,7 +169,9 @@ fn test_mutate_listener_incidental() {
     st.rhs.listen(move || rhs_send.send(()).is_ok());
     st.sum.listen(move || sum_send.send(()).is_ok());
 
-    client.apply(&LinkedFieldIntent::SetLhs(1)).unwrap();
+    client
+        .apply(&IntentEvent::simple(LinkedFieldIntent::SetLhs(1)))
+        .unwrap();
 
     assert_eq!(1, st.lhs.get());
     assert_eq!(1, st.sum.get());

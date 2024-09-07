@@ -2,7 +2,7 @@ use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
 use aper::{
     connection::{ClientConnection, MessageToClient, MessageToServer},
-    Aper, AperClient, IntentEvent, Store,
+    Aper, AperClient, Store,
 };
 use core::fmt::Debug;
 use std::{
@@ -43,14 +43,7 @@ where
     pub fn apply(&self, intent: S::Intent) {
         let mut conn = self.conn.lock().unwrap();
 
-        let client = conn.client_id;
-        let intent = IntentEvent {
-            client,
-            timestamp: chrono::Utc::now(),
-            intent,
-        };
-
-        if let Err(err) = conn.apply(&intent) {
+        if let Err(err) = conn.apply(intent) {
             tracing::error!("Error applying intent: {:?}", err);
         }
     }
@@ -117,13 +110,6 @@ where
     pub fn apply(&self, intent: S::Intent) -> Result<(), S::Error> {
         let mut conn = self.conn.lock().unwrap();
 
-        let client = conn.client_id;
-        let intent = IntentEvent {
-            client,
-            timestamp: chrono::Utc::now(),
-            intent,
-        };
-
-        conn.apply(&intent)
+        conn.apply(intent)
     }
 }

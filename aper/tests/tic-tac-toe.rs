@@ -1,6 +1,6 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperSync, Store,
+    Aper, AperSync, IntentEvent, Store,
 };
 use serde::{Deserialize, Serialize};
 
@@ -55,10 +55,10 @@ impl Aper for TicTacToe {
     type Intent = TicTacToePlay;
     type Error = ();
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
+    fn apply(&mut self, intent: &IntentEvent<Self::Intent>) -> Result<(), Self::Error> {
         let player = self.player.get();
 
-        match intent {
+        match &intent.intent {
             TicTacToePlay::Play(cell) => {
                 self.grid.set(*cell as u32, Some(player));
                 self.player.set(match player {
@@ -89,10 +89,14 @@ fn test_tic_tac_toe() {
     let map = Store::default();
     let mut game = TicTacToe::attach(map.handle());
 
-    game.apply(&TicTacToePlay::Play(0)).unwrap(); // X
-    game.apply(&TicTacToePlay::Play(1)).unwrap(); // O
-    game.apply(&TicTacToePlay::Play(3)).unwrap(); // X
-    game.apply(&TicTacToePlay::Play(2)).unwrap(); // O
+    game.apply(&IntentEvent::simple(TicTacToePlay::Play(0)))
+        .unwrap(); // X
+    game.apply(&IntentEvent::simple(TicTacToePlay::Play(1)))
+        .unwrap(); // O
+    game.apply(&IntentEvent::simple(TicTacToePlay::Play(3)))
+        .unwrap(); // X
+    game.apply(&IntentEvent::simple(TicTacToePlay::Play(2)))
+        .unwrap(); // O
 
     assert_eq!(game.grid.get(0), Some(TicTacToePlayer::X));
     assert_eq!(game.grid.get(1), Some(TicTacToePlayer::O));
@@ -101,10 +105,12 @@ fn test_tic_tac_toe() {
 
     assert_eq!(game.winner.get(), None);
 
-    game.apply(&TicTacToePlay::Play(6)).unwrap(); // X for the win
+    game.apply(&IntentEvent::simple(TicTacToePlay::Play(6)))
+        .unwrap(); // X for the win
     assert_eq!(game.winner.get(), Some(TicTacToePlayer::X));
 
-    game.apply(&TicTacToePlay::Reset).unwrap();
+    game.apply(&IntentEvent::simple(TicTacToePlay::Reset))
+        .unwrap();
 
     for i in 0..9 {
         assert_eq!(game.grid.get(i), None);

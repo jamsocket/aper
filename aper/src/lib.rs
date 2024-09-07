@@ -37,4 +37,12 @@ impl<T> IntentEvent<T> {
             intent,
         }
     }
+
+    pub fn simple(intent: T) -> IntentEvent<T> {
+        IntentEvent {
+            timestamp: Utc::now(),
+            client: None,
+            intent,
+        }
+    }
 }
