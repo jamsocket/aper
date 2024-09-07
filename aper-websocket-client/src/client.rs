@@ -28,37 +28,6 @@ where
     }
 }
 
-pub struct IntentApplier<S>
-where
-    S: Aper,
-{
-    conn: Rc<Mutex<ClientConnection<S>>>,
-}
-
-impl<S> Clone for IntentApplier<S>
-where
-    S: Aper,
-{
-    fn clone(&self) -> Self {
-        IntentApplier {
-            conn: self.conn.clone(),
-        }
-    }
-}
-
-impl<S> IntentApplier<S>
-where
-    S: Aper,
-{
-    pub fn apply(&self, intent: S::Intent) {
-        let mut conn = self.conn.lock().unwrap();
-
-        if let Err(err) = conn.apply(intent) {
-            tracing::error!("Error applying intent: {:?}", err);
-        }
-    }
-}
-
 impl<S> Debug for AperWebSocketClient<S>
 where
     S: Aper,
@@ -100,12 +69,6 @@ where
         });
 
         Ok(AperWebSocketClient { conn })
-    }
-
-    pub fn intent_applier(&self) -> IntentApplier<S> {
-        IntentApplier {
-            conn: self.conn.clone(),
-        }
     }
 
     pub fn store(&self) -> Store {

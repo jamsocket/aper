@@ -2,4 +2,4 @@ mod client;
 mod typed;
 mod websocket;
 
-pub use client::{AperWebSocketClient, IntentApplier};
+pub use client::AperWebSocketClient;

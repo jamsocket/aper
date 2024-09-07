@@ -1,7 +1,7 @@
 use aper::{data_structures::atom::Atom, Aper, AperSync, IntentEvent};
 use serde::{Deserialize, Serialize};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 pub struct Counter {
     pub value: Atom<i64>,
 }
