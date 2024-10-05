@@ -2,40 +2,46 @@ use crate::typed::TypedWebsocketConnection;
 use anyhow::Result;
 use aper::{
     connection::{ClientConnection, MessageToClient, MessageToServer},
-    AperClient, Store,
+    Aper, AperClient, Store,
 };
-use aper_stateroom::{IntentEvent, StateProgram};
 use core::fmt::Debug;
 use std::{
     rc::{Rc, Weak},
     sync::Mutex,
 };
 
-pub struct AperWebSocketStateProgramClient<S>
+#[derive(Clone)]
+pub struct AperWebSocketClient<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
     conn: Rc<Mutex<ClientConnection<S>>>,
-    store: Store,
 }
 
-impl<S> Debug for AperWebSocketStateProgramClient<S>
+impl<T> PartialEq for AperWebSocketClient<T>
 where
-    S: StateProgram,
+    T: Aper,
+{
+    fn eq(&self, _other: &Self) -> bool {
+        // only equal if they are the same instance
+        std::ptr::eq(self.conn.as_ref(), _other.conn.as_ref())
+    }
+}
+
+impl<S> Debug for AperWebSocketClient<S>
+where
+    S: Aper,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AperWebSocketStateProgramClient").finish()
     }
 }
 
-impl<S> AperWebSocketStateProgramClient<S>
+impl<S> AperWebSocketClient<S>
 where
-    S: StateProgram,
+    S: Aper,
 {
-    pub fn new<F>(url: &str, state_callback: F) -> Result<Self>
-    where
-        F: Fn(S, u32) + 'static,
-    {
+    pub fn new(url: &str) -> Result<Self> {
         // callback is called when the state changes
         // need to create a connection
         // connection needs to be able to call the state and message callback
@@ -44,7 +50,6 @@ where
         // connection needs to be able to send messages to client
 
         let client = AperClient::<S>::new();
-        let store = client.store();
 
         let conn = Rc::new_cyclic(|c: &Weak<Mutex<ClientConnection<S>>>| {
             let d = c.clone();
@@ -60,30 +65,28 @@ where
                 wss_conn.send(&message);
             });
 
-            Mutex::new(ClientConnection::new(
-                client,
-                message_callback,
-                state_callback,
-            ))
+            Mutex::new(ClientConnection::new(client, message_callback))
         });
 
-        Ok(AperWebSocketStateProgramClient { conn, store })
+        Ok(AperWebSocketClient { conn })
+    }
+
+    pub fn store(&self) -> Store {
+        self.conn.lock().unwrap().store()
     }
 
     pub fn state(&self) -> S {
-        S::attach(self.store.handle())
+        let store = self.store();
+        S::attach(store.handle())
     }
 
-    pub fn push_intent(&self, intent: S::T) -> Result<(), S::Error> {
+    pub fn apply(&self, intent: S::Intent) -> Result<(), S::Error> {
         let mut conn = self.conn.lock().unwrap();
 
-        let client = conn.client_id;
-        let intent = IntentEvent {
-            client,
-            timestamp: chrono::Utc::now(),
-            intent,
-        };
+        conn.apply(intent)
+    }
 
-        conn.apply(&intent)
+    pub fn client_id(&self) -> Option<u32> {
+        self.conn.lock().unwrap().client_id()
     }
 }

@@ -1,12 +1,12 @@
 use crate::{
     connection::{ClientConnection, MessageToServer},
     store::{Store, StoreHandle},
-    Mutation,
+    IntentMetadata, Mutation,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, fmt::Debug};
 
-pub trait AperSync {
+pub trait AperSync: Clone {
     fn attach(map: StoreHandle) -> Self;
 
     fn listen<F: Fn() -> bool + 'static + Send + Sync>(&self, _listener: F) {
@@ -14,14 +14,23 @@ pub trait AperSync {
     }
 }
 
-pub trait Aper: AperSync {
+pub trait Aper: AperSync + 'static {
     type Intent: Clone + Serialize + for<'de> Deserialize<'de> + PartialEq;
     type Error: Debug;
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error>;
+    fn apply(
+        &mut self,
+        intent: &Self::Intent,
+        metadata: &IntentMetadata,
+    ) -> Result<(), Self::Error>;
+
+    fn suspended_event(&self) -> Option<(Self::Intent, IntentMetadata)> {
+        None
+    }
 }
 
 struct SpeculativeIntent<I> {
+    metadata: IntentMetadata,
     intent: I,
     version: u64,
 }
@@ -66,12 +75,11 @@ impl<A: Aper> AperClient<A> {
         self.store.clone()
     }
 
-    pub fn connect<F: Fn(MessageToServer) + 'static, FS: Fn(A, u32) + 'static>(
+    pub fn connect<F: Fn(MessageToServer) + 'static>(
         self,
         message_callback: F,
-        state_callback: FS,
     ) -> ClientConnection<A> {
-        ClientConnection::new(self, message_callback, state_callback)
+        ClientConnection::new(self, message_callback)
     }
 
     pub fn state(&self) -> A {
@@ -93,13 +101,17 @@ impl<A: Aper> AperClient<A> {
     }
 
     /// Apply a mutation to the local client state.
-    pub fn apply(&mut self, intent: &A::Intent) -> Result<u64, A::Error> {
+    pub fn apply(
+        &mut self,
+        intent: &A::Intent,
+        metadata: &IntentMetadata,
+    ) -> Result<u64, A::Error> {
         self.store.push_overlay();
 
         {
             let mut sm = A::attach(self.store.handle());
 
-            if let Err(e) = sm.apply(intent) {
+            if let Err(e) = sm.apply(intent, metadata) {
                 // reverse changes.
                 self.store.pop_overlay();
                 return Err(e);
@@ -109,6 +121,7 @@ impl<A: Aper> AperClient<A> {
         let version = self.next_client_version;
         self.intent_stack.push_back(SpeculativeIntent {
             intent: intent.clone(),
+            metadata: metadata.clone(),
             version,
         });
         self.next_client_version += 1;
@@ -163,7 +176,10 @@ impl<A: Aper> AperClient<A> {
 
             let mut sm = A::attach(self.store.handle());
 
-            if sm.apply(&speculative_intent.intent).is_err() {
+            if sm
+                .apply(&speculative_intent.intent, &speculative_intent.metadata)
+                .is_err()
+            {
                 // reverse changes.
                 self.store.pop_overlay();
                 continue;
@@ -208,12 +224,16 @@ impl<A: Aper> AperServer<A> {
         self.map.top_layer_mutations()
     }
 
-    pub fn apply(&mut self, intent: &A::Intent) -> Result<Vec<Mutation>, A::Error> {
+    pub fn apply(
+        &mut self,
+        intent: &A::Intent,
+        metadata: &IntentMetadata,
+    ) -> Result<Vec<Mutation>, A::Error> {
         self.map.push_overlay();
 
         let mut sm = A::attach(self.map.handle());
 
-        if let Err(e) = sm.apply(intent) {
+        if let Err(e) = sm.apply(intent, metadata) {
             // reverse changes.
             self.map.pop_overlay();
             return Err(e);

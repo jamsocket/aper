@@ -7,6 +7,19 @@ pub struct AtomMap<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOw
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
+impl<K, V> Clone for AtomMap<K, V>
+where
+    K: Serialize + DeserializeOwned,
+    V: Serialize + DeserializeOwned,
+{
+    fn clone(&self) -> Self {
+        Self {
+            map: self.map.clone(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
 impl<K: Serialize + DeserializeOwned, V: Serialize + DeserializeOwned> AperSync for AtomMap<K, V> {
     fn attach(map: StoreHandle) -> Self {
         Self {

@@ -1,24 +1,28 @@
 use aper::connection::{MessageToClient, MessageToServer, ServerConnection, ServerHandle};
-use chrono::serde::ts_milliseconds;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-pub use state_program::{StateMachineContainerProgram, StateProgram};
+use aper::{Aper, IntentMetadata};
+use chrono::Utc;
 pub use stateroom::ClientId;
 use stateroom::{MessagePayload, StateroomContext, StateroomService};
 use std::collections::HashMap;
 
-mod state_program;
-
-pub struct AperStateroomService<P: StateProgram> {
+pub struct AperStateroomService<P>
+where
+    P: Aper,
+    P::Intent: Unpin + 'static,
+{
     connection: ServerConnection<P>,
-    suspended_event: Option<IntentEvent<P::T>>,
+    suspended_event: Option<(P::Intent, IntentMetadata)>,
     client_connections: HashMap<ClientId, ServerHandle<P>>,
 
     /// Pseudo-connection for sending timer events.
     timer_event_handle: ServerHandle<P>,
 }
 
-impl<P: StateProgram> Default for AperStateroomService<P> {
+impl<P: Aper> Default for AperStateroomService<P>
+where
+    P: Aper,
+    P::Intent: Unpin + 'static,
+{
     fn default() -> Self {
         let mut connection = ServerConnection::new();
         let timer_event_handle = connection.connect(|_| {});
@@ -32,7 +36,11 @@ impl<P: StateProgram> Default for AperStateroomService<P> {
     }
 }
 
-impl<P: StateProgram> AperStateroomService<P> {
+impl<P: Aper> AperStateroomService<P>
+where
+    P: Aper,
+    P::Intent: Unpin + 'static,
+{
     fn update_suspended_event(&mut self, ctx: &impl StateroomContext) {
         let susp = self.connection.state().suspended_event();
         if susp == self.suspended_event {
@@ -40,7 +48,7 @@ impl<P: StateProgram> AperStateroomService<P> {
         }
 
         if let Some(ev) = &susp {
-            let dur = ev.timestamp.signed_duration_since(Utc::now());
+            let dur = ev.1.timestamp.signed_duration_since(Utc::now());
             ctx.set_timer(dur.num_milliseconds().max(0) as u32);
         }
 
@@ -63,9 +71,10 @@ impl<P: StateProgram> AperStateroomService<P> {
     }
 }
 
-impl<P: StateProgram> StateroomService for AperStateroomService<P>
+impl<P: Aper> StateroomService for AperStateroomService<P>
 where
-    P::T: Unpin + Send + Sync + 'static,
+    P: Aper + Send + Sync,
+    P::Intent: Unpin + Send + Sync + 'static,
 {
     fn init(&mut self, ctx: &impl StateroomContext) {
         self.update_suspended_event(ctx);
@@ -106,7 +115,7 @@ where
 
     fn timer(&mut self, ctx: &impl StateroomContext) {
         if let Some(mut event) = self.suspended_event.take() {
-            event.timestamp = Utc::now();
+            event.1.timestamp = Utc::now();
             let event = bincode::serialize(&event).unwrap();
             self.process_message(
                 MessageToServer::Intent {
@@ -116,32 +125,6 @@ where
                 None,
                 ctx,
             );
-        }
-    }
-}
-
-pub type Timestamp = DateTime<Utc>;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct IntentEvent<T>
-where
-    T: Unpin + Send + Sync + 'static + Clone,
-{
-    #[serde(with = "ts_milliseconds")]
-    pub timestamp: Timestamp,
-    pub client: Option<u32>,
-    pub intent: T,
-}
-
-impl<T> IntentEvent<T>
-where
-    T: Unpin + Send + Sync + 'static + Clone,
-{
-    pub fn new(client: Option<u32>, timestamp: Timestamp, intent: T) -> IntentEvent<T> {
-        IntentEvent {
-            timestamp,
-            client,
-            intent,
         }
     }
 }

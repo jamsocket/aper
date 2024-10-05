@@ -7,6 +7,19 @@ pub struct Map<K: Serialize + DeserializeOwned, V: AperSync> {
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
+impl<K, V> Clone for Map<K, V>
+where
+    K: Serialize + DeserializeOwned,
+    V: AperSync,
+{
+    fn clone(&self) -> Self {
+        Self {
+            map: self.map.clone(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
 impl<K: Serialize + DeserializeOwned, V: AperSync> AperSync for Map<K, V> {
     fn attach(map: StoreHandle) -> Self {
         Self {

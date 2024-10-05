@@ -1,11 +1,12 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperClient, AperSync, Bytes, Mutation, PrefixMap, PrefixMapValue,
+    Aper, AperClient, AperSync, Bytes, IntentMetadata, Mutation, PrefixMap, PrefixMapValue,
 };
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, sync::mpsc::channel};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct SimpleStruct {
     atom_i32: Atom<i32>,
     atom_string: Atom<String>,
@@ -23,7 +24,11 @@ impl Aper for SimpleStruct {
     type Intent = SimpleIntent;
     type Error = ();
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
+    fn apply(
+        &mut self,
+        intent: &Self::Intent,
+        _metadata: &IntentMetadata,
+    ) -> Result<(), Self::Error> {
         match intent {
             SimpleIntent::SetAtomI32(value) => self.atom_i32.set(*value),
             SimpleIntent::SetAtomString(value) => self.atom_string.set(value.clone()),
@@ -60,21 +65,34 @@ fn test_apply_listener() {
     st.fixed_array
         .listen(move || fixed_array_send.send(()).is_ok());
 
-    client.apply(&SimpleIntent::SetAtomI32(42)).unwrap();
+    client
+        .apply(
+            &SimpleIntent::SetAtomI32(42),
+            &IntentMetadata::new(None, Utc::now()),
+        )
+        .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_ok());
     assert!(atom_string_recv.try_recv().is_err());
     assert!(fixed_array_recv.try_recv().is_err());
 
     client
-        .apply(&SimpleIntent::SetAtomString("hello".to_string()))
+        .apply(
+            &SimpleIntent::SetAtomString("hello".to_string()),
+            &IntentMetadata::new(None, Utc::now()),
+        )
         .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_err());
     assert!(atom_string_recv.try_recv().is_ok());
     assert!(fixed_array_recv.try_recv().is_err());
 
-    client.apply(&SimpleIntent::SetFixedArray(0, 42)).unwrap();
+    client
+        .apply(
+            &SimpleIntent::SetFixedArray(0, 42),
+            &IntentMetadata::new(None, Utc::now()),
+        )
+        .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_err());
     assert!(atom_string_recv.try_recv().is_err());
@@ -100,7 +118,7 @@ fn test_mutate_listener_simple() {
         .listen(move || fixed_array_send.send(()).is_ok());
 
     client.mutate(
-        &vec![create_mutation(
+        &[create_mutation(
             vec![b"atom_i32"],
             vec![(
                 b"".to_vec(),
@@ -118,7 +136,7 @@ fn test_mutate_listener_simple() {
     assert!(fixed_array_recv.try_recv().is_err());
 }
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct LinkedFields {
     lhs: Atom<i32>,
     rhs: Atom<i32>,
@@ -135,7 +153,11 @@ impl Aper for LinkedFields {
     type Intent = LinkedFieldIntent;
     type Error = ();
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
+    fn apply(
+        &mut self,
+        intent: &Self::Intent,
+        _metadata: &IntentMetadata,
+    ) -> Result<(), Self::Error> {
         match intent {
             LinkedFieldIntent::SetLhs(value) => self.lhs.set(*value),
             LinkedFieldIntent::SetRhs(value) => self.rhs.set(*value),
@@ -163,12 +185,17 @@ fn test_mutate_listener_incidental() {
     st.rhs.listen(move || rhs_send.send(()).is_ok());
     st.sum.listen(move || sum_send.send(()).is_ok());
 
-    client.apply(&LinkedFieldIntent::SetLhs(1)).unwrap();
+    client
+        .apply(
+            &LinkedFieldIntent::SetLhs(1),
+            &IntentMetadata::new(None, Utc::now()),
+        )
+        .unwrap();
 
     assert_eq!(1, st.lhs.get());
     assert_eq!(1, st.sum.get());
 
-    client.mutate(&vec![], None, 1);
+    client.mutate(&[], None, 1);
 
     assert!(lhs_recv.try_recv().is_ok());
     assert!(rhs_recv.try_recv().is_err());
@@ -177,7 +204,7 @@ fn test_mutate_listener_incidental() {
     // now mutate the rhs, which should cause the sum to be recomputed
 
     client.mutate(
-        &vec![create_mutation(
+        &[create_mutation(
             vec![b"rhs"],
             vec![(
                 b"".to_vec(),

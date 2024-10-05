@@ -1,7 +1,8 @@
-use yew::prelude::*;
-use yew::{Callback, Component};
-
 use crate::{Board, GameTransition, PlayerColor, BOARD_COLS, BOARD_ROWS};
+use aper_yew::YewAperClient;
+use drop_four_common::DropFourGame;
+use yew::prelude::*;
+use yew::Component;
 
 const CELL_SIZE: u32 = 80;
 const CELL_INNER_SIZE: u32 = 70;
@@ -25,10 +26,10 @@ pub struct SetHoverCol(Option<u32>);
 
 #[derive(Properties, Clone)]
 pub struct BoardProps {
+    pub connection: YewAperClient<DropFourGame>,
     pub board: Board,
     pub player: PlayerColor,
     pub interactive: bool,
-    pub callback: Callback<GameTransition>,
 }
 
 impl PartialEq for BoardProps {
@@ -73,7 +74,6 @@ impl BoardComponent {
 
     fn view_hover_zones(&self, context: &yew::Context<Self>) -> Html {
         let set_hover_col = context.link().callback(SetHoverCol);
-        let drop_tile = context.props().callback.reform(GameTransition::Drop);
         let zones = (0..BOARD_COLS).map(move |c| {
             html! {
                 <rect
@@ -82,7 +82,7 @@ impl BoardComponent {
                     height={(CELL_SIZE * BOARD_ROWS).to_string()}
                     opacity="0"
                     onmouseover={set_hover_col.reform(move |_| Some(c))}
-                    onclick={drop_tile.reform(move |_| c as usize)}
+                    onclick={context.props().connection.callback(move || GameTransition::Drop(c as _))}
                 />
             }
         });

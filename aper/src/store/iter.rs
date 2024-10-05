@@ -47,7 +47,7 @@ impl StoreIterator {
             if let Some((key, value)) = next_value {
                 println!("pushing... {:?}", key);
                 heap.push(PeekedIterator {
-                    next_value: (&key, value),
+                    next_value: (key, value),
                     layer_rank,
                     rest: iter,
                 });

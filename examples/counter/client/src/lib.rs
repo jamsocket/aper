@@ -1,36 +1,53 @@
-use aper_yew::{
-    StateMachineContainerProgram, StateProgramComponent, StateProgramComponentProps,
-    StateProgramViewComponent, StateProgramViewContext,
-};
+use aper::AperSync;
+use aper_yew::{FakeSend, YewAperClient};
 pub use counter_common::{Counter, CounterIntent};
 use wasm_bindgen::prelude::*;
-use yew::prelude::{html, Html};
+use yew::{
+    prelude::{function_component, html, Html, Properties},
+    use_state,
+};
 
-struct CounterView;
+#[derive(Clone, PartialEq, Properties)]
+struct CounterViewProps {
+    connection: YewAperClient<Counter>,
+}
 
-impl StateProgramViewComponent for CounterView {
-    type Program = StateMachineContainerProgram<Counter>;
+#[function_component]
+fn CounterView(props: &CounterViewProps) -> Html {
+    let counter = props.connection.state();
 
-    fn view(state: &Self::Program, context: StateProgramViewContext<Self::Program>) -> Html {
-        html! {
-            <div>
-                <p>{&format!("Counter: {}", state.0.value())}</p>
-                <button onclick={context.callback.reform(|_| CounterIntent::Add(1))}>
-                    {"+1"}
-                </button>
-                <button onclick={context.callback.reform(|_| CounterIntent::Subtract(1))}>
-                    {"-1"}
-                </button>
-                <button onclick={context.callback.reform(|_| CounterIntent::Reset)}>
-                    {"Reset"}
-                </button>
-            </div>
-        }
+    let state = use_state(|| 0);
+
+    let state_ = FakeSend { value: state };
+    let c = counter.clone();
+    counter.value.listen(move || {
+        state_.value.set(c.value());
+        true
+    });
+
+    html! {
+        <div>
+            <p>{&format!("Counter: {}", counter.value())}</p>
+            <button onclick={props.connection.callback(|| CounterIntent::Add(1))}>
+                {"+1"}
+            </button>
+            <button onclick={props.connection.callback(|| CounterIntent::Subtract(1))}>
+                {"-1"}
+            </button>
+            <button onclick={props.connection.callback(|| CounterIntent::Reset)}>
+                {"Reset"}
+            </button>
+        </div>
     }
 }
 
 #[wasm_bindgen(start)]
 pub fn entry() {
-    let props = StateProgramComponentProps::new("ws");
-    yew::Renderer::<StateProgramComponent<CounterView>>::with_props(props).render();
+    let url = "ws://localhost:8080/ws";
+
+    let connection = YewAperClient::<Counter>::new(url);
+
+    let props = CounterViewProps { connection };
+
+    yew::Renderer::<CounterView>::with_props(props).render();
 }

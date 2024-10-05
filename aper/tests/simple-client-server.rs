@@ -1,6 +1,10 @@
-use aper::{data_structures::atom::Atom, Aper, AperClient, AperServer, AperSync, StoreHandle};
+use aper::{
+    data_structures::atom::Atom, Aper, AperClient, AperServer, AperSync, IntentMetadata,
+    StoreHandle,
+};
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone)]
 struct Counter(Atom<u64>);
 
 impl AperSync for Counter {
@@ -25,8 +29,12 @@ impl Aper for Counter {
     type Intent = CounterIntent;
     type Error = ();
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
-        match intent {
+    fn apply(
+        &mut self,
+        intent: &Self::Intent,
+        _metadata: &IntentMetadata,
+    ) -> Result<(), Self::Error> {
+        match &intent {
             CounterIntent::IncrementBy(amount) => {
                 self.0.set(self.0.get() + amount);
             }
@@ -44,14 +52,17 @@ fn test_local_change() {
     let mut client = AperClient::<Counter>::new();
     let mut server = AperServer::<Counter>::new();
 
-    let intent = CounterIntent::IncrementBy(5);
-    let version = client.apply(&intent).unwrap();
+    let version = client
+        .apply(&CounterIntent::IncrementBy(5), &IntentMetadata::now())
+        .unwrap();
 
     assert_eq!(1, version);
     assert_eq!(0, client.verified_client_version());
     assert_eq!(1, client.speculative_client_version());
 
-    let mutations = server.apply(&intent).unwrap();
+    let mutations = server
+        .apply(&CounterIntent::IncrementBy(5), &IntentMetadata::now())
+        .unwrap();
 
     client.mutate(&mutations, Some(version), 1);
 
@@ -66,8 +77,9 @@ fn test_local_change() {
 fn test_remote_change() {
     let mut server = AperServer::<Counter>::new();
 
-    let intent = CounterIntent::IncrementBy(5);
-    let mutations = server.apply(&intent).unwrap();
+    let mutations = server
+        .apply(&CounterIntent::IncrementBy(5), &IntentMetadata::now())
+        .unwrap();
 
     let mut client = AperClient::<Counter>::new();
     client.mutate(&mutations, None, 1);
@@ -87,9 +99,13 @@ fn test_speculative_change_remains() {
     let mut server = AperServer::<Counter>::new();
     let mut client = AperClient::<Counter>::new();
 
-    client.apply(&CounterIntent::IncrementBy(5)).unwrap();
+    client
+        .apply(&CounterIntent::IncrementBy(5), &IntentMetadata::now())
+        .unwrap();
 
-    let mutations = server.apply(&CounterIntent::SetTo(10)).unwrap();
+    let mutations = server
+        .apply(&CounterIntent::IncrementBy(10), &IntentMetadata::now())
+        .unwrap();
 
     client.mutate(&mutations, None, 1);
 
@@ -105,14 +121,17 @@ fn test_remote_changes_persist() {
     let mut server = AperServer::<Counter>::new();
     let mut client = AperClient::<Counter>::new();
 
-    let intent = CounterIntent::IncrementBy(5);
-    let mutations = server.apply(&intent).unwrap();
+    let mutations = server
+        .apply(&CounterIntent::IncrementBy(5), &IntentMetadata::now())
+        .unwrap();
     client.mutate(&mutations, None, 1);
 
     let state = client.state();
     assert_eq!(5, state.get());
 
-    let mutations = server.apply(&intent).unwrap();
+    let mutations = server
+        .apply(&CounterIntent::IncrementBy(5), &IntentMetadata::now())
+        .unwrap();
     client.mutate(&mutations, None, 1);
 
     let state = client.state();

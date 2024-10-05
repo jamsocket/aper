@@ -1,4 +1,4 @@
-use crate::{Aper, AperClient, AperServer};
+use crate::{Aper, AperClient, AperServer, IntentMetadata, Store};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -41,15 +41,13 @@ pub struct MessageToClient {
 pub struct ClientConnection<A: Aper> {
     client: AperClient<A>,
     message_callback: Box<dyn Fn(MessageToServer)>,
-    state_callback: Box<dyn Fn(A, u32)>,
-    pub client_id: Option<u32>,
+    client_id: Option<u32>,
 }
 
 impl<A: Aper> ClientConnection<A> {
-    pub fn new<F: Fn(MessageToServer) + 'static, FS: Fn(A, u32) + 'static>(
+    pub fn new<F: Fn(MessageToServer) + 'static>(
         client: AperClient<A>,
         message_callback: F,
-        state_callback: FS,
     ) -> Self {
         // Request initial state.
 
@@ -60,29 +58,31 @@ impl<A: Aper> ClientConnection<A> {
         Self {
             client,
             message_callback: Box::new(message_callback),
-            state_callback: Box::new(state_callback),
             client_id: None,
         }
+    }
+
+    pub fn client_id(&self) -> Option<u32> {
+        self.client_id
     }
 
     pub fn state(&self) -> A {
         self.client.state()
     }
 
+    pub fn store(&self) -> Store {
+        self.client.store()
+    }
+
     /// Send an intent to the server, and apply it speculatively to the local state.
-    pub fn apply(&mut self, intent: &A::Intent) -> Result<(), A::Error> {
-        let version = self.client.apply(intent)?;
-        let intent = bincode::serialize(intent).unwrap();
+    pub fn apply(&mut self, intent: A::Intent) -> Result<(), A::Error> {
+        let metadata = IntentMetadata::new(self.client_id, Utc::now());
+        let version = self.client.apply(&intent, &metadata)?;
+        let intent = bincode::serialize(&intent).unwrap();
         (self.message_callback)(MessageToServer::Intent {
             intent,
             client_version: version,
         });
-
-        if let Some(client_id) = self.client_id {
-            (self.state_callback)(self.client.state(), client_id);
-        } else {
-            tracing::warn!("Received intent before client ID was assigned.");
-        }
 
         Ok(())
     }
@@ -95,12 +95,6 @@ impl<A: Aper> ClientConnection<A> {
                 server_version,
             } => {
                 self.client.mutate(mutations, *version, *server_version);
-
-                if let Some(client_id) = self.client_id {
-                    (self.state_callback)(self.client.state(), client_id);
-                } else {
-                    tracing::warn!("Received state before client ID was assigned.");
-                }
             }
             MessageToClientType::Hello { client_id } => {
                 self.client_id = Some(*client_id);
@@ -172,7 +166,8 @@ impl<A: Aper> ServerHandle<A> {
             } => {
                 let intent = bincode::deserialize(intent).unwrap();
                 let mut server_borrow = self.server.lock().unwrap();
-                let Ok(mutations) = server_borrow.apply(&intent) else {
+                let metadata = IntentMetadata::new(Some(self.client_id), Utc::now());
+                let Ok(mutations) = server_borrow.apply(&intent, &metadata) else {
                     // still need to ack the client.
 
                     if let Some(callback) = self.callbacks.get(&self.client_id) {

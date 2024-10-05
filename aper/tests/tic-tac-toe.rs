@@ -1,10 +1,11 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperSync, Store,
+    Aper, AperSync, IntentMetadata, Store,
 };
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct TicTacToe {
     grid: FixedArray<9, Option<TicTacToePlayer>>,
     player: Atom<TicTacToePlayer>,
@@ -55,10 +56,14 @@ impl Aper for TicTacToe {
     type Intent = TicTacToePlay;
     type Error = ();
 
-    fn apply(&mut self, intent: &Self::Intent) -> Result<(), Self::Error> {
+    fn apply(
+        &mut self,
+        intent: &Self::Intent,
+        _metadata: &IntentMetadata,
+    ) -> Result<(), Self::Error> {
         let player = self.player.get();
 
-        match intent {
+        match &intent {
             TicTacToePlay::Play(cell) => {
                 self.grid.set(*cell as u32, Some(player));
                 self.player.set(match player {
@@ -89,10 +94,26 @@ fn test_tic_tac_toe() {
     let map = Store::default();
     let mut game = TicTacToe::attach(map.handle());
 
-    game.apply(&TicTacToePlay::Play(0)).unwrap(); // X
-    game.apply(&TicTacToePlay::Play(1)).unwrap(); // O
-    game.apply(&TicTacToePlay::Play(3)).unwrap(); // X
-    game.apply(&TicTacToePlay::Play(2)).unwrap(); // O
+    game.apply(
+        &TicTacToePlay::Play(0),
+        &IntentMetadata::new(None, Utc::now()),
+    )
+    .unwrap(); // X
+    game.apply(
+        &TicTacToePlay::Play(1),
+        &IntentMetadata::new(None, Utc::now()),
+    )
+    .unwrap(); // O
+    game.apply(
+        &TicTacToePlay::Play(3),
+        &IntentMetadata::new(None, Utc::now()),
+    )
+    .unwrap(); // X
+    game.apply(
+        &TicTacToePlay::Play(2),
+        &IntentMetadata::new(None, Utc::now()),
+    )
+    .unwrap(); // O
 
     assert_eq!(game.grid.get(0), Some(TicTacToePlayer::X));
     assert_eq!(game.grid.get(1), Some(TicTacToePlayer::O));
@@ -101,10 +122,15 @@ fn test_tic_tac_toe() {
 
     assert_eq!(game.winner.get(), None);
 
-    game.apply(&TicTacToePlay::Play(6)).unwrap(); // X for the win
+    game.apply(
+        &TicTacToePlay::Play(6),
+        &IntentMetadata::new(None, Utc::now()),
+    )
+    .unwrap(); // X for the win
     assert_eq!(game.winner.get(), Some(TicTacToePlayer::X));
 
-    game.apply(&TicTacToePlay::Reset).unwrap();
+    game.apply(&TicTacToePlay::Reset, &IntentMetadata::now())
+        .unwrap();
 
     for i in 0..9 {
         assert_eq!(game.grid.get(i), None);

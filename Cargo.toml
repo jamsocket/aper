@@ -8,9 +8,8 @@ exclude = [
 members = [
     "aper",
     "aper/aper-derive*",
-    "aper-stateroom",
-    "aper-serve",
-    "aper-yew",
     "aper-websocket-client",
-    "site/doctests",
+    "aper-serve",
+    "aper-stateroom",
+    "site/doctests", "aper-yew",
 ]

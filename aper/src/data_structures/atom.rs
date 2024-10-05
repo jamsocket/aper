@@ -7,6 +7,18 @@ pub struct Atom<T: Serialize + DeserializeOwned + Default> {
     _phantom: std::marker::PhantomData<T>,
 }
 
+impl<K> Clone for Atom<K>
+where
+    K: Serialize + DeserializeOwned + Default,
+{
+    fn clone(&self) -> Self {
+        Self {
+            map: self.map.clone(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
 impl<T: Serialize + DeserializeOwned + Default> AperSync for Atom<T> {
     fn attach(map: StoreHandle) -> Self {
         Self {
