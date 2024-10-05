@@ -1,4 +1,4 @@
-use aper::{data_structures::atom::Atom, Aper, AperSync, IntentEvent};
+use aper::{data_structures::atom::Atom, Aper, AperSync, IntentMetadata};
 use serde::{Deserialize, Serialize};
 
 #[derive(AperSync, Clone)]
@@ -23,10 +23,10 @@ impl Aper for Counter {
     type Intent = CounterIntent;
     type Error = ();
 
-    fn apply(&mut self, event: &IntentEvent<CounterIntent>) -> Result<(), ()> {
+    fn apply(&mut self, intent: &CounterIntent, _metadata: &IntentMetadata) -> Result<(), ()> {
         let value = self.value.get();
 
-        match &event.intent {
+        match &intent {
             CounterIntent::Add(i) => {
                 self.value.set(value + i);
             }

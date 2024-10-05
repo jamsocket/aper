@@ -12,6 +12,7 @@ pub enum MessageToServer {
     Intent {
         intent: Vec<u8>,
         client_version: u64,
+        metadata: IntentMetadata,
     },
     RequestState {
         latest_version: u64,
@@ -82,6 +83,7 @@ impl<A: Aper> ClientConnection<A> {
         (self.message_callback)(MessageToServer::Intent {
             intent,
             client_version: version,
+            metadata,
         });
 
         Ok(())
@@ -163,10 +165,10 @@ impl<A: Aper> ServerHandle<A> {
             MessageToServer::Intent {
                 intent,
                 client_version,
+                metadata,
             } => {
                 let intent = bincode::deserialize(intent).unwrap();
                 let mut server_borrow = self.server.lock().unwrap();
-                let metadata = IntentMetadata::new(Some(self.client_id), Utc::now());
                 let Ok(mutations) = server_borrow.apply(&intent, &metadata) else {
                     // still need to ack the client.
 
