@@ -23,13 +23,13 @@ In the last section, we implemented a `ToDoList`:
 ```rust
 use aper::{AperSync, data_structures::{Atom, Map}};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct ToDoItem {
    pub done: Atom<bool>,
    pub name: Atom<String>,
 }
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct ToDoList {
    pub items: Map<String, ToDoItem>,
 }
@@ -79,17 +79,17 @@ or the user has gone offline.)
 Now, we implement `Aper` for `ToDoList`:
 
 ```rust
-# use aper::{AperSync, data_structures::{Atom, Map}};
+# use aper::{AperSync, data_structures::{Atom, Map}, IntentMetadata};
 # use serde::{Serialize, Deserialize};
 # use uuid::Uuid;
 # 
-# #[derive(AperSync)]
+# #[derive(AperSync, Clone)]
 # struct ToDoItem {
 #    pub done: Atom<bool>,
 #    pub name: Atom<String>,
 # }
 # 
-# #[derive(AperSync)]
+# #[derive(AperSync, Clone)]
 # struct ToDoList {
 #    pub items: Map<Uuid, ToDoItem>,
 # }
@@ -117,7 +117,7 @@ impl Aper for ToDoList {
     type Intent = ToDoIntent;
     type Error = ();
 
-    fn apply(&mut self, intent: &ToDoIntent) -> Result<(), ()> {
+    fn apply(&mut self, intent: &ToDoIntent, _metadata: &IntentMetadata) -> Result<(), ()> {
         match intent {
             ToDoIntent::CreateTask { id, name } => {
                 let mut item = self.items.get_or_create(id);

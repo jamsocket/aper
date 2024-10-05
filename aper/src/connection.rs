@@ -1,4 +1,4 @@
-use crate::{Aper, AperClient, AperServer, Store};
+use crate::{Aper, AperClient, AperServer, IntentMetadata, Store};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -76,8 +76,8 @@ impl<A: Aper> ClientConnection<A> {
 
     /// Send an intent to the server, and apply it speculatively to the local state.
     pub fn apply(&mut self, intent: A::Intent) -> Result<(), A::Error> {
-        let intent = crate::IntentEvent::new(self.client_id, Utc::now(), intent);
-        let version = self.client.apply(&intent)?;
+        let metadata = IntentMetadata::new(self.client_id, Utc::now());
+        let version = self.client.apply(&intent, &metadata)?;
         let intent = bincode::serialize(&intent).unwrap();
         (self.message_callback)(MessageToServer::Intent {
             intent,
@@ -166,7 +166,8 @@ impl<A: Aper> ServerHandle<A> {
             } => {
                 let intent = bincode::deserialize(intent).unwrap();
                 let mut server_borrow = self.server.lock().unwrap();
-                let Ok(mutations) = server_borrow.apply(&intent) else {
+                let metadata = IntentMetadata::new(Some(self.client_id), Utc::now());
+                let Ok(mutations) = server_borrow.apply(&intent, &metadata) else {
                     // still need to ack the client.
 
                     if let Some(callback) = self.callbacks.get(&self.client_id) {

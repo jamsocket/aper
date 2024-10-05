@@ -1,7 +1,8 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperClient, AperSync, Bytes, IntentEvent, Mutation, PrefixMap, PrefixMapValue,
+    Aper, AperClient, AperSync, Bytes, IntentMetadata, Mutation, PrefixMap, PrefixMapValue,
 };
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, sync::mpsc::channel};
 
@@ -23,8 +24,12 @@ impl Aper for SimpleStruct {
     type Intent = SimpleIntent;
     type Error = ();
 
-    fn apply(&mut self, event: &IntentEvent<Self::Intent>) -> Result<(), Self::Error> {
-        match &event.intent {
+    fn apply(
+        &mut self,
+        intent: &Self::Intent,
+        _metadata: &IntentMetadata,
+    ) -> Result<(), Self::Error> {
+        match intent {
             SimpleIntent::SetAtomI32(value) => self.atom_i32.set(*value),
             SimpleIntent::SetAtomString(value) => self.atom_string.set(value.clone()),
             SimpleIntent::SetFixedArray(index, value) => self.fixed_array.set(*index, *value),
@@ -61,7 +66,10 @@ fn test_apply_listener() {
         .listen(move || fixed_array_send.send(()).is_ok());
 
     client
-        .apply(&IntentEvent::simple(SimpleIntent::SetAtomI32(42)))
+        .apply(
+            &SimpleIntent::SetAtomI32(42),
+            &IntentMetadata::new(None, Utc::now()),
+        )
         .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_ok());
@@ -69,9 +77,10 @@ fn test_apply_listener() {
     assert!(fixed_array_recv.try_recv().is_err());
 
     client
-        .apply(&IntentEvent::simple(SimpleIntent::SetAtomString(
-            "hello".to_string(),
-        )))
+        .apply(
+            &SimpleIntent::SetAtomString("hello".to_string()),
+            &IntentMetadata::new(None, Utc::now()),
+        )
         .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_err());
@@ -79,7 +88,10 @@ fn test_apply_listener() {
     assert!(fixed_array_recv.try_recv().is_err());
 
     client
-        .apply(&IntentEvent::simple(SimpleIntent::SetFixedArray(0, 42)))
+        .apply(
+            &SimpleIntent::SetFixedArray(0, 42),
+            &IntentMetadata::new(None, Utc::now()),
+        )
         .unwrap();
 
     assert!(atom_i32_recv.try_recv().is_err());
@@ -141,8 +153,12 @@ impl Aper for LinkedFields {
     type Intent = LinkedFieldIntent;
     type Error = ();
 
-    fn apply(&mut self, intent: &IntentEvent<Self::Intent>) -> Result<(), Self::Error> {
-        match &intent.intent {
+    fn apply(
+        &mut self,
+        intent: &Self::Intent,
+        _metadata: &IntentMetadata,
+    ) -> Result<(), Self::Error> {
+        match intent {
             LinkedFieldIntent::SetLhs(value) => self.lhs.set(*value),
             LinkedFieldIntent::SetRhs(value) => self.rhs.set(*value),
         }
@@ -170,7 +186,10 @@ fn test_mutate_listener_incidental() {
     st.sum.listen(move || sum_send.send(()).is_ok());
 
     client
-        .apply(&IntentEvent::simple(LinkedFieldIntent::SetLhs(1)))
+        .apply(
+            &LinkedFieldIntent::SetLhs(1),
+            &IntentMetadata::new(None, Utc::now()),
+        )
         .unwrap();
 
     assert_eq!(1, st.lhs.get());

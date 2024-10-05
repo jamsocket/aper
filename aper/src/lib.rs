@@ -22,27 +22,18 @@ pub struct Mutation {
 pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct IntentEvent<T> {
+pub struct IntentMetadata {
     #[serde(with = "ts_milliseconds")]
     pub timestamp: Timestamp,
     pub client: Option<u32>,
-    pub intent: T,
 }
 
-impl<T> IntentEvent<T> {
-    pub fn new(client: Option<u32>, timestamp: Timestamp, intent: T) -> IntentEvent<T> {
-        IntentEvent {
-            timestamp,
-            client,
-            intent,
-        }
+impl IntentMetadata {
+    pub fn new(client: Option<u32>, timestamp: Timestamp) -> IntentMetadata {
+        IntentMetadata { timestamp, client }
     }
 
-    pub fn simple(intent: T) -> IntentEvent<T> {
-        IntentEvent {
-            timestamp: Utc::now(),
-            client: None,
-            intent,
-        }
+    pub fn now() -> IntentMetadata {
+        IntentMetadata::new(None, Utc::now())
     }
 }

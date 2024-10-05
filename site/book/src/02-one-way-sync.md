@@ -7,7 +7,7 @@ Typically, you will not implement `AperSync` directly, but instead derive it. Fo
 ```rust
 use aper::{AperSync, data_structures::Atom};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct ToDoItem {
    done: Atom<bool>,
    name: Atom<String>,
@@ -23,7 +23,7 @@ Generally, for compound data structures, you should use more appropriate types. 
 ```rust
 use aper::{AperSync, data_structures::AtomMap};
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct PhoneBook {
    name_to_number: AtomMap<String, String>,
 }
@@ -37,13 +37,13 @@ Aper also provides a type of map where values are `AperSync`. This allows more f
 use aper::{AperSync, data_structures::{Atom, Map}};
 use uuid::Uuid;
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct ToDoItem {
    pub done: Atom<bool>,
    pub name: Atom<String>,
 }
 
-#[derive(AperSync)]
+#[derive(AperSync, Clone)]
 struct ToDoList {
    pub items: Map<Uuid, ToDoItem>,
 }
@@ -62,13 +62,13 @@ When modifying collections of `AperSync` like `Map`, you don't insert new values
 # use uuid::Uuid;
 use aper::{AperSync, Store};
 
-# #[derive(AperSync)]
+# #[derive(AperSync, Clone)]
 # struct ToDoItem {
 #    pub done: Atom<bool>,
 #    pub name: Atom<String>,
 # }
 # 
-# #[derive(AperSync)]
+# #[derive(AperSync, Clone)]
 # struct ToDoList {
 #    pub items: Map<Uuid, ToDoItem>,
 # }
