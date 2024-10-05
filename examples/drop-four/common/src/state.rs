@@ -1,6 +1,6 @@
 use aper::{
     data_structures::{atom::Atom, fixed_array::FixedArray},
-    Aper, AperSync, IntentEvent,
+    Aper, AperSync, IntentMetadata,
 };
 use serde::{Deserialize, Serialize};
 
@@ -154,14 +154,14 @@ impl Aper for DropFourGame {
     type Intent = GameTransition;
     type Error = ();
 
-    fn apply(&mut self, event: &IntentEvent<Self::Intent>) -> Result<(), ()> {
-        match event.intent {
+    fn apply(&mut self, intent: &Self::Intent, metadata: &IntentMetadata) -> Result<(), ()> {
+        match intent {
             GameTransition::Join => {
                 if PlayState::Waiting == self.play_state.get() {
                     if self.player_map.teal_player.get().is_none() {
-                        self.player_map.teal_player.set(event.client);
+                        self.player_map.teal_player.set(metadata.client);
                     } else if self.player_map.brown_player.get().is_none() {
-                        self.player_map.brown_player.set(event.client);
+                        self.player_map.brown_player.set(metadata.client);
                         self.play_state.set(PlayState::Playing);
                     }
                 }
@@ -171,15 +171,15 @@ impl Aper for DropFourGame {
                     if self.winner.get().is_some() {
                         return Ok(());
                     } // Someone has already won.
-                    if self.player_map.id_of_color(self.next_player.get()) != event.client {
+                    if self.player_map.id_of_color(self.next_player.get()) != metadata.client {
                         return Ok(());
                     } // Play out of turn.
 
-                    if let Some(insert_row) = self.board.lowest_open_row(c as u32) {
+                    if let Some(insert_row) = self.board.lowest_open_row(*c as u32) {
                         self.board
-                            .set(insert_row, c as u32, Some(self.next_player.get()));
+                            .set(insert_row, *c as u32, Some(self.next_player.get()));
 
-                        let winner = self.board.check_winner_at(insert_row as i32, c as i32);
+                        let winner = self.board.check_winner_at(insert_row as i32, *c as i32);
 
                         self.winner.set(winner);
                         self.next_player.set(self.next_player.get().other());
@@ -221,31 +221,36 @@ mod tests {
     #[test]
     fn test_game() {
         let mut game = DropFourGame::new();
-        let dummy_timestamp = Utc.timestamp_millis_opt(0).unwrap();
         let player1 = 1;
         let player2 = 2;
 
+        let player1_meta = IntentMetadata {
+            client: Some(player1),
+            timestamp: Utc.timestamp_millis_opt(0).unwrap(),
+        };
+        let player2_meta = IntentMetadata {
+            client: Some(player2),
+            timestamp: Utc.timestamp_millis_opt(0).unwrap(),
+        };
+
         assert_eq!(Waiting, game.play_state.get());
 
-        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Join))
-            .unwrap();
+        game.apply(&Join, &player1_meta).unwrap();
 
         assert_eq!(Waiting, game.play_state.get());
 
-        assert_eq!(Some(player1), game.player_map.teal_player.get(),);
+        assert_eq!(Some(player1), game.player_map.teal_player.get());
 
-        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Join))
-            .unwrap();
+        game.apply(&Join, &player2_meta).unwrap();
 
         assert_eq!(game.play_state.get(), Playing,);
-        assert_eq!(Some(player2), game.player_map.brown_player.get(),);
-        assert_eq!(Teal, game.next_player.get(),);
+        assert_eq!(Some(player2), game.player_map.brown_player.get());
+        assert_eq!(Teal, game.next_player.get());
 
-        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(4)))
-            .unwrap();
+        game.apply(&Drop(4), &player1_meta).unwrap();
 
         expect_disc(&game, 5, 4, Teal);
-        assert_eq!(Brown, game.next_player.get(),);
+        assert_eq!(Brown, game.next_player.get());
 
         //     v
         // .......
@@ -255,10 +260,9 @@ mod tests {
         // .......
         // ....T..
 
-        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Drop(4)))
-            .unwrap();
+        game.apply(&Drop(4), &player2_meta).unwrap();
 
-        assert_eq!(Teal, game.next_player.get(),);
+        assert_eq!(Teal, game.next_player.get());
         expect_disc(&game, 4, 4, Brown);
 
         //     v
@@ -269,10 +273,9 @@ mod tests {
         // ....B..
         // ....T..
 
-        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(3)))
-            .unwrap();
+        game.apply(&Drop(3), &player1_meta).unwrap();
 
-        assert_eq!(Brown, game.next_player.get(),);
+        assert_eq!(Brown, game.next_player.get());
         expect_disc(&game, 5, 3, Teal);
 
         //    v
@@ -283,10 +286,9 @@ mod tests {
         // ....B..
         // ...TT..
 
-        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Drop(5)))
-            .unwrap();
+        game.apply(&Drop(5), &player2_meta).unwrap();
 
-        assert_eq!(Teal, game.next_player.get(),);
+        assert_eq!(Teal, game.next_player.get());
         expect_disc(&game, 5, 5, Brown);
 
         //      v
@@ -297,10 +299,9 @@ mod tests {
         // ....B..
         // ...TTB.
 
-        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(2)))
-            .unwrap();
+        game.apply(&Drop(2), &player1_meta).unwrap();
 
-        assert_eq!(Brown, game.next_player.get(),);
+        assert_eq!(Brown, game.next_player.get());
         expect_disc(&game, 5, 2, Teal);
 
         //   v
@@ -311,10 +312,9 @@ mod tests {
         // ....B..
         // ..TTTB.
 
-        game.apply(&IntentEvent::new(Some(player2), dummy_timestamp, Drop(2)))
-            .unwrap();
+        game.apply(&Drop(2), &player2_meta).unwrap();
 
-        assert_eq!(Teal, game.next_player.get(),);
+        assert_eq!(Teal, game.next_player.get());
         expect_disc(&game, 4, 2, Brown);
 
         //   v
@@ -325,12 +325,11 @@ mod tests {
         // ..B.B..
         // ..TTTB.
 
-        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Drop(1)))
-            .unwrap();
+        game.apply(&Drop(1), &player1_meta).unwrap();
 
-        assert_eq!(Brown, game.next_player.get(),);
+        assert_eq!(Brown, game.next_player.get());
         expect_disc(&game, 5, 1, Teal);
-        assert_eq!(Some(Teal), game.winner.get(),);
+        assert_eq!(Some(Teal), game.winner.get());
 
         //  v
         // .......
@@ -340,9 +339,8 @@ mod tests {
         // ..B.B..
         // .TTTTB.
 
-        game.apply(&IntentEvent::new(Some(player1), dummy_timestamp, Reset))
-            .unwrap();
+        game.apply(&Reset, &player1_meta).unwrap();
 
-        assert_eq!(None, game.winner.get(),);
+        assert_eq!(None, game.winner.get());
     }
 }

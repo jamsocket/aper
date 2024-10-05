@@ -3,6 +3,7 @@ use crate::{
     store::{Store, StoreHandle},
     IntentMetadata, Mutation,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, fmt::Debug};
 
@@ -24,7 +25,7 @@ pub trait Aper: AperSync + 'static {
         metadata: &IntentMetadata,
     ) -> Result<(), Self::Error>;
 
-    fn suspended_event(&self) -> Option<(Self::Intent, IntentMetadata)> {
+    fn suspended_event(&self) -> Option<(DateTime<Utc>, Self::Intent)> {
         None
     }
 }

@@ -1,6 +1,6 @@
 use aper::connection::{MessageToClient, MessageToServer, ServerConnection, ServerHandle};
 use aper::{Aper, IntentMetadata};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 pub use stateroom::ClientId;
 use stateroom::{MessagePayload, StateroomContext, StateroomService};
 use std::collections::HashMap;
@@ -11,7 +11,7 @@ where
     P::Intent: Unpin + 'static,
 {
     connection: ServerConnection<P>,
-    suspended_event: Option<(P::Intent, IntentMetadata)>,
+    suspended_event: Option<(DateTime<Utc>, P::Intent)>,
     client_connections: HashMap<ClientId, ServerHandle<P>>,
 
     /// Pseudo-connection for sending timer events.
@@ -48,7 +48,7 @@ where
         }
 
         if let Some(ev) = &susp {
-            let dur = ev.1.timestamp.signed_duration_since(Utc::now());
+            let dur = ev.0.signed_duration_since(Utc::now());
             ctx.set_timer(dur.num_milliseconds().max(0) as u32);
         }
 
@@ -114,13 +114,13 @@ where
     }
 
     fn timer(&mut self, ctx: &impl StateroomContext) {
-        if let Some(mut event) = self.suspended_event.take() {
-            event.1.timestamp = Utc::now();
-            let event = bincode::serialize(&event).unwrap();
+        if let Some((_timestamp, intent)) = self.suspended_event.take() {
+            let intent = bincode::serialize(&intent).unwrap();
             self.process_message(
                 MessageToServer::Intent {
-                    intent: event,
+                    intent,
                     client_version: 0,
+                    metadata: IntentMetadata::new(None, Utc::now()),
                 },
                 None,
                 ctx,
