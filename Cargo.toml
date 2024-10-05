@@ -6,10 +6,12 @@ exclude = [
 ]
 
 members = [
-    "aper",
-    "aper/aper-derive*",
-    "aper-websocket-client",
+    "aper-leptos",
     "aper-serve",
     "aper-stateroom",
-    "site/doctests", "aper-yew",
+    "aper-websocket-client",
+    "aper-yew",
+    "aper",
+    "aper/aper-derive*",
+    "site/doctests",
 ]

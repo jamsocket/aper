@@ -1,26 +1,14 @@
-use aper::AperSync;
 use aper_websocket_client::AperWebSocketClient;
+use aper_leptos::{init_tracing, Watch};
 pub use counter_common::{Counter, CounterIntent};
-use leptos::{component, create_trigger, view, IntoView};
+use leptos::{component, view, IntoView};
 use wasm_bindgen::prelude::*;
-
-// TODO: move to shared module
-mod init_tracing;
 
 #[component]
 fn App() -> impl IntoView {
-    let trigger = create_trigger();
     let url = "ws://localhost:8080/ws";
 
     let client_program = AperWebSocketClient::<Counter>::new(url).unwrap();
-
-    // Force a redraw when the counter changes.
-    // Note: we need to listen on the "value" field, which is what actually mutates,
-    // not the root state. (TODO: seems not ideal?)
-    client_program.state().value.listen(move || {
-        trigger.notify();
-        true
-    });
 
     let state = client_program.state();
 
@@ -31,10 +19,9 @@ fn App() -> impl IntoView {
             }
         >
             "Click me: "
-            {move || {
-                trigger.track();
-                state.value()
-            }}
+            {
+                state.value.watch()
+            }
         </button>
     }
 }
